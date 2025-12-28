@@ -1,0 +1,149 @@
+//
+//  MagicMountBackgroundTests.swift
+//  MagicMountBackgroundTests
+//
+//  Created by Mark Tassinari on 12/28/25.
+//
+
+import XCTest
+@testable import MagicMountBackground
+
+final class MagicMountBackgroundTests: XCTestCase {
+    let defaultsSuiteName = "group.org.tassinari.magicmount.test"
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        UserDefaults(suiteName: defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
+    }
+
+    @MainActor func testStorageManagerSavesAndLoads()   async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let mount = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid)
+        try manager.addMount(mount)
+        guard let mounts = manager.mounts else {
+            XCTFail()
+            return
+        }
+        guard let first = mounts.first else {
+            XCTFail()
+            return
+        }
+        XCTAssert(mounts.count == 1)
+        XCTAssert(first.url == testURl)
+        XCTAssert(first.user == user)
+        XCTAssert(first.password  == testPassword)
+    
+        
+    }
+    @MainActor func testStorageManagerTHrowsWithNoDefaults()   async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: nil)
+        let mount = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid)
+        do{
+            try manager.addMount(mount)
+            XCTFail("should have thrown")
+        }catch let e as StorageManagerError{
+            XCTAssert(e == StorageManagerError.noUserDefaults)
+        }catch{
+            XCTFail()
+        }
+    }
+    @MainActor func testStorageManagerThrowsOnDeleteWithNoDefaults()   async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: nil)
+        let mount = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid)
+        do{
+            try manager.deleteMount(mount)
+            XCTFail("should have thrown")
+        }catch let e as StorageManagerError{
+            XCTAssert(e == StorageManagerError.noUserDefaults)
+        }catch{
+            XCTFail()
+        }
+    }
+    @MainActor func testStorageManagerNilWithNoDefaults()   async throws {
+        let manager =  StorageManager(defaults: nil)
+        
+        let mounts = manager.mounts
+        XCTAssertNil(mounts)
+        
+    }
+    @MainActor func testStorageManagerDeleteThrowsWithNoKey()   async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let mount = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid)
+        do{
+            try manager.deleteMount(mount)
+            XCTFail("should have thrown")
+        }catch let e as StorageManagerError{
+            XCTAssert(e == StorageManagerError.doesNotExsist)
+        }catch{
+            XCTFail()
+        }
+        
+    }
+    @MainActor func testDeleteMountWorks() async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let n = 10
+        var expected : [Share] = []
+        for i in 0..<n{
+            let d = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid + String(i))
+            try manager.addMount(d)
+            expected.append(d)
+        }
+        let j = "3"
+        let delete = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid + j)
+        try manager.deleteMount(delete)
+        guard let allMounts = manager.mounts else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssertFalse(allMounts.contains(delete))
+        XCTAssert(allMounts.count == n - 1)
+        
+    }
+    @MainActor func testStorageManagerSavesAndLoadsMultiple()   async throws {
+        let user = "TestUser"
+        let testURl = "testUrl"
+        let testPassword = "testPassword"
+        let name = "testName"
+        let uuid = UUID().uuidString
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let n = 10
+        var expected : [Share] = []
+        for i in 0..<n{
+            let d = Share(user: user, password: testPassword, url: testURl, name: name, uuid: uuid + String(i))
+            try manager.addMount(d)
+            expected.append(d)
+        }
+        guard let allMounts = manager.mounts else {
+            XCTFail()
+            return
+        }
+        XCTAssert(allMounts.count == n)
+        XCTAssertEqual(expected.sorted(by: {$0.url > $1.url}), allMounts.sorted(by: {$0.url > $1.url}))
+    }
+
+}

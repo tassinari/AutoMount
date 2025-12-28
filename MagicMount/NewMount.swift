@@ -45,7 +45,10 @@ struct NewMount: View {
 
                     Button("Cancel") {
                         if let onCancel { onCancel() }
-                        dismiss()
+                      //  dismiss()
+                        var b : ObjCBool = false
+                        print( "--> \(FileManager.default.fileExists(atPath: "/Volumes/photo", isDirectory: &b) ? "true" : "false")")
+                        print(b)
                     }
                 }
             }

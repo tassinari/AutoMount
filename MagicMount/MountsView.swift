@@ -7,19 +7,30 @@
 
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 @Observable final class MountsViewModel{
     init() {
+        
+        
+        let loginItem = SMAppService.loginItem(
+            identifier: "org.tassinari.MagicMount.MagicMountBackground"
+        )
+        Task{
+            try loginItem.register()
+        }
+       
         refresh()
     }
+   
     func refresh(){
-        if let mnts = StorageManager.shared.mounts {
+        if let mnts = StorageManager().mounts {
             mounts = mnts
         }else{
             //FIXME: logger
         }
     }
-    var mounts: [MountStorage] = []
+    var mounts: [Share] = []
 }
 
 struct MountsView: View {
