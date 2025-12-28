@@ -20,6 +20,68 @@ enum MountResponse{
     case noSuchFileOrDirectory
    
 }
+struct Volume : Hashable, Identifiable{
+    var id: String{
+        return uuid
+    }
+    
+    let name: String
+    let url: URL
+    let uuid : String
+    let local : Bool
+    let mountPoint: String
+    var  type: String {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
+    }
+    let isManaged: Bool = false
+}
+
+struct MountInfo{
+    static func mountedVolumes() -> [Volume] {
+        guard let urls = FileManager.default.mountedVolumeURLs(
+            includingResourceValuesForKeys: [
+                .volumeIsLocalKey,
+                .volumeNameKey,
+                .volumeURLForRemountingKey,
+                .volumeUUIDStringKey
+            ],
+            options: [.skipHiddenVolumes]
+        ) else {
+            return []
+        }
+
+        var result: [Volume] = []
+        for url in urls {
+            let values = try? url.resourceValues(forKeys: [
+                .volumeIsLocalKey,
+                .volumeNameKey,
+                .volumeUUIDStringKey,
+                .volumeURLForRemountingKey,
+                .pathKey
+            ])
+            let name = values?.volumeName ?? url.lastPathComponent
+            let isLocal = values?.volumeIsLocal ?? false
+            let uuid = values?.volumeUUIDString ?? UUID().uuidString
+            let mount = values?.path ?? "/"
+            let remote = values?.volumeURLForRemounting ?? url
+            result.append(Volume(name: name, url: remote, uuid: uuid, local: isLocal, mountPoint: mount))
+        }
+        return result
+    }
+    
+    static func isVolumeMounted(at remoteURL: URL) -> Bool {
+        guard let urls = FileManager.default.mountedVolumeURLs(
+            includingResourceValuesForKeys: nil,
+            options: [.skipHiddenVolumes]
+        ) else {
+            return false
+        }
+        for url in urls {
+            if url == remoteURL { return true }
+        }
+        return false
+    }
+}
 
 struct MountData{
     let scheme: MountScheme
@@ -84,5 +146,6 @@ struct MountData{
             return .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
         }
     }
+    
 }
 

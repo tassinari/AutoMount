@@ -72,12 +72,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		487A921B2F0179D70095BDA6 /* Exceptions for "MagicMountBackground" folder in "MagicMount" target */ = {
+		487A921E2F01AF100095BDA6 /* Exceptions for "Common" folder in "MagicMountBackground" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Mount.swift,
 				Storage.swift,
 			);
-			target = 482995EF2EFC63CF003AB633 /* MagicMount */;
+			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -99,15 +100,20 @@
 		};
 		487A91DA2F006F260095BDA6 /* MagicMountBackground */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				487A921B2F0179D70095BDA6 /* Exceptions for "MagicMountBackground" folder in "MagicMount" target */,
-			);
 			path = MagicMountBackground;
 			sourceTree = "<group>";
 		};
 		487A92122F0160780095BDA6 /* MagicMountBackgroundTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MagicMountBackgroundTests;
+			sourceTree = "<group>";
+		};
+		487A921D2F01AEF00095BDA6 /* Common */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				487A921E2F01AF100095BDA6 /* Exceptions for "Common" folder in "MagicMountBackground" target */,
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -154,6 +160,7 @@
 		482995E72EFC63CF003AB633 = {
 			isa = PBXGroup;
 			children = (
+				487A921D2F01AEF00095BDA6 /* Common */,
 				482995F22EFC63CF003AB633 /* MagicMount */,
 				482996002EFC63D0003AB633 /* MagicMountTests */,
 				4829960A2EFC63D0003AB633 /* MagicMountUITests */,
@@ -203,6 +210,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				482995F22EFC63CF003AB633 /* MagicMount */,
+				487A921D2F01AEF00095BDA6 /* Common */,
 			);
 			name = MagicMount;
 			packageProductDependencies = (

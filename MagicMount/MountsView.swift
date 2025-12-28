@@ -24,22 +24,22 @@ import ServiceManagement
     }
    
     func refresh(){
-        if let mnts = StorageManager().mounts {
-            mounts = mnts
-        }else{
-            //FIXME: logger
-        }
+        mounts = MountInfo.mountedVolumes()
+       
     }
-    var mounts: [Share] = []
+    var mounts: [Volume] = []
 }
 
 struct MountsView: View {
     @Environment(\.openWindow) var openWindow
-    @State private var viewInTabBar = false
-    private var model: MountsViewModel = MountsViewModel()
+    @State var shares: [Volume]
+    @State private var model: MountsViewModel
+    @State private var viewInTabBar: Bool = false
 
-    // Keep references to windows we open so they aren't deallocated immediately
-    @State private var newMountWindows: [NSWindow] = []
+    init(shares: [Volume] = []) {
+        self.shares = shares
+        self.model = MountsViewModel()
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -63,13 +63,8 @@ struct MountsView: View {
             )
 
             // MARK: - List
-            List {
-                ForEach(model.mounts, id: \.self) { mount in
-                    Text(mount.url)
-                        .padding(.vertical, 4)
-                }
-            }
-            .listStyle(.inset)
+            SharesTableView(shares: shares)
+           
 
             // MARK: - Bottom Bar
             HStack {
@@ -97,5 +92,5 @@ struct MountsView: View {
 }
 
 #Preview {
-    MountsView()
+    MountsView(shares: PreviewData.mockShares)
 }

@@ -16,7 +16,7 @@ enum MounterConstants {
 struct MagicMountApp: App {
     var body: some Scene {
         WindowGroup {
-            MountsView()
+            MountsView(shares: MountInfo.mountedVolumes())
         }
         WindowGroup(id: MounterConstants.newMountWindowID) {
             NewMount()

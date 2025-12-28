@@ -8,6 +8,8 @@
 import Foundation
 import Network
 
+
+
 class Detector{
     let monitor = NWPathMonitor()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
@@ -34,31 +36,5 @@ class Detector{
         monitor.start(queue: queue)
     }
     
-    func mountedVolumes(){
-//        guard let volumes = FileManager.default.mountedVolumeURLs(
-//               includingResourceValuesForKeys: [
-//                   .volumeURLKey,
-//                   .volumeIsLocalKey,
-//                   .volumeNameKey,
-//                   .volumeUUIDStringKey
-//               ],
-//               options: [.skipHiddenVolumes]
-//           ) else {
-//                
-//               return
-//           }
-//
-//           for volume in volumes {
-//               if let resource = try? volume.resourceValues(
-//                   forKeys: [.volumeURLKey]
-//               ),
-//                  let volumeURL = resource.volumeURL {
-//
-//                   if volumeURL == remoteURL {
-//                       return true
-//                   }
-//               }
-//           }
-        
-    }
+    
 }
