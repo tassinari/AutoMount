@@ -111,6 +111,18 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
+    func testMountWithWrongPortFails() throws{
+        let mountData =  MountData(scheme: .smb, host: hostName, port: 445, user: userName, password: password, shareName: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let mounts = try mountData.mount()
+        switch mounts {
+        case .connectionRefused:
+            break
+        default:
+            XCTFail()
+        }
+    }
     func testMountWithBadHostFails() throws{
         let mountData =  MountData(scheme: .smb, host: "UNKNOWN", port: port, user: userName, password: "badpass", shareName: shareName)
         
@@ -123,7 +135,7 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithBadPortFails() throws{
+    func testMountWithRandomPortFails() throws{
         let mountData =  MountData(scheme: .smb, host: hostName, port: 1010, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
@@ -147,7 +159,27 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
+    func testAlreadyMountedReportsError() throws{
+        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
+        _ = try mountData.mount()
+        switch try mountData.mount() {
+        case .alreadyMounted:
+            break
+        default:
+            XCTFail()
+        }
+        
+    }
     
+    //
+    func testLiveMountWithPasswordWorks() throws{
+//        let mountData =  MountData(scheme: .smb, host: "synology", port: 445, user: "tassinaeri", password: nil, shareName: "media")
+//        print(try mountData.url)
+//        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+//        _ = try mountData.mount()
+//       
+//        XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+    }
 }
 
 

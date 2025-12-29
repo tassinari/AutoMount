@@ -18,6 +18,8 @@ enum MountResponse{
     case cannotFindHost
     case timeout
     case noSuchFileOrDirectory
+    case connectionRefused
+    case alreadyMounted
    
 }
 struct Volume : Hashable, Identifiable{
@@ -139,8 +141,12 @@ struct MountData{
             return .cannotFindHost
         case ETIMEDOUT:
             return .timeout
+        case ECONNREFUSED, ELOOP:
+            return .connectionRefused
         case ENOENT:
             return .noSuchFileOrDirectory
+        case EEXIST:
+            return .alreadyMounted
             
         default:
             return .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))

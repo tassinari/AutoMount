@@ -13,20 +13,21 @@ import Foundation
 
 
 final class newModelTests: XCTestCase {
+    let defaultsSuiteName = "group.org.tassinari.magicmount.test"
     override func setUpWithError() throws {
-        UserDefaults.standard.removeObject(forKey: MounterConstants.mountsStorageKey)
+        UserDefaults(suiteName: defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
     }
 
     func testStorageManagerInstantiates() async throws {
-        let manager = await StorageManager.shared
+        let manager = await StorageManager()
         XCTAssertNotNil(manager)
     }
-    func testStorageManagerSavesAndLoads()  throws {
+    @MainActor func testStorageManagerSavesAndLoads() async throws {
         let user = "TestUser"
         let testURl = "testUrl"
         let testPassword = "testPassword"
-        let manager =  StorageManager.shared
-        let mount = MountStorage(user: user, url: testURl, password: testPassword)
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", uuid: UUID().uuidString)
         try manager.addMount(mount)
         guard let mounts = manager.mounts else {
             XCTFail()
@@ -43,20 +44,20 @@ final class newModelTests: XCTestCase {
     
         
     }
-    func testDeleteMountWorks() throws {
+    @MainActor func testDeleteMountWorks() async throws {
         let user = "TestUser"
         let testURl = "testUrl"
         let testPassword = "testPassword"
-        let manager =  StorageManager.shared
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
         let n = 10
-        var expected : [MountStorage] = []
+        var expected : [Share] = []
         for i in 0..<n{
-            let d = MountStorage(user: user + String(i), url:testURl + String(i), password:testPassword + String(i))
+            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl  + String(i), name: "name", uuid: "uuid")
             try manager.addMount(d)
             expected.append(d)
         }
         let j = "3"
-        let delete = MountStorage(user: user + j, url: testURl + j, password: testPassword + j)
+        let delete = Share(user: user + j, password: testPassword + j, url: testURl + j, name: "name", uuid: "uuid")
         try manager.deleteMount(delete)
         guard let allMounts = manager.mounts else {
             XCTFail()
@@ -67,15 +68,15 @@ final class newModelTests: XCTestCase {
         XCTAssert(allMounts.count == n - 1)
         
     }
-    func testStorageManagerSavesAndLoadsMultiple()  throws {
+    @MainActor func testStorageManagerSavesAndLoadsMultiple()  async throws {
         let user = "TestUser"
         let testURl = "testUrl"
         let testPassword = "testPassword"
-        let manager =  StorageManager.shared
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
         let n = 10
-        var expected : [MountStorage] = []
+        var expected : [Share] = []
         for i in 0..<n{
-            let d = MountStorage(user: user + String(i), url:testURl + String(i), password:testPassword + String(i))
+            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl  + String(i), name: "name", uuid: UUID().uuidString)
             try manager.addMount(d)
             expected.append(d)
         }

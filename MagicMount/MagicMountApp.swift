@@ -8,7 +8,6 @@
 import SwiftUI
 
 enum MounterConstants {
-    static let mountsStorageKey: String = "mounts"
     static let newMountWindowID: String = "newMountWindowID"
 }
 
