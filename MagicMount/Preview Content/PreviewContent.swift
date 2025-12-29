@@ -7,31 +7,36 @@
 import Foundation
 
 class PreviewData {
-    static let mockShares: [Volume] = [
-        Volume(name: "Media",
-               url: URL(string:"smb://nas.local/Media")!,
-               uuid: UUID().uuidString,
-               local: false,
-               mountPoint: "/Volumes/Media"
-              ),
-        Volume(name: "Projects",
-               url: URL( string:"smb://fileserver/Projects")!,
-               uuid: UUID().uuidString,
-               local: false,
-               mountPoint: "/Volumes/Projects"
-              ),
-        Volume(name: "Backup",
-               url: URL( string:"nfs://backup.local:/exports/backup")!,
-               uuid: UUID().uuidString,
-               local: false,
-               mountPoint: "/Volumes/Backup"
-              ),
-        Volume(name: "USB Drive",
-               url: URL( string:"file:///Volumes/USB%20Drive")!,
-               uuid: UUID().uuidString,
-               local: false,
-               mountPoint: "/Volumes/USB Drive"
-              )
+    static let mockShares: [Share] = [
+        Share(user: "",
+              password: "",
+              url: URL(string:"smb://nas.local/Media")!,
+              name: "Media",
+              mountPoint: "/Volumes/Media",
+              managed: false
+             ),
+        Share(user: "",
+              password: "",
+              url: URL( string:"smb://fileserver/Projects")!,
+              name: "Projects",
+              mountPoint: "/Volumes/Projects",
+              managed: true
+             ),
+        Share(user: "",
+              password: "",
+              url: URL( string:"nfs://fileserver/Backup")!,
+              name: "Projects",
+              mountPoint: "/Volumes/Backup",
+              managed: true
+             ),
+        Share(user: "",
+              password: "",
+              url: URL( string:"nfs://fileserver/USB%20Drive")!,
+              name: "USB",
+              mountPoint: "/Volumes/USB Drive",
+              managed: true
+             ),
+       
     ]
 
 }

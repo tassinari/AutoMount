@@ -27,16 +27,16 @@ import ServiceManagement
         mounts = MountInfo.mountedVolumes()
        
     }
-    var mounts: [Volume] = []
+    var mounts: [Share] = []
 }
 
 struct MountsView: View {
     @Environment(\.openWindow) var openWindow
-    @State var shares: [Volume]
+    @State var shares: [Share]
     @State private var model: MountsViewModel
     @State private var viewInTabBar: Bool = false
 
-    init(shares: [Volume] = []) {
+    init(shares: [Share] = []) {
         self.shares = shares
         self.model = MountsViewModel()
     }

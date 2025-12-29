@@ -7,13 +7,19 @@
 
 import Foundation
 
-struct Share : Codable, Sendable, Equatable, Hashable{
+struct Share : Codable, Sendable, Hashable, Identifiable{
+    var id: String{
+        return url.absoluteString
+    }
     let user : String
     let password : String
-    let url : String
+    let url : URL
     let name: String
-    let uuid : String
-   
+    let mountPoint: String
+    let managed: Bool
+    var  type: String {
+        URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
+    }
     
 }
 enum StorageManagerError : Error {

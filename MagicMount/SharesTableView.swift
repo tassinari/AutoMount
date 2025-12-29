@@ -12,10 +12,24 @@ import SwiftUI
 
 struct SharesTableView: View {
 
-    @State var shares: [Volume]
+    @State var shares: [Share]
+    @State private var selectedShare: Share? = nil
 
     var body: some View {
         Table(shares) {
+            TableColumn("Status") { share in
+                if share.managed{
+                    Image(systemName:  "checkmark.circle.fill" )
+                        .foregroundStyle( .blue)
+                }else{
+                    Button("Manage") {
+                        selectedShare = share
+                    }
+                    .buttonStyle(.bordered)
+                }
+               
+            }
+            .width(80)
 
             TableColumn("Name") { share in
                 Text(share.name)
@@ -40,19 +54,13 @@ struct SharesTableView: View {
             }
             .width(60)
 
-            TableColumn("Local") { share in
-                Image(systemName: share.local ? "checkmark.circle.fill" : "xmark.circle")
-                    .foregroundStyle(share.local ? .green : .secondary)
-            }
-            .width(60)
-
-            TableColumn("Managed") { share in
-                Image(systemName: share.isManaged ? "checkmark.circle.fill" : "xmark.circle")
-                    .foregroundStyle(share.isManaged ? .blue : .secondary)
-            }
-            .width(80)
         }
         .padding()
+        .sheet(item: $selectedShare, content: { share in
+            AddManagedView(share: share)
+               }
+        )
+       
     }
 }
 

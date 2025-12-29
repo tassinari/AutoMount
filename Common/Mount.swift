@@ -22,24 +22,9 @@ enum MountResponse{
     case alreadyMounted
    
 }
-struct Volume : Hashable, Identifiable{
-    var id: String{
-        return uuid
-    }
-    
-    let name: String
-    let url: URL
-    let uuid : String
-    let local : Bool
-    let mountPoint: String
-    var  type: String {
-        URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
-    }
-    let isManaged: Bool = false
-}
 
 struct MountInfo{
-    static func mountedVolumes() -> [Volume] {
+    static func mountedVolumes() -> [Share] {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: [
                 .volumeIsLocalKey,
@@ -52,7 +37,7 @@ struct MountInfo{
             return []
         }
 
-        var result: [Volume] = []
+        var result: [Share] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: [
                 .volumeIsLocalKey,
@@ -66,7 +51,7 @@ struct MountInfo{
             let uuid = values?.volumeUUIDString ?? UUID().uuidString
             let mount = values?.path ?? "/"
             let remote = values?.volumeURLForRemounting ?? url
-            result.append(Volume(name: name, url: remote, uuid: uuid, local: isLocal, mountPoint: mount))
+            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, managed: false))
         }
         return result
     }
