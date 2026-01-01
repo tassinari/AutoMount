@@ -7,20 +7,37 @@
 
 import Foundation
 
-struct Share : Codable, Sendable, Hashable, Identifiable{
-    var id: String{
-        return url.absoluteString
-    }
+struct Share : Sendable, Codable{
+    
     let user : String
     let password : String
     let url : URL
     let name: String
     let mountPoint: String
-    let managed: Bool
     var  type: String {
         URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
     }
+    var managed : Bool{
+        let shares = StorageManager().mounts
+        return shares?.contains(where: { $0.url == self.url }) ?? false
+    }
+    let connected : Bool
     
+    func updatedConnectetion() -> Share{
+        let isConnected = MountInfo.isVolumeMounted(at: url)
+        return Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, connected: isConnected)
+    }
+}
+extension Share: Hashable, Identifiable{
+    var id: String{
+        return url.absoluteString
+    }
+    static func == (lhs: Share, rhs: Share) -> Bool {
+        return lhs.id == rhs.id
+    }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 enum StorageManagerError : Error {
     case doesNotExsist, noUserDefaults
@@ -68,7 +85,14 @@ class StorageManager{
             return nil
         }
         let decoder = JSONDecoder()
-        return try? decoder.decode([Share].self, from: data)
+        do{
+            let shares = try decoder.decode([Share].self, from: data)
+            return shares.map{$0.updatedConnectetion()}
+        }catch{
+            //FIXME: logger
+            return []
+        }
+       
     }
     
 }

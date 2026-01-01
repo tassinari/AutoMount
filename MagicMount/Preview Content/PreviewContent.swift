@@ -13,28 +13,28 @@ class PreviewData {
               url: URL(string:"smb://nas.local/Media")!,
               name: "Media",
               mountPoint: "/Volumes/Media",
-              managed: false
+              connected: false
              ),
         Share(user: "",
               password: "",
               url: URL( string:"smb://fileserver/Projects")!,
               name: "Projects",
               mountPoint: "/Volumes/Projects",
-              managed: true
+              connected: true
              ),
         Share(user: "",
               password: "",
               url: URL( string:"nfs://fileserver/Backup")!,
               name: "Projects",
               mountPoint: "/Volumes/Backup",
-              managed: true
+              connected: false
              ),
         Share(user: "",
               password: "",
               url: URL( string:"nfs://fileserver/USB%20Drive")!,
               name: "USB",
               mountPoint: "/Volumes/USB Drive",
-              managed: true
+              connected: true
              ),
        
     ]

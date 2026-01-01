@@ -28,7 +28,7 @@ enum NewMountModelError : Swift.Error {
             throw NewMountModelError.missingValues
         }
 
-        let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path", managed: true)
+        let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path", connected: false)
 
         try await Task {
             try StorageManager().addMount(mount)

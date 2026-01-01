@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import MagicMount
+@testable import MagicMountBackground
 
 enum ShellError: Error {
     case nonZeroExit(Int, String)
@@ -46,32 +46,36 @@ final class MagicMountTests: XCTestCase {
         
     }
     func testURLProducedWithNoPort(){
-        let mount = MountData(scheme: .smb, host: "localhost", port: nil, user: "user1", password: "Password1", shareName: "share")
+        let mount = MountData(scheme: "smb", host: "localhost", port: nil, user: "user1", password: "Password1", shareName: "share")
         let expexted = "smb://user1:Password1@localhost:445/share"
         XCTAssertEqual(expexted, try mount.url.absoluteString)
     }
     func testURLProducedWithPassword(){
-        let mount = MountData(scheme: .smb, host: "localhost", port: 1445, user: "user1", password: "Password1", shareName: "share")
+        let mount = MountData(scheme: "smb", host: "localhost", port: 1445, user: "user1", password: "Password1", shareName: "share")
         let expexted = "smb://user1:Password1@localhost:1445/share"
         XCTAssertEqual(expexted, try mount.url.absoluteString)
     }
     func testURLProducedWithOutPassword(){
-        let mount = MountData(scheme: .smb, host: "localhost", port: 1445, user: nil, password: nil, shareName: "share")
+        let mount = MountData(scheme: "smb", host: "localhost", port: 1445, user: nil, password: nil, shareName: "share")
         let expexted = "smb://localhost:1445/share"
         XCTAssertEqual(expexted, try mount.url.absoluteString)
     }
     
     
-    func testMountWithPasswordWorks() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
+    @MainActor func testMountWithPasswordWorks() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
         //FIXME: unmount after every test
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        _ = try mountData.mount()
+        do{
+            _ = try mountData.mount()
+        }catch{
+            XCTFail(error.localizedDescription)
+        }
        
         XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
     }
     func testMountWithPasswordReturnsMountArrayString() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: password, shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -86,9 +90,26 @@ final class MagicMountTests: XCTestCase {
        
        
     }
+    func testMountedVolumes() throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let _ = try mountData.mount()
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssert(volumes.count > 1) //one for test mount and one for mac HD
+        guard let test = volumes.first(where: { $0.name == shareName}) else { XCTFail() ; return}
+        XCTAssertEqual(test.url, URL(string: "smb://samba@localhost:1445/smbTestShare")!)
+        XCTAssertEqual(test.name, shareName)
+        XCTAssertEqual(test.mountPoint, "/Volumes/\(shareName)")
+       
+    }
+    func testMountedVolumesOnlyHardDrive() throws{
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssert(volumes.count == 1)
+    }
     
     func testMountWithBadUserFails() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: "badName", password: password, shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: "badName", password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -100,7 +121,7 @@ final class MagicMountTests: XCTestCase {
         }
     }
     func testMountWithBadPasswordFails() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: "badpass", shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "badpass", shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -112,7 +133,7 @@ final class MagicMountTests: XCTestCase {
         }
     }
     func testMountWithWrongPortFails() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: 445, user: userName, password: password, shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: hostName, port: 445, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -124,7 +145,7 @@ final class MagicMountTests: XCTestCase {
         }
     }
     func testMountWithBadHostFails() throws{
-        let mountData =  MountData(scheme: .smb, host: "UNKNOWN", port: port, user: userName, password: "badpass", shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: "UNKNOWN", port: port, user: userName, password: "badpass", shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -136,7 +157,7 @@ final class MagicMountTests: XCTestCase {
         }
     }
     func testMountWithRandomPortFails() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: 1010, user: userName, password: password, shareName: shareName)
+        let mountData =  MountData(scheme: "smb", host: hostName, port: 1010, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -148,7 +169,7 @@ final class MagicMountTests: XCTestCase {
         }
     }
     func testMountWithBadShareFails() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: password, shareName: "doesntExsist")
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: "doesntExsist")
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try mountData.mount()
@@ -159,8 +180,8 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testAlreadyMountedReportsError() throws{
-        let mountData =  MountData(scheme: .smb, host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
+    @MainActor func testAlreadyMountedReportsError() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
         _ = try mountData.mount()
         switch try mountData.mount() {
         case .alreadyMounted:
@@ -172,8 +193,8 @@ final class MagicMountTests: XCTestCase {
     }
     
     //
-    func testLiveMountWithPasswordWorks() throws{
-//        let mountData =  MountData(scheme: .smb, host: "synology", port: 445, user: "tassinaeri", password: nil, shareName: "media")
+    func testLiveMountWithPasswordWorks() async throws{
+//        let mountData =  MountData(scheme: "smb", host: "synology", port: 445, user: "tassinaeri", password: nil, shareName: "media")
 //        print(try mountData.url)
 //        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
 //        _ = try mountData.mount()

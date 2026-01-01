@@ -27,7 +27,7 @@ final class newModelTests: XCTestCase {
         let testURl = URL(string: "smb://testUrl")!
         let testPassword = "testPassword"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: false)
+        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
         try manager.addMount(mount)
         guard let mounts = manager.mounts else {
             XCTFail()
@@ -46,18 +46,20 @@ final class newModelTests: XCTestCase {
     }
     @MainActor func testDeleteMountWorks() async throws {
         let user = "TestUser"
-        let testURl = URL(string: "smb://testUrl")!
+        let testURlStr = "smb://testUrl"
         let testPassword = "testPassword"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
         let n = 10
         var expected : [Share] = []
         for i in 0..<n{
-            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", managed: false)
+            let testURl = URL(string: testURlStr + String(i))!
+            let d = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
             try manager.addMount(d)
             expected.append(d)
         }
         let j = "3"
-        let delete = Share(user: user + j, password: testPassword + j, url: testURl, name: "name", mountPoint: "/some/share", managed: false)
+        let testURl = URL(string: testURlStr + j)!
+        let delete = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
         try manager.deleteMount(delete)
         guard let allMounts = manager.mounts else {
             XCTFail()
@@ -70,13 +72,14 @@ final class newModelTests: XCTestCase {
     }
     @MainActor func testStorageManagerSavesAndLoadsMultiple()  async throws {
         let user = "TestUser"
-        let testURl = URL(string: "smb://testUrl")!
+       
         let testPassword = "testPassword"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
         let n = 10
         var expected : [Share] = []
         for i in 0..<n{
-            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", managed: false)
+            let testURl = URL(string: "smb://testUrl\(i)")!
+            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", connected: false)
             try manager.addMount(d)
             expected.append(d)
         }

@@ -5,66 +5,93 @@
 //  Created by Mark Tassinari on 12/28/25.
 //
 
-
 import SwiftUI
 
+struct SharesListView: View {
 
-
-struct SharesTableView: View {
-
-    @State var shares: [Share]
+    let shares: [Share]
     @State private var selectedShare: Share? = nil
 
+    private var connectedShares: [Share] {
+        shares.filter { $0.connected }
+    }
+
+    private var notConnectedShares: [Share] {
+        shares.filter { !$0.connected }
+    }
+
     var body: some View {
-        Table(shares) {
-            TableColumn("Status") { share in
-                if share.managed{
-                    Image(systemName:  "checkmark.circle.fill" )
-                        .foregroundStyle( .blue)
-                }else{
-                    Button("Manage") {
-                        selectedShare = share
+        List {
+            if !connectedShares.isEmpty {
+                Section("Connected") {
+                    ForEach(connectedShares) { share in
+                        row(for: share)
                     }
-                    .buttonStyle(.bordered)
                 }
-               
             }
-            .width(80)
 
-            TableColumn("Name") { share in
-                Text(share.name)
+            if !notConnectedShares.isEmpty {
+                Section("Not Connected") {
+                    ForEach(notConnectedShares) { share in
+                        row(for: share)
+                    }
+                }
             }
-            .width(min: 120, ideal: 160)
-
-            TableColumn("Mount Point") { share in
-                Text(share.mountPoint)
-                    .font(.system(.body, design: .monospaced))
-            }
-            .width(min: 180, ideal: 240)
-
-            TableColumn("URL") { share in
-                Text(share.url.absoluteString)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            .width(min: 200, ideal: 280)
-
-            TableColumn("Type") { share in
-                Text(share.type)
-            }
-            .width(60)
-
         }
-        .padding()
-        .sheet(item: $selectedShare, content: { share in
+        .listStyle(.inset)
+        .sheet(item: $selectedShare) { share in
             AddManagedView(share: share)
-               }
-        )
-       
+        }
+    }
+
+    @ViewBuilder
+    private func row(for share: Share) -> some View {
+        HStack(spacing: 12) {
+
+            // Status
+            if share.managed {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.blue)
+                    .frame(width: 24)
+            } else {
+                Button("Manage") {
+                    selectedShare = share
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .frame(width: 80, alignment: .leading)
+            }
+
+            // Name
+            Text(share.name)
+                .fontWeight(.medium)
+                .frame(minWidth: 120, alignment: .leading)
+
+            // Mount Point
+            Text(share.mountPoint)
+                .font(.system(.body, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 180, alignment: .leading)
+
+            // URL
+            Text(share.url.absoluteString)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 200, alignment: .leading)
+
+            // Type
+            Text(share.type)
+                .foregroundStyle(.secondary)
+                .frame(width: 60, alignment: .leading)
+
+            Spacer()
+        }
+        
+        .padding(.vertical, 4)
     }
 }
 
 #Preview {
-    SharesTableView(shares: PreviewData.mockShares)
+    SharesListView(shares: PreviewData.mockShares)
 }
-

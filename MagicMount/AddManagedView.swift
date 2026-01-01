@@ -50,7 +50,13 @@ struct AddManagedView: View {
                 .keyboardShortcut(.cancelAction)
 
                 Button("Add") {
-                    // handle save
+                    do{
+                        try StorageManager().addMount(share)
+                        dismiss()
+                    }catch{
+                        //FIXME: Logger
+                    }
+                    
                    
                 }
                 .keyboardShortcut(.defaultAction)
@@ -61,5 +67,5 @@ struct AddManagedView: View {
 }
 
 #Preview {
-    AddManagedView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path", managed: false))
+    AddManagedView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path",connected: false))
 }

@@ -10,7 +10,18 @@ import AppKit
 import ServiceManagement
 
 @Observable final class MountsViewModel{
-    init() {
+    private var unmountNote : NSObjectProtocol?
+    private var mountNote : NSObjectProtocol?
+    
+    deinit {
+        if let unmountNote = unmountNote {
+            NSWorkspace.shared.notificationCenter.removeObserver(unmountNote)
+        }
+        if let mountNote = mountNote {
+            NSWorkspace.shared.notificationCenter.removeObserver(mountNote)
+        }
+    }
+    @MainActor init() {
         
         
         let loginItem = SMAppService.loginItem(
@@ -19,27 +30,31 @@ import ServiceManagement
         Task{
             try loginItem.register()
         }
-       
-        refresh()
+
+        mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
+            self?.refresh()
+        }
+        unmountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didUnmountNotification, object: nil, queue: .main) {[weak self] note in
+            self?.refresh()
+           
+        }
     }
    
     func refresh(){
-        mounts = MountInfo.mountedVolumes()
-       
+        let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
+        let managed = Set(StorageManager().mounts ?? [])
+        let merged = connected.union(managed)
+        mounts = Array(merged)
     }
     var mounts: [Share] = []
+
+
 }
 
 struct MountsView: View {
     @Environment(\.openWindow) var openWindow
-    @State var shares: [Share]
-    @State private var model: MountsViewModel
+    private var model: MountsViewModel = MountsViewModel()
     @State private var viewInTabBar: Bool = false
-
-    init(shares: [Share] = []) {
-        self.shares = shares
-        self.model = MountsViewModel()
-    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,8 +67,15 @@ struct MountsView: View {
 
                 Spacer()
 
-                Toggle("View in Tab Bar", isOn: $viewInTabBar)
-                    .toggleStyle(.switch)
+                HStack{
+                    Toggle("View in Tab Bar", isOn: $viewInTabBar)
+                        .toggleStyle(.switch)
+                    Button {
+                        model.refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise.circle")
+                    }
+                }
             }
             .padding()
             .background(Color(nsColor: .windowBackgroundColor))
@@ -63,7 +85,7 @@ struct MountsView: View {
             )
 
             // MARK: - List
-            SharesTableView(shares: shares)
+            SharesListView(shares: model.mounts)
            
 
             // MARK: - Bottom Bar
@@ -92,5 +114,5 @@ struct MountsView: View {
 }
 
 #Preview {
-    MountsView(shares: PreviewData.mockShares)
+    MountsView()
 }

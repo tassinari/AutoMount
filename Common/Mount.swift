@@ -2,10 +2,6 @@
 import Foundation
 import NetFS
 
-
-enum MountScheme : String{
-    case smb = "smb"
-}
 enum MountError: Error{
     case badURL
 }
@@ -51,7 +47,7 @@ struct MountInfo{
             let uuid = values?.volumeUUIDString ?? UUID().uuidString
             let mount = values?.path ?? "/"
             let remote = values?.volumeURLForRemounting ?? url
-            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, managed: false))
+            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, connected: true))
         }
         return result
     }
@@ -64,6 +60,10 @@ struct MountInfo{
             return false
         }
         for url in urls {
+            let values = try? url.resourceValues(forKeys: [
+                .volumeURLForRemountingKey
+            ])
+            let remote = values?.volumeURLForRemounting ?? url
             if url == remoteURL { return true }
         }
         return false
@@ -71,7 +71,7 @@ struct MountInfo{
 }
 
 struct MountData{
-    let scheme: MountScheme
+    let scheme: String
     let host: String
     let port : Int?
     let user: String?
@@ -81,7 +81,7 @@ struct MountData{
     var url: URL{
         get throws{
             var components = URLComponents()
-            components.scheme = scheme.rawValue
+            components.scheme = scheme
             components.host = host
             components.path = "/\(shareName)"
             if let user{

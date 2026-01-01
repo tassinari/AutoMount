@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		487A91EF2F0075760095BDA6 /* MagicMountBackground.app in Resources */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; };
 		487A91FA2F0076030095BDA6 /* MagicMountBackground.app in Embed Login */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		48D81D152F0558070046103D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48D81D142F0558070046103D /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,6 +48,13 @@
 			remoteGlobalIDString = 487A91D82F006F260095BDA6;
 			remoteInfo = MagicMountBackground;
 		};
+		48D81D0F2F0551410046103D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 482995E82EFC63CF003AB633 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 487A91D82F006F260095BDA6;
+			remoteInfo = MagicMountBackground;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -69,6 +77,7 @@
 		482996072EFC63D0003AB633 /* MagicMountUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		487A91D92F006F260095BDA6 /* MagicMountBackground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagicMountBackground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		487A92112F0160780095BDA6 /* MagicMountBackgroundTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountBackgroundTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		48D81D142F0558070046103D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -144,6 +153,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				48D81D152F0558070046103D /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,6 +196,7 @@
 		487A91EE2F0075760095BDA6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				48D81D142F0558070046103D /* Foundation.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -231,6 +242,7 @@
 			);
 			dependencies = (
 				482995FF2EFC63D0003AB633 /* PBXTargetDependency */,
+				48D81D102F0551410046103D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				482996002EFC63D0003AB633 /* MagicMountTests */,
@@ -465,6 +477,11 @@
 			isa = PBXTargetDependency;
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 			targetProxy = 487A92152F0160780095BDA6 /* PBXContainerItemProxy */;
+		};
+		48D81D102F0551410046103D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
+			targetProxy = 48D81D0F2F0551410046103D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -743,10 +760,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N2Z455V6H8;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSBackgroundOnly = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -777,10 +793,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N2Z455V6H8;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSBackgroundOnly = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
