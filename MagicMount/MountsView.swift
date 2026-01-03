@@ -30,21 +30,49 @@ import ServiceManagement
         Task{
             try loginItem.register()
         }
-
+        refresh()
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
-            self?.refresh()
+            if let info = note.userInfo{
+                self?.updateConnection(mounted: true, dict: info)
+            }
         }
         unmountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didUnmountNotification, object: nil, queue: .main) {[weak self] note in
-            self?.refresh()
-           
+            if let info = note.userInfo{
+                self?.updateConnection(mounted: false, dict: info)
+            }
+        }
+    }
+    func updateConnection(mounted: Bool, dict: [AnyHashable: Any]){
+        if  let path = dict["NSDevicePath"] as? String{
+            var found = false
+            for mount in mounts{
+                if mount.mountPoint == path{
+                    found = true
+                    withAnimation {
+                        mount.connected = mounted
+                    }
+                }
+            }
+            if !found{
+                self.refresh()
+            }
+        }
+        else{
+            self.refresh()
         }
     }
    
     func refresh(){
         let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
         let managed = Set(StorageManager().mounts ?? [])
+        for m in managed{
+            m.connected = connected.contains(m)
+        }
+        for con in connected{
+            con.managed = managed.contains(con)
+        }
         let merged = connected.union(managed)
-        mounts = Array(merged)
+        mounts = Array(merged).sorted(by: {$0.name < $1.name})
     }
     var mounts: [Share] = []
 
@@ -52,8 +80,8 @@ import ServiceManagement
 }
 
 struct MountsView: View {
-    @Environment(\.openWindow) var openWindow
-    private var model: MountsViewModel = MountsViewModel()
+    @Environment(MountsViewModel.self) var model
+    @State private var showNew : Bool = false
     @State private var viewInTabBar: Bool = false
 
     var body: some View {
@@ -91,7 +119,7 @@ struct MountsView: View {
             // MARK: - Bottom Bar
             HStack {
                 Button {
-                    addModel()
+                    showNew = true
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
@@ -106,10 +134,9 @@ struct MountsView: View {
             )
         }
         .frame(minWidth: 400, minHeight: 300)
-    }
-
-    private func addModel() {
-        openWindow(id: MounterConstants.newMountWindowID)
+        .sheet(isPresented: $showNew, content: {
+            NewMount()
+        })
     }
 }
 

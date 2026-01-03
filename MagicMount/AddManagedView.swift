@@ -67,5 +67,5 @@ struct AddManagedView: View {
 }
 
 #Preview {
-    AddManagedView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path",connected: false))
+    AddManagedView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path", managed: true,connected: false))
 }

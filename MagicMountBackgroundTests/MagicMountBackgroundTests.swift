@@ -22,7 +22,7 @@ final class MagicMountBackgroundTests: XCTestCase {
         let name = "testName"
         
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", managed: true, connected: true)
         try manager.addMount(mount)
         guard let mounts = manager.mounts else {
             XCTFail()
@@ -46,7 +46,7 @@ final class MagicMountBackgroundTests: XCTestCase {
         let name = "testName"
        
         let manager =  StorageManager(defaults: nil)
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
         do{
             try manager.addMount(mount)
             XCTFail("should have thrown")
@@ -62,7 +62,7 @@ final class MagicMountBackgroundTests: XCTestCase {
         let testPassword = "testPassword"
         let name = "testName"
         let manager =  StorageManager(defaults: nil)
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
         do{
             try manager.deleteMount(mount)
             XCTFail("should have thrown")
@@ -85,7 +85,7 @@ final class MagicMountBackgroundTests: XCTestCase {
         let testPassword = "testPassword"
         let name = "testName"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
         do{
             try manager.deleteMount(mount)
             XCTFail("should have thrown")
@@ -107,12 +107,12 @@ final class MagicMountBackgroundTests: XCTestCase {
         var expected : [Share] = []
         for i in 0..<n{
             let testURL = URL(string: "testUrl\(i)")!
-            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
             try manager.addMount(d)
             expected.append(d)
         }
         let j = "3"
-        let delete = Share(user: user, password: testPassword, url: URL(string: "testUrl\(j)")!, name: name, mountPoint: "/Volumes/share", connected: true)
+        let delete = Share(user: user, password: testPassword, url: URL(string: "testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
         try manager.deleteMount(delete)
         guard let allMounts = manager.mounts else {
             XCTFail()
@@ -133,7 +133,7 @@ final class MagicMountBackgroundTests: XCTestCase {
         var expected : [Share] = []
         for i in 0..<n{
             let testURL = URL(string: "testUrl\(i)")!
-            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", connected: true)
+            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: true)
             try manager.addMount(d)
             expected.append(d)
         }

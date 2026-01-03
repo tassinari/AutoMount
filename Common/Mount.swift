@@ -3,7 +3,7 @@ import Foundation
 import NetFS
 
 enum MountError: Error{
-    case badURL
+    case badURL, noMountData
 }
 /// Errors:
 ///  os errors are defined in <sys/errno.h>
@@ -36,18 +36,14 @@ struct MountInfo{
         var result: [Share] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: [
-                .volumeIsLocalKey,
                 .volumeNameKey,
-                .volumeUUIDStringKey,
                 .volumeURLForRemountingKey,
                 .pathKey
             ])
             let name = values?.volumeName ?? url.lastPathComponent
-            let isLocal = values?.volumeIsLocal ?? false
-            let uuid = values?.volumeUUIDString ?? UUID().uuidString
             let mount = values?.path ?? "/"
             let remote = values?.volumeURLForRemounting ?? url
-            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, connected: true))
+            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, managed: false, connected: true))
         }
         return result
     }
@@ -63,7 +59,6 @@ struct MountInfo{
             let values = try? url.resourceValues(forKeys: [
                 .volumeURLForRemountingKey
             ])
-            let remote = values?.volumeURLForRemounting ?? url
             if url == remoteURL { return true }
         }
         return false
@@ -101,42 +96,55 @@ struct MountData{
             return url
         }
     }
-    func mount() throws -> MountResponse {
-        
-        
+    func mount() async throws -> MountResponse {
+       
         let url = try self.url
         var cfArray: Unmanaged<CFArray>?
         let mountD = NSMutableDictionary()
         let optD = NSMutableDictionary()
         mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
-        let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
-        print("Responses: \(response)")
-        switch response{
-        case 0:
-            let messages: [String] = {
-                guard let unmanaged = cfArray else { return [] }
-                let arrayRef: CFArray = unmanaged.takeRetainedValue()
-                let anyArray = arrayRef as [AnyObject]
-                return anyArray.compactMap { $0 as? String }
-            }()
-            return .success(messages)
-        case EAUTH:
-            return .authenticationError
-        case EHOSTUNREACH:
-            return .cannotFindHost
-        case ETIMEDOUT:
-            return .timeout
-        case ECONNREFUSED, ELOOP:
-            return .connectionRefused
-        case ENOENT:
-            return .noSuchFileOrDirectory
-        case EEXIST:
-            return .alreadyMounted
-            
-        default:
-            return .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
+        return await withCheckedContinuation { cont in
+            let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
+            print("Responses: \(response)")
+            var retVal: MountResponse = .alreadyMounted
+            switch response{
+            case 0:
+                let messages: [String] = {
+                    guard let unmanaged = cfArray else { return [] }
+                    let arrayRef: CFArray = unmanaged.takeRetainedValue()
+                    let anyArray = arrayRef as [AnyObject]
+                    return anyArray.compactMap { $0 as? String }
+                }()
+                retVal =  .success(messages)
+            case EAUTH:
+                retVal =  .authenticationError
+            case EHOSTUNREACH:
+                retVal =  .cannotFindHost
+            case ETIMEDOUT:
+                retVal =  .timeout
+            case ECONNREFUSED, ELOOP:
+                retVal =  .connectionRefused
+            case ENOENT:
+                retVal =  .noSuchFileOrDirectory
+            case EEXIST:
+                retVal =  .alreadyMounted
+                
+            default:
+                retVal =  .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
+            }
+            cont.resume(returning: retVal)
         }
+        
     }
-    
+
+    static func unmount(url: URL) async throws {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+        try await FileManager.default.unmountVolume(
+            at: url,
+            options: [.withoutUI]
+        )
+    }
 }
 

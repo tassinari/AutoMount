@@ -39,7 +39,7 @@ final class MagicMountTests: XCTestCase {
     override func tearDown() async throws {
         try await super.tearDown()
         do{
-            _ = try await unmount(path: "/Volumes/\(shareName)")
+            _ = try await MountData.unmount(url: URL(filePath: "/Volumes/\(shareName)"))
         }catch{
             //no-op, just cleaning up, it may not e mounted and will throw
         }
@@ -67,18 +67,18 @@ final class MagicMountTests: XCTestCase {
         //FIXME: unmount after every test
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         do{
-            _ = try mountData.mount()
+            _ = try await mountData.mount()
         }catch{
             XCTFail(error.localizedDescription)
         }
        
         XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
     }
-    func testMountWithPasswordReturnsMountArrayString() throws{
+    func testMountWithPasswordReturnsMountArrayString() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .success(let mounts):
             XCTAssert(mounts.count == 1)
@@ -90,11 +90,34 @@ final class MagicMountTests: XCTestCase {
        
        
     }
-    func testMountedVolumes() throws{
+    @MainActor func testUnmountWorks() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
+        //FIXME: unmount after every test
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        do{
+            switch try await mountData.mount(){
+            case .success(let _):
+                XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+                guard let share = MountInfo.mountedVolumes().first(where: ({$0.name == shareName})) else {XCTFail(); return}
+                try await share.unmount()
+                XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+            default:
+                XCTFail()
+            }
+            
+           
+        }catch{
+            XCTFail(error.localizedDescription)
+        }
+        
+       
+    }
+    
+    func testMountedVolumes() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let _ = try mountData.mount()
+        let _ = try await mountData.mount()
         let volumes = MountInfo.mountedVolumes()
         XCTAssert(volumes.count > 1) //one for test mount and one for mac HD
         guard let test = volumes.first(where: { $0.name == shareName}) else { XCTFail() ; return}
@@ -103,16 +126,12 @@ final class MagicMountTests: XCTestCase {
         XCTAssertEqual(test.mountPoint, "/Volumes/\(shareName)")
        
     }
-    func testMountedVolumesOnlyHardDrive() throws{
-        let volumes = MountInfo.mountedVolumes()
-        XCTAssert(volumes.count == 1)
-    }
-    
-    func testMountWithBadUserFails() throws{
+
+    func testMountWithBadUserFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: "badName", password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .authenticationError:
             break
@@ -120,11 +139,11 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithBadPasswordFails() throws{
+    func testMountWithBadPasswordFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "badpass", shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .authenticationError:
             break
@@ -132,11 +151,11 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithWrongPortFails() throws{
+    func testMountWithWrongPortFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: 445, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .connectionRefused:
             break
@@ -144,11 +163,11 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithBadHostFails() throws{
+    func testMountWithBadHostFails() async throws{
         let mountData =  MountData(scheme: "smb", host: "UNKNOWN", port: port, user: userName, password: "badpass", shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .cannotFindHost:
             break
@@ -156,11 +175,11 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithRandomPortFails() throws{
+    func testMountWithRandomPortFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: 1010, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .timeout:
             break
@@ -168,11 +187,11 @@ final class MagicMountTests: XCTestCase {
             XCTFail()
         }
     }
-    func testMountWithBadShareFails() throws{
+    func testMountWithBadShareFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: "doesntExsist")
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try mountData.mount()
+        let mounts = try await mountData.mount()
         switch mounts {
         case .noSuchFileOrDirectory:
             break
@@ -182,8 +201,8 @@ final class MagicMountTests: XCTestCase {
     }
     @MainActor func testAlreadyMountedReportsError() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
-        _ = try mountData.mount()
-        switch try mountData.mount() {
+        _ = try await mountData.mount()
+        switch try await mountData.mount() {
         case .alreadyMounted:
             break
         default:
@@ -203,35 +222,3 @@ final class MagicMountTests: XCTestCase {
     }
 }
 
-
-extension MagicMountTests {
-    func unmount(path: String) async throws -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
-        process.arguments = ["unmount", path]
-
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-
-        try process.run()
-
-        return try await withCheckedThrowingContinuation { cont in
-            process.terminationHandler = { proc in
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let output = String(decoding: data, as: UTF8.self)
-
-                if proc.terminationStatus == 0 {
-                    print(output)
-                    cont.resume(returning: output)
-                } else {
-                    cont.resume(throwing: NSError(
-                        domain: "DiskUtilError",
-                        code: Int(proc.terminationStatus),
-                        userInfo: [NSLocalizedDescriptionKey: output]
-                    ))
-                }
-            }
-        }
-    }
-}

@@ -5,6 +5,8 @@
 //  Created by Mark Tassinari on 12/28/25.
 //
 
+
+
 import SwiftUI
 
 struct SharesListView: View {
@@ -25,7 +27,9 @@ struct SharesListView: View {
             if !connectedShares.isEmpty {
                 Section("Connected") {
                     ForEach(connectedShares) { share in
-                        row(for: share)
+                        MountCell(model: MountCellModel(share: share, handler: { passedShare in
+                            self.selectedShare = passedShare
+                        }))
                     }
                 }
             }
@@ -33,7 +37,9 @@ struct SharesListView: View {
             if !notConnectedShares.isEmpty {
                 Section("Not Connected") {
                     ForEach(notConnectedShares) { share in
-                        row(for: share)
+                        MountCell(model: MountCellModel(share: share, handler: { passedShare in
+                            self.selectedShare = passedShare
+                        }))
                     }
                 }
             }
@@ -44,52 +50,7 @@ struct SharesListView: View {
         }
     }
 
-    @ViewBuilder
-    private func row(for share: Share) -> some View {
-        HStack(spacing: 12) {
-
-            // Status
-            if share.managed {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.blue)
-                    .frame(width: 24)
-            } else {
-                Button("Manage") {
-                    selectedShare = share
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .frame(width: 80, alignment: .leading)
-            }
-
-            // Name
-            Text(share.name)
-                .fontWeight(.medium)
-                .frame(minWidth: 120, alignment: .leading)
-
-            // Mount Point
-            Text(share.mountPoint)
-                .font(.system(.body, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 180, alignment: .leading)
-
-            // URL
-            Text(share.url.absoluteString)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 200, alignment: .leading)
-
-            // Type
-            Text(share.type)
-                .foregroundStyle(.secondary)
-                .frame(width: 60, alignment: .leading)
-
-            Spacer()
-        }
-        
-        .padding(.vertical, 4)
-    }
+   
 }
 
 #Preview {

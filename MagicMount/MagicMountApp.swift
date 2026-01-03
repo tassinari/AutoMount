@@ -13,12 +13,15 @@ enum MounterConstants {
 
 @main
 struct MagicMountApp: App {
+    private var model: MountsViewModel = MountsViewModel()
     var body: some Scene {
         WindowGroup {
             MountsView()
+                .environment(model)
         }
         WindowGroup(id: MounterConstants.newMountWindowID) {
             NewMount()
+                
                 
         }
     }
