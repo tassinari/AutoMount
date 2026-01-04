@@ -15,7 +15,7 @@ struct MagicMountBackgroundApp: App {
   
     var body: some Scene {
         MenuBarExtra("Magic Mount", systemImage: "externaldrive", isInserted: $showMenuBar) {
-           EmptyView()
+          ContentView()
         }
         .menuBarExtraStyle(.window)
     }

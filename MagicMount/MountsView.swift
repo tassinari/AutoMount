@@ -42,6 +42,7 @@ import ServiceManagement
             }
         }
     }
+    /// updates Share from a user info dictionary passed by the mount/unmount notification
     func updateConnection(mounted: Bool, dict: [AnyHashable: Any]){
         if  let path = dict["NSDevicePath"] as? String{
             var found = false
@@ -63,16 +64,7 @@ import ServiceManagement
     }
    
     func refresh(){
-        let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
-        let managed = Set(StorageManager().mounts ?? [])
-        for m in managed{
-            m.connected = connected.contains(m)
-        }
-        for con in connected{
-            con.managed = managed.contains(con)
-        }
-        let merged = connected.union(managed)
-        mounts = Array(merged).sorted(by: {$0.name < $1.name})
+        mounts = StorageManager().fullMountList ?? []
     }
     var mounts: [Share] = []
 

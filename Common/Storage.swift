@@ -145,6 +145,7 @@ class StorageManager{
         defaults.set(data, forKey: StorageManager.storeKey)
         
     }
+    /// The list of shares in User defaults.  These are added/managed by user.  Connected status is not guarenteed. Use fullMountList for true status
     var mounts: [Share]? {
         guard let defaults = userDefaults, let data = defaults.data(forKey: StorageManager.storeKey) else {
             return nil
@@ -161,6 +162,19 @@ class StorageManager{
             return []
         }
        
+    }
+    /// The list of all external mounted volumes and volumes managed by user that may not be mounted
+    var fullMountList: [Share]? {
+        let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
+        let managed = Set(self.mounts ?? [])
+        for m in managed{
+            m.connected = connected.contains(m)
+        }
+        for con in connected{
+            con.managed = managed.contains(con)
+        }
+        let merged = connected.union(managed)
+        return Array(merged).sorted(by: {$0.name < $1.name})
     }
     
 }
