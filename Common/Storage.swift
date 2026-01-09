@@ -8,6 +8,7 @@
 import Foundation
 
 @Observable class Share: Codable{
+    
     init(user: String, password: String, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
         self.user = user
         self.password = password
@@ -168,9 +169,11 @@ class StorageManager{
         let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
         let managed = Set(self.mounts ?? [])
         for m in managed{
+            m.managed = true
             m.connected = connected.contains(m)
         }
         for con in connected{
+            con.connected = true
             con.managed = managed.contains(con)
         }
         let merged = connected.union(managed)

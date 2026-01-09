@@ -84,6 +84,7 @@
 		487A921E2F01AF100095BDA6 /* Exceptions for "Common" folder in "MagicMountBackground" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Logger.swift,
 				Mount.swift,
 				Storage.swift,
 			);

@@ -15,36 +15,40 @@ struct MagicMountBackgroundApp: App {
   
     var body: some Scene {
         MenuBarExtra("Magic Mount", systemImage: "externaldrive", isInserted: $showMenuBar) {
-          ContentView()
+            ContentView(model: model.menuModel)
         }
         .menuBarExtraStyle(.window)
     }
 }
 
 class Model{
-    let monitor = NWPathMonitor()
+    let menuModel = MenuModel()
+    let remounter = Remounter()
+    let detector: Detector = Detector()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
     
     init(){
-        
-        monitor.pathUpdateHandler = { path in
-            if path.status == .satisfied {
-              
-                debug("Network available")
-            } else {
-                debug("Network unavailable")
-            }
-
-            if path.usesInterfaceType(.wifi) {
-                debug("Using Wi-Fi")
-            }
-
-            if path.usesInterfaceType(.wiredEthernet) {
-                debug("Using Ethernet")
-            }
-        }
-
-        monitor.start(queue: queue)
+        detector.listen(self)
     }
+    
+}
+extension Model: DetectorDelegate{
+    func didDetectEvent(_ event: DetectorEvent) {
+        switch event{
+            
+        case .network:
+            debug("Network event")
+            Task{
+                await remounter.checkAndRemount()
+            }
+            
+        case .sleep:
+            debug("Sleep event")
+        case .volume:
+            menuModel.refresh()
+        }
+        
+    }
+    
     
 }
