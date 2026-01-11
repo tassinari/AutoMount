@@ -25,31 +25,25 @@ import SwiftUI
     func refresh(){
         let connected = MountInfo.mountedVolumes().filter({$0.type != "file"})
         for share in shares {
-            share.connected = connected.contains(share)
+            share.connected = connected.contains(share) ? .mounted : .unmounted
             print("\(share.name) -> \(share.connected)")
         }
-    }
-    func open(share: Share){
-        let url = URL(filePath: share.mountPoint)
-        if FileManager.default.fileExists(atPath: url.path){
-            NSWorkspace.shared.activateFileViewerSelecting([url])
-        }
-        
     }
     func openApp(){
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.PhotoVaultManager"){
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.MagicMount"){
             NSWorkspace.shared.openApplication(at: url, configuration: config)
         }
     }
     func toggleMount(share: Share){
         Task{
             do{
-                if share.connected {
-                    try await MountData.unmount(url: URL(filePath: share.mountPoint))
-                }else{
-                    switch try await share.mountData?.mount(){
+                switch share.connected{
+                case .mounted:
+                    try await share.unmount()
+                case .unmounted:
+                    switch try await share.mount(){
                         
                     case .success(_):
                         print("mount")
@@ -58,6 +52,9 @@ import SwiftUI
                         print("no success")
                         break
                     }
+                case .mounting, .unmounting:
+                    //no op
+                    break
                 }
             }catch{
                 MagicMountBackground.error(String(describing: error))
@@ -98,7 +95,7 @@ struct ContentView: View {
                             switch type{
                                 
                             case .open:
-                                model.open(share: share)
+                                share.open()
                             case .mount:
                                 model.toggleMount(share: share)
                             }
@@ -121,6 +118,16 @@ enum ButtonActionType{
     case open, mount
 }
 
+extension Share{
+    var textColor : Color{
+        connected == .mounted || connected == .unmounting  ? .black : .gray.opacity(0.5)
+    }
+    var buttonDisabled : Bool{
+        connected == .mounting || connected == .unmounting
+    }
+}
+
+
 struct ContentCellView: View {
     @State private var hovering = false
     @Bindable var share: Share
@@ -132,14 +139,25 @@ struct ContentCellView: View {
         } label: {
             HStack(spacing: 0){
                 Text(share.name)
-                    .foregroundStyle(share.connected ? .black : .gray.opacity(0.5))
+                    .foregroundStyle(share.textColor)
                 Spacer()
                 Button {
                     actionHandler(share, .mount)
                 } label: {
-                    share.connected ? Image(systemName: "eject") : Image(systemName: "arrow.up.circle")
+                    switch share.connected {
+                    case .mounted:
+                        Image(systemName: "eject")
+                    case .unmounted:
+                        Image(systemName: "arrow.up.circle")
+                    case .mounting, .unmounting:
+                        ProgressView()
+                            .controlSize(.mini)
+                                .frame(width: 16, height: 16)
+                    }
+
                 }
                 .buttonStyle(.borderless)
+                .disabled(share.buttonDisabled)
             }
             .contentShape(Rectangle())  //allows taps on empty space in cell
         }
@@ -152,7 +170,12 @@ struct ContentCellView: View {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                .fill(hovering ? Color.gray.opacity(0.15) : .clear)
         )
-        .onHover(perform: {self.hovering = $0})
+        .onHover(perform: {
+            if share.connected == .mounted{
+                self.hovering = $0
+            }
+            else {self.hovering = false}
+        })
         
     }
 }

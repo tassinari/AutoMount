@@ -11,7 +11,7 @@ import Network
 @main
 struct MagicMountBackgroundApp: App {
     let model = Model()
-    @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "N2Z455V6H8.org.tassinari")) private var showMenuBar = true
+    @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "group.org.tassinari.magicmount")) private var showMenuBar = true
   
     var body: some Scene {
         MenuBarExtra("Magic Mount", systemImage: "externaldrive", isInserted: $showMenuBar) {

@@ -15,11 +15,11 @@ struct SharesListView: View {
     @State private var selectedShare: Share? = nil
 
     private var connectedShares: [Share] {
-        shares.filter { $0.connected }
+        shares.filter { $0.connected == .mounted || $0.connected == .unmounting }
     }
 
     private var notConnectedShares: [Share] {
-        shares.filter { !$0.connected }
+        shares.filter { $0.connected == .unmounted || $0.connected == .mounting}
     }
 
     var body: some View {

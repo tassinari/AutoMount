@@ -50,7 +50,7 @@ import ServiceManagement
                 if mount.mountPoint == path{
                     found = true
                     withAnimation {
-                        mount.connected = mounted
+                        mount.connected = mounted ? .mounted : .unmounted
                     }
                 }
             }
@@ -74,8 +74,8 @@ import ServiceManagement
 struct MountsView: View {
     @Environment(MountsViewModel.self) var model
     @State private var showNew : Bool = false
-    @State private var viewInTabBar: Bool = false
-
+    @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "group.org.tassinari.magicmount")) private var showMenuBar = true
+    
     var body: some View {
         VStack(spacing: 0) {
 
@@ -88,7 +88,7 @@ struct MountsView: View {
                 Spacer()
 
                 HStack{
-                    Toggle("View in Tab Bar", isOn: $viewInTabBar)
+                    Toggle("View in Tab Bar", isOn: $showMenuBar)
                         .toggleStyle(.switch)
                     Button {
                         model.refresh()

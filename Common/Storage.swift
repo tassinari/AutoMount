@@ -6,6 +6,11 @@
 //
 
 import Foundation
+import AppKit
+
+enum ConnectionState: Codable{
+    case mounted, unmounted, mounting, unmounting
+}
 
 @Observable class Share: Codable{
     
@@ -16,7 +21,7 @@ import Foundation
         self.name = name
         self.mountPoint = mountPoint
         self.managed = managed
-        self.connected = connected
+        self.connected = .unmounted
     }
     required init(from decoder: Decoder) throws {
            let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -26,7 +31,7 @@ import Foundation
            name = try container.decode(String.self, forKey: .name)
            mountPoint = try container.decode(String.self, forKey: .mountPoint)
            managed = try container.decode(Bool.self, forKey: .managed)
-           connected = try container.decode(Bool.self, forKey: .connected)
+           connected = try container.decode(ConnectionState.self, forKey: .connected)
     }
     func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
@@ -48,7 +53,7 @@ import Foundation
         URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
     }
     var managed : Bool
-    var connected : Bool
+    var connected : ConnectionState
     
     enum CodingKeys: String, CodingKey {
         case user
@@ -73,11 +78,26 @@ extension Share {
    
     func unmount() async throws{
         let url = URL(filePath: mountPoint)
-        try await MountData.unmount(url: url)
+        self.connected = .unmounting
+        do{
+            try await MountData.unmount(url: url)
+            self.connected = .unmounted
+        }catch{
+            self.connected = .mounted
+            throw error
+        }
     }
     func mount() async throws -> MountResponse{
         if let mountData{
-            return try await mountData.mount()
+            do{
+                self.connected = .mounting
+                let data =  try await mountData.mount()
+                self.connected = .unmounted
+                return data
+            }catch{
+                self.connected = .unmounted
+                throw error
+            }
         }
         throw MountError.noMountData
     }
@@ -103,6 +123,16 @@ extension Share: Hashable, Identifiable{
         
     }
 }
+extension Share{
+    func open(){
+        let url = URL(filePath: mountPoint)
+        if FileManager.default.fileExists(atPath: url.path){
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
+        
+    }
+}
+
 enum StorageManagerError : Error {
     case doesNotExsist, noUserDefaults
 }
@@ -170,10 +200,10 @@ class StorageManager{
         let managed = Set(self.mounts ?? [])
         for m in managed{
             m.managed = true
-            m.connected = connected.contains(m)
+            m.connected = connected.contains(m) ? .mounted : .unmounted
         }
         for con in connected{
-            con.connected = true
+            con.connected = .mounted
             con.managed = managed.contains(con)
         }
         let merged = connected.union(managed)

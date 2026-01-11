@@ -10,7 +10,6 @@ import SwiftUI
 @Observable class MountCellModel {
     let share: Share
     let manageHandler : ((Share) -> Void)?
-    var working : Bool = false
     
     init(share: Share, handler: ((Share) -> Void)? = nil){
         self.share = share
@@ -18,11 +17,7 @@ import SwiftUI
     }
     
     func eject(){
-        working = true
         Task{
-            defer{
-                working = false
-            }
             do{
                 try await share.unmount()
             }
@@ -32,11 +27,8 @@ import SwiftUI
         }
     }
     func mount(){
-        working = true
+        
         Task{
-            defer{
-                working = false
-            }
             do{
                 switch try await share.mount(){
                 case .success(_):
@@ -55,7 +47,26 @@ import SwiftUI
     func edit(){
         manageHandler?(share)
     }
+    func mountUnmountPressed(){
+        switch share.connected{
+        case .mounted:
+            eject()
+        case .unmounted:
+            mount()
+        default:
+            //no op the other cases
+            break
+        }
+    }
+    var shouldShowOpenIcon : Bool{
+        share.connected == .mounted || share.connected == .unmounting
+    }
+    var shouldDisableMountBoutton : Bool{
+        share.connected == .mounting || share.connected == .unmounting
+    }
+    
 }
+
 
 struct MountCell: View {
     var model: MountCellModel
@@ -64,15 +75,7 @@ struct MountCell: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading) {
                     HStack(alignment: .center){
-                       if model.share.connected{
-                           Image(systemName: "externaldrive.badge.checkmark")
-                               .font(.title2)
-                               .foregroundStyle(.green)
-                       }else{
-                           Image(systemName: "externaldrive.badge.xmark")
-                               .font(.title2)
-                               .foregroundStyle(.gray)
-                       }
+                        driveIcon
                         Text(model.share.name)
                             .font(.title2)
                             .fontWeight(.bold)
@@ -82,12 +85,12 @@ struct MountCell: View {
                         .foregroundStyle(.gray)
                 }
                 Spacer()
-                if model.share.connected{
+                if model.shouldShowOpenIcon{
                     HStack {
                         Text(model.share.mountPoint)
                             .font(.title2)
                         Button {
-                            
+                            model.share.open()
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                                 .foregroundStyle(.blue)
@@ -109,33 +112,44 @@ struct MountCell: View {
                     Text(model.share.managed ? "Edit" : "Manage")
                 }
                 .buttonStyle(.glass)
-                if !model.working{
-                    Button {
-                        //FIXME: debounce this
-                        model.share.connected ?  model.eject() : model.mount()
-                        
-                    } label: {
-                        if model.share.connected{
-                            Image(systemName: "eject")
-                                .foregroundStyle(.gray)
-                                .font(.title2)
-                        }else{
-                            Text("Mount")
-                            
-                        }
-                        
-                    }
-                    .buttonStyle(.glass)
-                    .disabled(model.working)
-                }else{
-                    ProgressView()
+                
+                Button {
+                    model.mountUnmountPressed()
+                } label: {
+                    mountButtonLabel
                 }
+                .buttonStyle(.glass)
+                .disabled(model.shouldDisableMountBoutton)
+                
                 
                
             }
             
         }
         .padding()
+    }
+    var driveIcon: some View{
+        switch model.share.connected{
+        case .mounted, .unmounting:
+            Image(systemName: "externaldrive.badge.checkmark")
+                .font(.title2)
+                .foregroundStyle(.green)
+        case .unmounted, .mounting:
+            Image(systemName: "externaldrive.badge.xmark")
+                .font(.title2)
+                .foregroundStyle(.gray)
+        }
+    }
+    @ViewBuilder var mountButtonLabel: some View{
+        switch model.share.connected{
+        case .mounted, .unmounting:
+            Image(systemName: "eject")
+                .foregroundStyle(.gray)
+                .font(.title2)
+        case .unmounted, .mounting:
+            Text("Mount")
+            
+        }
     }
 }
 
