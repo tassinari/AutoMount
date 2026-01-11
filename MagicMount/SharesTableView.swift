@@ -46,7 +46,12 @@ struct SharesListView: View {
         }
         .listStyle(.inset)
         .sheet(item: $selectedShare) { share in
-            AddManagedView(share: share)
+            if share.managed{
+                EditShareView(share: share)
+            }else{
+                AddManagedView(share: share)
+            }
+           
         }
     }
 
