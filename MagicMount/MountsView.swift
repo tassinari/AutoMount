@@ -88,13 +88,9 @@ struct MountsView: View {
                 Spacer()
 
                 HStack{
-                    Toggle("View in Tab Bar", isOn: $showMenuBar)
+                    Toggle("Menu Bar Icon", isOn: $showMenuBar)
                         .toggleStyle(.switch)
-                    Button {
-                        model.refresh()
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise.circle")
-                    }
+                   
                 }
             }
             .padding()
@@ -113,10 +109,21 @@ struct MountsView: View {
                 Button {
                     showNew = true
                 } label: {
-                    Label("Add", systemImage: "plus")
+                    Image(systemName: "plus")
+                        .font(.title)
                 }
+                .buttonStyle(.borderless)
 
                 Spacer()
+                Button {
+                    model.refresh()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.title)
+                        
+                   
+                }
+                .buttonStyle(.borderless)
             }
             .padding()
             .background(Color(nsColor: .windowBackgroundColor))

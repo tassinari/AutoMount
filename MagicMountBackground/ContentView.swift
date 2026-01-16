@@ -24,10 +24,15 @@ import SwiftUI
     }
     func refresh(){
         let connected = MountInfo.mountedVolumes().filter({$0.type != "file"})
+        
+        //update status of shares we know about
         for share in shares {
             share.connected = connected.contains(share) ? .mounted : .unmounted
             print("\(share.name) -> \(share.connected)")
         }
+        //append any new shares
+        let newShares = Set(connected).subtracting(shares)
+        shares.append(contentsOf: newShares)
     }
     func openApp(){
         let config = NSWorkspace.OpenConfiguration()

@@ -9,46 +9,63 @@ import SwiftUI
 
 @Observable class MountCellModel {
     let share: Share
-    let manageHandler : ((Share) -> Void)?
-    
-    init(share: Share, handler: ((Share) -> Void)? = nil){
+    let manageHandler: ((Share) -> Void)?
+    var autoMount: Bool {
+        set {
+            share.managed = newValue
+            do {
+                if newValue {
+                    try StorageManager().addMount(share)
+                } else {
+                    try StorageManager().deleteMount(share)
+                }
+            } catch {
+                MagicMount.error(
+                    "Cell mount/unmount error: \(String(describing: error))"
+                )
+            }
+        }
+        get {
+            return share.managed
+        }
+    }
+
+    init(share: Share, handler: ((Share) -> Void)? = nil) {
         self.share = share
         self.manageHandler = handler
     }
-    
-    func eject(){
-        Task{
-            do{
+
+    func eject() {
+        Task {
+            do {
                 try await share.unmount()
-            }
-            catch{
-                //FIXME: logger
+            } catch {
+                MagicMount.error("unmount error : \(String(describing: error))")
             }
         }
     }
-    func mount(){
-        
-        Task{
-            do{
-                switch try await share.mount(){
+    
+    func mount() {
+        Task {
+            do {
+                switch try await share.mount() {
                 case .success(_):
                     break
                 default:
-                    //FIXME: logger
-                    print("error")
+                    MagicMount.error("mount error, non success returned")
                 }
-            }catch {
-                //FIXME: logger
-
+            } catch {
+                MagicMount.error("mount error : \(String(describing: error))")
             }
         }
-        
     }
-    func edit(){
+    
+    func edit() {
         manageHandler?(share)
     }
-    func mountUnmountPressed(){
-        switch share.connected{
+    
+    func mountUnmountPressed() {
+        switch share.connected {
         case .mounted:
             eject()
         case .unmounted:
@@ -58,23 +75,22 @@ import SwiftUI
             break
         }
     }
-    var shouldShowOpenIcon : Bool{
+    var shouldShowOpenIcon: Bool {
         share.connected == .mounted || share.connected == .unmounting
     }
-    var shouldDisableMountBoutton : Bool{
+    var shouldDisableMountBoutton: Bool {
         share.connected == .mounting || share.connected == .unmounting
     }
-    
+
 }
 
-
 struct MountCell: View {
-    var model: MountCellModel
+    @Bindable var model: MountCellModel
     var body: some View {
         VStack {
             HStack(alignment: .top) {
                 VStack(alignment: .leading) {
-                    HStack(alignment: .center){
+                    HStack(alignment: .center) {
                         driveIcon
                         Text(model.share.name)
                             .font(.title2)
@@ -85,34 +101,25 @@ struct MountCell: View {
                         .foregroundStyle(.gray)
                 }
                 Spacer()
-                if model.shouldShowOpenIcon{
-                    HStack {
+                if model.shouldShowOpenIcon {
+
+                    Button {
+                        model.share.open()
+                    } label: {
                         Text(model.share.mountPoint)
                             .font(.title2)
-                        Button {
-                            model.share.open()
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .foregroundStyle(.blue)
-                        }
-                        .buttonStyle(.plain)
-
+                            .foregroundStyle(.blue)
                     }
+                    .buttonStyle(.plain)
                 }
-                
             }
-           
-            
-           Spacer()
+
+            Spacer()
             HStack {
+                Toggle("Auto-mount", isOn: $model.autoMount)
+                    .toggleStyle(.switch)
+                    .fixedSize()
                 Spacer()
-                Button {
-                    model.edit()
-                } label: {
-                    Text(model.share.managed ? "Edit" : "Manage")
-                }
-                .buttonStyle(.glass)
-                
                 Button {
                     model.mountUnmountPressed()
                 } label: {
@@ -120,16 +127,14 @@ struct MountCell: View {
                 }
                 .buttonStyle(.glass)
                 .disabled(model.shouldDisableMountBoutton)
-                
-                
-               
+
             }
-            
+
         }
         .padding()
     }
-    var driveIcon: some View{
-        switch model.share.connected{
+    var driveIcon: some View {
+        switch model.share.connected {
         case .mounted, .unmounting:
             Image(systemName: "externaldrive.badge.checkmark")
                 .font(.title2)
@@ -140,20 +145,25 @@ struct MountCell: View {
                 .foregroundStyle(.gray)
         }
     }
-    @ViewBuilder var mountButtonLabel: some View{
-        switch model.share.connected{
-        case .mounted, .unmounting:
+    @ViewBuilder var mountButtonLabel: some View {
+        switch model.share.connected {
+        case .mounted:
             Image(systemName: "eject")
                 .foregroundStyle(.gray)
                 .font(.title2)
-        case .unmounted, .mounting:
+        case .unmounted:
             Text("Mount")
-            
+        case .unmounting, .mounting:
+            ProgressView()
+                .controlSize(.mini)
+                //.frame(width: 16, height: 16)
+
         }
     }
 }
 
 #Preview {
-    MountCell(model: MountCellModel(share: Share(user: "", password: "", url: URL(string: "smb://127.0.0.1/photos")!, name: "Photos", mountPoint: "/Volumes/photos", managed: true, connected: true)))
-        .frame(width: 400, height: 150)
+    SharesListView(shares: PreviewData.mockShares)
+    //    MountCell(model: MountCellModel(share: Share(user: "", password: "", url: URL(string: "smb://127.0.0.1/photos")!, name: "Photos", mountPoint: "/Volumes/photos", managed: true, connected: true)))
+    //        .frame(width: 400, height: 150)
 }

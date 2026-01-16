@@ -86,6 +86,7 @@
 			membershipExceptions = (
 				Logger.swift,
 				Mount.swift,
+				Share.swift,
 				Storage.swift,
 			);
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
