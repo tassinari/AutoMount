@@ -2,12 +2,12 @@
 import Foundation
 import NetFS
 
-enum MountError: Error{
+public enum MountError: Error{
     case badURL, noMountData
 }
 /// Errors:
 ///  os errors are defined in <sys/errno.h>
-enum MountResponse{
+public enum MountResponse{
     case genericError(Error)
     case success([String])
     case authenticationError
@@ -19,8 +19,8 @@ enum MountResponse{
    
 }
 
-struct MountInfo{
-    static func mountedVolumes() -> [Share] {
+public struct MountInfo{
+    public static func mountedVolumes() -> [Share] {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: [
                 .volumeIsLocalKey,
@@ -52,7 +52,7 @@ struct MountInfo{
         return result
     }
     
-    static func isVolumeMounted(at remoteURL: URL) -> Bool {
+    public static func isVolumeMounted(at remoteURL: URL) -> Bool {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: nil,
             options: [.skipHiddenVolumes]
@@ -69,15 +69,15 @@ struct MountInfo{
     }
 }
 
-struct MountData{
-    let scheme: String
-    let host: String
-    let port : Int?
-    let user: String?
-    let password: String?
-    let shareName: String
+public struct MountData{
+    public let scheme: String
+    public let host: String
+    public let port : Int?
+    public let user: String?
+    public let password: String?
+    public let shareName: String
     
-    var url: URL{
+    public var url: URL{
         get throws{
             var components = URLComponents()
             components.scheme = scheme
@@ -100,7 +100,7 @@ struct MountData{
             return url
         }
     }
-    func mount() async throws -> MountResponse {
+    public func mount() async throws -> MountResponse {
        
         let url = try self.url
         var cfArray: Unmanaged<CFArray>?
@@ -141,7 +141,7 @@ struct MountData{
         
     }
 
-    static func unmount(url: URL) async throws {
+    public static func unmount(url: URL) async throws {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw CocoaError(.fileNoSuchFile)
         }

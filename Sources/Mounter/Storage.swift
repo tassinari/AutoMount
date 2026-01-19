@@ -8,22 +8,22 @@
 import Foundation
 import AppKit
 
-enum ConnectionState: Codable{
+public enum ConnectionState: Codable{
     case mounted, unmounted, mounting, unmounting
 }
 
-enum StorageManagerError : Error {
+public enum StorageManagerError : Error {
     case doesNotExsist, noUserDefaults
 }
 
-class StorageManager{
+public class StorageManager{
     static let storeKey : String = "ShareStoreKey"
     init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.magicmount")) {
         self.userDefaults = defaults
     }
     let userDefaults: UserDefaults?
     
-    func addMount(_ mount: Share) throws {
+    public func addMount(_ mount: Share) throws {
         mount.managed = true
         guard let defaults = userDefaults else {
             throw StorageManagerError.noUserDefaults
@@ -40,7 +40,7 @@ class StorageManager{
             defaults.set(data, forKey: StorageManager.storeKey)
         }
     }
-    func deleteMount(_ mount: Share) throws {
+    public func deleteMount(_ mount: Share) throws {
         mount.managed = false
         guard let defaults = userDefaults else {
             throw StorageManagerError.noUserDefaults
@@ -56,7 +56,7 @@ class StorageManager{
         
     }
     /// The list of shares in User defaults.  These are added/managed by user.  Connected status is not guarenteed. Use fullMountList for true status
-    var mounts: [Share]? {
+    public var mounts: [Share]? {
         guard let defaults = userDefaults, let data = defaults.data(forKey: StorageManager.storeKey) else {
             return nil
         }
@@ -74,7 +74,7 @@ class StorageManager{
        
     }
     /// The list of all external mounted volumes and volumes managed by user that may not be mounted
-    var fullMountList: [Share]? {
+    public var fullMountList: [Share]? {
         let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
         let managed = Set(self.mounts ?? [])
         for m in managed{

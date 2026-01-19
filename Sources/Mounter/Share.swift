@@ -10,9 +10,9 @@ import AppKit
 
 
 
-class Share: Codable{
+public class Share: Codable{
     
-    init(user: String, password: String, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
+    public init(user: String, password: String, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
         self.user = user
         self.password = password
         self.url = url
@@ -21,7 +21,7 @@ class Share: Codable{
         self.managed = managed
         self.connected = .unmounted
     }
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
            let container = try decoder.container(keyedBy: CodingKeys.self)
            user = try container.decode(String.self, forKey: .user)
            password = try container.decode(String.self, forKey: .password)
@@ -31,7 +31,7 @@ class Share: Codable{
            managed = try container.decode(Bool.self, forKey: .managed)
            connected = try container.decode(ConnectionState.self, forKey: .connected)
     }
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(user, forKey: .user)
             try container.encode(password, forKey: .password)
@@ -42,18 +42,18 @@ class Share: Codable{
             try container.encode(connected, forKey: .connected)
     }
     
-    var user : String
-    var password : String
-    let url : URL
-    let name: String
-    let mountPoint: String
-    var  type: String {
+    public var user : String
+    public var password : String
+    public let url : URL
+    public let name: String
+    public let mountPoint: String
+    public var  type: String {
         URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
     }
-    var managed : Bool
-    var connected : ConnectionState
+    public var managed : Bool
+    public var connected : ConnectionState
     
-    enum CodingKeys: String, CodingKey {
+    public  enum CodingKeys: String, CodingKey {
         case user
         case password
         case url
@@ -67,14 +67,14 @@ class Share: Codable{
 //FIXME: put mount unmount into an actor to preserve state access
 extension Share {
     
-    var mountData : MountData?{
+    public var mountData : MountData?{
         if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false),let scheme = comp.scheme, let host = comp.host{
             return MountData(scheme: scheme , host: host, port: comp.port, user: comp.user, password: comp.password, shareName: name)
         }
         return nil
     }
    
-    func unmount() async throws{
+    public func unmount() async throws{
         if connected == .unmounting{
             return
         }
@@ -88,7 +88,7 @@ extension Share {
             throw error
         }
     }
-    func mount() async throws -> MountResponse{
+    public func mount() async throws -> MountResponse{
         if connected != .unmounted{
             return .alreadyMounted
         }
@@ -107,16 +107,16 @@ extension Share {
     }
 }
 extension Share: Hashable, Identifiable{
-    var id: String{
+    public var id: String{
         return url.absoluteString
     }
-    static func == (lhs: Share, rhs: Share) -> Bool {
+    public static func == (lhs: Share, rhs: Share) -> Bool {
         guard let lcomp = URLComponents(url: lhs.url, resolvingAgainstBaseURL: false),
               let rcomp = URLComponents(url: rhs.url, resolvingAgainstBaseURL: false) else {return false}
         return lcomp.scheme == rcomp.scheme && lcomp.host == rcomp.host && lcomp.path == rcomp.path
         
     }
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         guard let uRLComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) else{
             hasher.combine(id)
             return
@@ -128,7 +128,7 @@ extension Share: Hashable, Identifiable{
     }
 }
 extension Share{
-    func open(){
+    public func open(){
         let url = URL(filePath: mountPoint)
         if FileManager.default.fileExists(atPath: url.path){
             NSWorkspace.shared.activateFileViewerSelecting([url])
