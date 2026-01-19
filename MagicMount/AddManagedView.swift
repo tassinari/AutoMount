@@ -5,6 +5,7 @@
 //  Created by Mark Tassinari on 12/29/25.
 //
 import SwiftUI
+import libMounter
 
 struct AddManagedView: View {
     @State var share: Share

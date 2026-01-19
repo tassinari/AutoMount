@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		487A91EF2F0075760095BDA6 /* MagicMountBackground.app in Resources */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; };
 		487A91FA2F0076030095BDA6 /* MagicMountBackground.app in Embed Login */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		488F8C022F1EC111004E8664 /* libMounter in Frameworks */ = {isa = PBXBuildFile; productRef = 488F8C012F1EC111004E8664 /* libMounter */; };
+		488F8C042F1EC118004E8664 /* libMounter in Frameworks */ = {isa = PBXBuildFile; productRef = 488F8C032F1EC118004E8664 /* libMounter */; };
 		48D81D152F0558070046103D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48D81D142F0558070046103D /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -85,9 +87,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Logger.swift,
-				Mount.swift,
-				Share.swift,
-				Storage.swift,
 			);
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 		};
@@ -134,6 +133,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				488F8C042F1EC118004E8664 /* libMounter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,6 +156,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				48D81D152F0558070046103D /* Foundation.framework in Frameworks */,
+				488F8C022F1EC111004E8664 /* libMounter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +228,7 @@
 			);
 			name = MagicMount;
 			packageProductDependencies = (
+				488F8C032F1EC118004E8664 /* libMounter */,
 			);
 			productName = MagicMount;
 			productReference = 482995F02EFC63CF003AB633 /* MagicMount.app */;
@@ -296,6 +298,7 @@
 			);
 			name = MagicMountBackground;
 			packageProductDependencies = (
+				488F8C012F1EC111004E8664 /* libMounter */,
 			);
 			productName = MagicMountBackground;
 			productReference = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */;
@@ -350,7 +353,6 @@
 					};
 					487A92102F0160780095BDA6 = {
 						CreatedOnToolsVersion = 26.2;
-						TestTargetID = 487A91D82F006F260095BDA6;
 					};
 				};
 			};
@@ -363,6 +365,9 @@
 			);
 			mainGroup = 482995E72EFC63CF003AB633;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 482995F12EFC63CF003AB633 /* Products */;
 			projectDirPath = "";
@@ -627,6 +632,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -659,6 +665,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -772,6 +779,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount.MagicMountBackground;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -805,6 +813,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount.MagicMountBackground;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -821,7 +830,6 @@
 		487A92182F0160780095BDA6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N2Z455V6H8;
@@ -834,14 +842,12 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicMountBackground.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicMountBackground";
 			};
 			name = Debug;
 		};
 		487A92192F0160780095BDA6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = N2Z455V6H8;
@@ -854,7 +860,6 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicMountBackground.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicMountBackground";
 			};
 			name = Release;
 		};
@@ -916,6 +921,26 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Mounter;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		488F8C012F1EC111004E8664 /* libMounter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			productName = libMounter;
+		};
+		488F8C032F1EC118004E8664 /* libMounter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			productName = libMounter;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 482995E82EFC63CF003AB633 /* Project object */;
 }

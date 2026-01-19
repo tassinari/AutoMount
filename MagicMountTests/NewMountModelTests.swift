@@ -27,7 +27,7 @@ final class newModelTests: XCTestCase {
         let testURl = URL(string: "smb://testUrl")!
         let testPassword = "testPassword"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
+        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
         try manager.addMount(mount)
         guard let mounts = manager.mounts else {
             XCTFail()
@@ -53,13 +53,13 @@ final class newModelTests: XCTestCase {
         var expected : [Share] = []
         for i in 0..<n{
             let testURl = URL(string: testURlStr + String(i))!
-            let d = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
+            let d = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
             try manager.addMount(d)
             expected.append(d)
         }
         let j = "3"
         let testURl = URL(string: testURlStr + j)!
-        let delete = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", connected: false)
+        let delete = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
         try manager.deleteMount(delete)
         guard let allMounts = manager.mounts else {
             XCTFail()
@@ -79,7 +79,7 @@ final class newModelTests: XCTestCase {
         var expected : [Share] = []
         for i in 0..<n{
             let testURl = URL(string: "smb://testUrl\(i)")!
-            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", connected: false)
+            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
             try manager.addMount(d)
             expected.append(d)
         }

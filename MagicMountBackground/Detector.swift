@@ -9,6 +9,10 @@ import Foundation
 import Network
 import AppKit
 
+protocol Detectable{
+    func listen(_ : DetectorDelegate)
+}
+
 struct MountEvent{
     enum MountType { case mounted, unmounted}
     let type : MountType
@@ -24,7 +28,7 @@ protocol DetectorDelegate: AnyObject{
     func didDetectEvent(_ event: DetectorEvent)
 }
 
-class Detector{
+class Detector : Detectable{
     
     private var unmountNote : NSObjectProtocol?
     private var mountNote : NSObjectProtocol?
@@ -45,6 +49,7 @@ class Detector{
         }
     }
     deinit {
+        monitor.cancel()
         if let unmountNote = unmountNote {
             NSWorkspace.shared.notificationCenter.removeObserver(unmountNote)
         }
@@ -52,7 +57,7 @@ class Detector{
             NSWorkspace.shared.notificationCenter.removeObserver(mountNote)
         }
     }
-    func listen(_ delegate: DetectorDelegate){
+    public func listen(_ delegate: DetectorDelegate){
         self.delegate = delegate
         monitor.pathUpdateHandler = { [weak self]path in
             if path.status == .satisfied {

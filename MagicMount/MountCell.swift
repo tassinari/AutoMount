@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import libMounter
 
 @Observable class MountCellModel {
     let share: Share
@@ -125,7 +126,7 @@ struct MountCell: View {
                 } label: {
                     mountButtonLabel
                 }
-                .buttonStyle(.glass)
+               // .buttonStyle(.glass)
                 .disabled(model.shouldDisableMountBoutton)
 
             }

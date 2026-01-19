@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import libMounter
 
 struct EditShareView: View {
     @State var share: Share

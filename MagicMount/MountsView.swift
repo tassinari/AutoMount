@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import ServiceManagement
+import libMounter
 
 @Observable final class MountsViewModel{
     private var unmountNote : NSObjectProtocol?

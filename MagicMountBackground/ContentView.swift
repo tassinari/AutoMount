@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+import libMounter
 //struct MountViewModel{
 //    var mounts : [Share]
 //    
@@ -135,7 +135,7 @@ extension Share{
 
 struct ContentCellView: View {
     @State private var hovering = false
-    @Bindable var share: Share
+    var share: Share
     let actionHandler : (Share, ButtonActionType) -> Void
     
     var body: some View {

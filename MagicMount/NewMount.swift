@@ -17,66 +17,74 @@ struct NewMount: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+       
+        VStack{
+            HStack{
+                Text("New Connection")
+                    .font(.title)
+                Spacer()
+            }
             Form {
-                Section("Connection") {
-                    TextField("URL (e.g. smb://host:port/share)", text: $model.urlString)
+                Section() {
+                    TextField("URL", text: $model.urlString, prompt: Text("smb://host:port/share"))
                         .autocorrectionDisabled(true)
-                    
-                }
-
-                Section("Credentials") {
-                    TextField("User", text: $model.username)
+                    TextField("Location", text: $model.urlString, prompt: Text("/Volumes/share"))
                         .autocorrectionDisabled(true)
-                    SecureField("Password", text: $model.password)
+                    Text("Optional, leave blank to default to standard /Volumes/share")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Section {
-                    Button("Submit") {
-                        if let onSubmit { onSubmit(model.urlString, model.username, model.password) }
-                        //FIXME: wrap
-                        Task{
-                            try? await model.saveAll()
-                        }
-                        dismiss()
+                    TextField("User", text: $model.username)
+                        .autocorrectionDisabled(true)
+                    SecureField("Password", text: $model.password)
+                } header: {
+                    HStack {
+                        Toggle("Use Credentials", isOn: Binding<Bool>.constant(true))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(model.urlString.isEmpty)
+                    .padding([.top, .bottom], 8)
+                }
 
-                    Button("Cancel") {
-                        if let onCancel { onCancel() }
-                      //  dismiss()
-                        var b : ObjCBool = false
-                        print( "--> \(FileManager.default.fileExists(atPath: "/Volumes/photo", isDirectory: &b) ? "true" : "false")")
-                        print(b)
-                    }
-                }
-            }
-            .navigationTitle("New Mount")
-            .toolbar {
-                ToolbarItem() {
-                    Button("Cancel") {
-                        if let onCancel { onCancel() }
-                        dismiss()
-                    }
-                }
-                ToolbarItem() {
-                    Button("Submit") {
-                        if let onSubmit { onSubmit(model.urlString, model.username, model.password) }
-                        //FIXME: wrap
-                        Task{
-                            try? await model.saveAll()
+
+                Section {
+                    HStack {
+                        Toggle("Auto mount", isOn: Binding<Bool>.constant(true))
+                        Spacer()
+                        Button("Cancel") {
+                            if let onCancel { onCancel() }
+                            //  dismiss()
+                            var b : ObjCBool = false
+                            print( "--> \(FileManager.default.fileExists(atPath: "/Volumes/photo", isDirectory: &b) ? "true" : "false")")
+                            print(b)
                         }
-                       
-                        dismiss()
+                        
+                        Button("Submit") {
+                            if let onSubmit { onSubmit(model.urlString, model.username, model.password) }
+                            //FIXME: wrap
+                            Task{
+                                try? await model.saveAll()
+                            }
+                            dismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(model.urlString.isEmpty)
+                        
+                        
+                        
                     }
-                    .disabled(model.urlString.isEmpty)
                 }
-            }
+                
+          
         }
+        }
+            .padding()
     }
 }
 
 #Preview {
-    NewMount()
+    NavigationStack{
+        NewMount()
+    }
+    
 }

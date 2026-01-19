@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import libMounter
 
 actor Remounter{
     init(debounceSeconds : TimeInterval = 20){
@@ -21,12 +22,12 @@ actor Remounter{
             return
         }
         callDate = .now
-        let mountedVolumes = await MountInfo.mountedVolumes()
-        let manager = await StorageManager()
-        for mount in await manager.mounts ?? []{
+        let mountedVolumes = MountInfo.mountedVolumes()
+        let manager = StorageManager()
+        for mount in manager.mounts ?? []{
             if !mountedVolumes.contains(mount){
                 await notice("\(mount.name) is not connected, connecting..")
-                guard let md = await mount.mountData else {
+                guard let md = mount.mountData else {
                     await error("could not get mountdata for \(mount.name)")
                     return
                 }

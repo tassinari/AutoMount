@@ -5,6 +5,7 @@
 //  Created by Mark Tassinari on 12/28/25.
 //
 import Foundation
+import libMounter
 
 class PreviewData {
     static let mockShares: [Share] = [

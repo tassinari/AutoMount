@@ -96,7 +96,7 @@ final class MagicMountTests: XCTestCase {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         do{
             switch try await mountData.mount(){
-            case .success(let _):
+            case .success( _):
                 XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
                 guard let share = MountInfo.mountedVolumes().first(where: ({$0.name == shareName})) else {XCTFail(); return}
                 try await share.unmount()
@@ -113,7 +113,7 @@ final class MagicMountTests: XCTestCase {
        
     }
     
-    func testMountedVolumes() async throws{
+    @MainActor func testMountedVolumes() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: password, shareName: shareName)
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
@@ -208,7 +208,6 @@ final class MagicMountTests: XCTestCase {
         default:
             XCTFail()
         }
-        
     }
     
     //
