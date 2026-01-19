@@ -10,7 +10,7 @@ import AppKit
 
 
 
-public class Share: Codable{
+@Observable public class Share: Codable{
     
     public init(user: String, password: String, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
         self.user = user

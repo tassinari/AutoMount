@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import Mounter
+@testable import libMounter
 
 enum ShellError: Error {
     case nonZeroExit(Int, String)

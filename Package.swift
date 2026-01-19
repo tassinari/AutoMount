@@ -2,24 +2,24 @@
 import PackageDescription
 
 let package = Package(
-    name: "Mounter",
+    name: "libMounter",
+    
     platforms: [
-        .macOS(.v13)
+        .macOS(.v14)
     ],
     products: [
-        .executable(
-            name: "Mounter",
-            targets: ["Mounter"]
-        ),
+        .library(
+            name: "libMounter",
+            targets: ["libMounter"]),
     ],
     targets: [
-        .executableTarget(
-            name: "Mounter"
+        .target(
+            name: "libMounter"
         ),
 
         .testTarget(
-            name: "MounterTests",
-            dependencies: ["Mounter"]
+            name: "libMounterTests",
+            dependencies: ["libMounter"]
         ),
     ]
 )

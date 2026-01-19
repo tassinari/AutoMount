@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import Mounter
+@testable import libMounter
 
 final class StorageManagerTests: XCTestCase {
     let defaultsSuiteName = "group.org.tassinari.magicmount.test"

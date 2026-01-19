@@ -18,7 +18,7 @@ public enum StorageManagerError : Error {
 
 public class StorageManager{
     static let storeKey : String = "ShareStoreKey"
-    init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.magicmount")) {
+    public init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.magicmount")) {
         self.userDefaults = defaults
     }
     let userDefaults: UserDefaults?
