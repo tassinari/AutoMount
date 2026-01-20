@@ -52,7 +52,7 @@ public struct MountInfo{
         return result
     }
     
-    public static func isVolumeMounted(at remoteURL: URL) -> Bool {
+    public static func isVolumeMounted(at local: URL) -> Bool {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: nil,
             options: [.skipHiddenVolumes]
@@ -63,7 +63,7 @@ public struct MountInfo{
             let values = try? url.resourceValues(forKeys: [
                 .volumeURLForRemountingKey
             ])
-            if url == remoteURL { return true }
+            if url.relativePath == local.relativePath { return true }
         }
         return false
     }

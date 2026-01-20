@@ -12,10 +12,7 @@ enum ShellError: Error {
     case nonZeroExit(Int, String)
 }
 
-
-
-final class MountDataTests: XCTestCase {
-    
+class BaseTest : XCTestCase{
     let hostName = "localhost"
     let port = 1445
     let password = "secret123"
@@ -59,13 +56,13 @@ final class MountDataTests: XCTestCase {
             let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
             let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
             
-            if let stdout = String(data: stdoutData, encoding: .utf8), !stdout.isEmpty {
-                print("📤 pretest.sh stdout:\n\(stdout)")
-            }
-            
-            if let stderr = String(data: stderrData, encoding: .utf8), !stderr.isEmpty {
-                print("📥 pretest.sh stderr:\n\(stderr)")
-            }
+//            if let stdout = String(data: stdoutData, encoding: .utf8), !stdout.isEmpty {
+//                print("📤 pretest.sh stdout:\n\(stdout)")
+//            }
+//
+//            if let stderr = String(data: stderrData, encoding: .utf8), !stderr.isEmpty {
+//                print("📥 pretest.sh stderr:\n\(stderr)")
+//            }
             
             XCTAssertEqual(
                 process.terminationStatus,
@@ -96,6 +93,15 @@ final class MountDataTests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
     }
+    
+}
+
+
+
+final class MountDataTests: BaseTest {
+    
+
+    
     override func setUp() async throws {
         try await super.setUp()
         
@@ -283,6 +289,34 @@ final class MountDataTests: XCTestCase {
         //
         //        XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
     }
+    
+    func testIsVolumeMountedReturnsTrueAfterMount() async throws {
+        let mountData = MountData(
+            scheme: "smb",
+            host: "localhost",
+            port: 1445,
+            user: "samba",
+            password: "secret123",
+            shareName: "smbTestShare"
+        )
+        XCTAssertFalse(MountInfo.isVolumeMounted(at: URL(filePath: "/Volumes/smbTestShare")))
+
+        let response = try await mountData.mount()
+        switch response{
+        case .success(let paths):
+            guard let url = paths.first else {
+                XCTFail()
+                return
+            }
+            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: url, directoryHint: .isDirectory)))
+        default:
+            XCTFail()
+        }
+
+
+        
+    }
+
 }
 
 

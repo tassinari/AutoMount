@@ -8,7 +8,7 @@
 import XCTest
 @testable import libMounter
 
-final class StorageManagerTests: XCTestCase {
+final class StorageManagerTests: BaseTest {
     let defaultsSuiteName = "group.org.tassinari.magicmount.test"
     override func setUpWithError() throws {
         try super.setUpWithError()
@@ -144,5 +144,26 @@ final class StorageManagerTests: XCTestCase {
         XCTAssert(allMounts.count == n)
         XCTAssertEqual(expected.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}), allMounts.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}))
     }
+    func testFullMountListIncludesMountedSMBShare() async throws {
+        let mountData = MountData(
+            scheme: "smb",
+            host: "localhost",
+            port: 1445,
+            user: "samba",
+            password: "secret123",
+            shareName: "smbTestShare"
+        )
+
+        _ = try await mountData.mount()
+
+        guard let mounts = StorageManager().fullMountList else{  XCTFail(); return}
+
+        XCTAssertFalse(mounts.isEmpty)
+
+        let smb = mounts.first { $0.name == "smbTestShare" }
+        XCTAssertNotNil(smb)
+        XCTAssertEqual(smb?.mountPoint, "/Volumes/smbTestShare")
+    }
+
 
 }
