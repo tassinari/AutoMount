@@ -12,6 +12,7 @@ import AppKit
 
 @Observable public class Share: Codable{
     
+    //FIXME: make this failable if URL does not conform to smb/afp/nfs??
     public init(user: String, password: String, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
         self.user = user
         self.password = password
