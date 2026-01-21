@@ -2,6 +2,10 @@ import Foundation
 import SwiftUI
 import libMounter
 
+enum CreateMountState{
+    case create, edit
+}
+
 enum NewMountModelError : Swift.Error {
     case missingValues
 }

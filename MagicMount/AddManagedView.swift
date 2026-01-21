@@ -7,6 +7,8 @@
 import SwiftUI
 import libMounter
 
+
+//FIXME: Depracated??
 struct AddManagedView: View {
     @State var share: Share
     @State private var storeInKeychain: Bool = true

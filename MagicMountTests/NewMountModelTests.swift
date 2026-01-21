@@ -7,88 +7,86 @@
 
 import XCTest
 import Foundation
+import libMounter
 @testable import MagicMount
 
 
 
 
 final class newModelTests: XCTestCase {
-    let defaultsSuiteName = "group.org.tassinari.magicmount.test"
-    override func setUpWithError() throws {
-        UserDefaults(suiteName: defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
-    }
-
-    func testStorageManagerInstantiates() async throws {
-        let manager = await StorageManager()
-        XCTAssertNotNil(manager)
-    }
-    @MainActor func testStorageManagerSavesAndLoads() async throws {
-        let user = "TestUser"
-        let testURl = URL(string: "smb://testUrl")!
-        let testPassword = "testPassword"
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
-        try manager.addMount(mount)
-        guard let mounts = manager.mounts else {
-            XCTFail()
-            return
-        }
-        guard let first = mounts.first else {
-            XCTFail()
-            return
-        }
-        XCTAssert(mounts.count == 1)
-        XCTAssert(first.url == testURl)
-        XCTAssert(first.user == user)
-        XCTAssert(first.password  == testPassword)
+   
     
+    @MainActor func testInitEmpty() async throws{
+        let model = CreateMountModel()
+        XCTAssertEqual(model.urlString, "")
+        XCTAssertEqual(model.username, "")
+        XCTAssertEqual(model.password, "")
+    }
+    @MainActor func testInitHoldsAllValues() async throws{
+        let url = "urlString"
+        let user = "username"
+        let pass = "password"
+        
+        let model = CreateMountModel(urlString: url, username: user, password: pass)
+        XCTAssertEqual(model.urlString, url)
+        XCTAssertEqual(model.username, user)
+        XCTAssertEqual(model.password, pass)
+    }
+    @MainActor func testClearWorks() async throws{
+        let url = "urlString"
+        let user = "username"
+        let pass = "password"
+        
+        let model = CreateMountModel(urlString: url, username: user, password: pass)
+        XCTAssertEqual(model.urlString, url)
+        XCTAssertEqual(model.username, user)
+        XCTAssertEqual(model.password, pass)
+        model.clear()
+        XCTAssertEqual(model.urlString, "")
+        XCTAssertEqual(model.username, "")
+        XCTAssertEqual(model.password, "")
         
     }
-    @MainActor func testDeleteMountWorks() async throws {
-        let user = "TestUser"
-        let testURlStr = "smb://testUrl"
-        let testPassword = "testPassword"
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let n = 10
-        var expected : [Share] = []
-        for i in 0..<n{
-            let testURl = URL(string: testURlStr + String(i))!
-            let d = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
-            try manager.addMount(d)
-            expected.append(d)
-        }
-        let j = "3"
-        let testURl = URL(string: testURlStr + j)!
-        let delete = Share(user: user, password: testPassword, url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
-        try manager.deleteMount(delete)
-        guard let allMounts = manager.mounts else {
-            XCTFail()
-            return
-        }
+    @MainActor func testSaveAllWorks() async throws{
+        let urlStr = "smb://localhost:445/test"
+        guard let url = URL(string: urlStr) else {XCTFail(); return}
+        let user = "username"
+        let pass = "password"
         
-        XCTAssertFalse(allMounts.contains(delete))
-        XCTAssert(allMounts.count == n - 1)
+        let model = CreateMountModel(urlString: urlStr, username: user, password: pass)
+        try await model.saveAll()
         
+        guard let share = StorageManager().mounts?.first else {XCTFail(); return}
+        
+        XCTAssertEqual(share.user, user)
+        XCTAssertEqual(share.password, pass)
+        XCTAssertEqual(share.url, url)
     }
-    @MainActor func testStorageManagerSavesAndLoadsMultiple()  async throws {
-        let user = "TestUser"
-       
-        let testPassword = "testPassword"
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-        let n = 10
-        var expected : [Share] = []
-        for i in 0..<n{
-            let testURl = URL(string: "smb://testUrl\(i)")!
-            let d = Share(user: user + String(i), password: testPassword + String(i), url: testURl, name: "name", mountPoint: "/some/share", managed: true, connected: false)
-            try manager.addMount(d)
-            expected.append(d)
+    @MainActor func testSaveAllThrowsAllEmpty() async throws{
+        do{
+            let model = CreateMountModel()
+            try await model.saveAll()
+            XCTFail("Should have thrown")
+        }catch let err as NewMountModelError{
+            XCTAssertEqual(err, NewMountModelError.missingValues)
+            
+        }catch{
+            XCTFail("Wrong error")
         }
-        guard let allMounts = manager.mounts else {
-            XCTFail()
-            return
-        }
-        XCTAssert(allMounts.count == n)
-        XCTAssertEqual(expected.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}), allMounts.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}))
     }
+    @MainActor func testSaveAllThrowsURLEmpty() async throws{
+        do{
+            let model = CreateMountModel(username: "dde", password: "cdxc")
+            try await model.saveAll()
+            XCTFail("Should have thrown")
+        }catch let err as NewMountModelError{
+            XCTAssertEqual(err, NewMountModelError.missingValues)
+            
+        }catch{
+            XCTFail("Wrong error")
+        }
+    }
+    
+
 }
     

@@ -24,7 +24,7 @@ import libMounter
     }
     @MainActor init() {
         
-        
+        //FIXME: only call register once...
         let loginItem = SMAppService.loginItem(
             identifier: "org.tassinari.MagicMount.MagicMountBackground"
         )

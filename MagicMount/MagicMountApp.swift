@@ -19,10 +19,10 @@ struct MagicMountApp: App {
             MountsView()
                 .environment(model)
         }
+        
+        //FIXME: deprecate?
         WindowGroup(id: MounterConstants.newMountWindowID) {
             NewMount()
-                
-                
         }
     }
 }
