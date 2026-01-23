@@ -4,7 +4,7 @@ builDir=$1
 echo "Starting Docker: (dir) $builDir"
 # Check if BUILT_PRODUCTS_DIR is set
 if [ -z "$1" ]; then
-  echo "arg 1 no set"
+  echo "arg 1 not set"
   exit 1
 fi
 

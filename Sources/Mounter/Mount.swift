@@ -9,7 +9,7 @@ public enum MountError: Error{
 ///  os errors are defined in <sys/errno.h>
 public enum MountResponse{
     case genericError(Error)
-    case success([String])
+    case success(Share)
     case authenticationError
     case cannotFindHost
     case timeout
@@ -18,9 +18,21 @@ public enum MountResponse{
     case alreadyMounted
    
 }
+struct MountedVolumesData: Equatable{
+    let name : String
+    let remountURL : URL
+    let path : String
+    
+    func equal(to: Share) -> Bool {
+        return remountURL.scheme == to.url.scheme && remountURL.host == to.url.host && remountURL.path() == to.url.path()
+    }
+    var share: Share {
+        return Share(user: nil, password: nil, url: remountURL, name: name, mountPoint: path, managed: false, connected: true)
+    }
+}
 
 public struct MountInfo{
-    public static func mountedVolumes() -> [Share] {
+    static func mountedVolumes() -> [MountedVolumesData] {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: [
                 .volumeIsLocalKey,
@@ -33,7 +45,7 @@ public struct MountInfo{
             return []
         }
 
-        var result: [Share] = []
+        var result: [MountedVolumesData] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: [
                 .volumeNameKey,
@@ -47,7 +59,7 @@ public struct MountInfo{
             if mount == "/"{
                 continue
             }
-            result.append(Share(user: "", password: "", url: remote, name: name, mountPoint: mount, managed: false, connected: true))
+            result.append(MountedVolumesData(name: name, remountURL: remote, path: mount))
         }
         return result
     }
@@ -82,7 +94,7 @@ public struct MountData{
             var components = URLComponents()
             components.scheme = scheme
             components.host = host
-            components.path = "/\(shareName)"
+            components.path = shareName.isEmpty ? "" : "/\(shareName)"
             if let user{
                 components.user = user
             }
@@ -119,7 +131,9 @@ public struct MountData{
                     let anyArray = arrayRef as [AnyObject]
                     return anyArray.compactMap { $0 as? String }
                 }()
-                retVal =  .success(messages)
+                let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: true)
+                retVal =  .success(share)
+  //
             case EAUTH:
                 retVal =  .authenticationError
             case EHOSTUNREACH:

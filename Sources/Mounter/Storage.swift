@@ -56,16 +56,14 @@ public class StorageManager{
         
     }
     /// The list of shares in User defaults.  These are added/managed by user.  Connected status is not guarenteed. Use fullMountList for true status
-    public var mounts: [Share]? {
+    internal var mounts: [Share]? {
         guard let defaults = userDefaults, let data = defaults.data(forKey: StorageManager.storeKey) else {
             return nil
         }
         let decoder = JSONDecoder()
         do{
             let shares = try decoder.decode([Share].self, from: data)
-            
-            //FIXME: updated connected here
-            
+           
             return shares
         }catch{
             //FIXME: logger
@@ -75,18 +73,22 @@ public class StorageManager{
     }
     /// The list of all external mounted volumes and volumes managed by user that may not be mounted
     public var fullMountList: [Share]? {
-        let connected = Set(MountInfo.mountedVolumes().filter({$0.type != "file"}))
-        let managed = Set(self.mounts ?? [])
+        let connected = MountInfo.mountedVolumes()
+        var managed = self.mounts ?? []
+        var notMananged = connected
         for m in managed{
             m.managed = true
-            m.connected = connected.contains(m) ? .mounted : .unmounted
+            for mnt in connected{
+                if mnt.equal(to: m){
+                    m.connected = .mounted
+                    notMananged.removeAll(where: {$0 == mnt})
+                }
+            }
         }
-        for con in connected{
-            con.connected = .mounted
-            con.managed = managed.contains(con)
-        }
-        let merged = connected.union(managed)
-        return Array(merged).sorted(by: {$0.name < $1.name})
+        //Add notManaged as Shares
+        let nonMananedShares: [Share] = notMananged.compactMap({$0.share})
+        managed.append(contentsOf: nonMananedShares)
+        return managed.sorted(by: {$0.name < $1.name})
     }
     
 }

@@ -53,9 +53,9 @@ class BaseTest : XCTestCase{
             process.waitUntilExit()
             
             
-            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-            
+//            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+//            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+//            
 //            if let stdout = String(data: stdoutData, encoding: .utf8), !stdout.isEmpty {
 //                print("📤 pretest.sh stdout:\n\(stdout)")
 //            }
@@ -104,6 +104,11 @@ final class MountDataTests: BaseTest {
     
     override func setUp() async throws {
         try await super.setUp()
+        do{
+            _ = try await MountData.unmount(url: URL(filePath: "/Volumes/\(shareName)"))
+        }catch{
+            //no-op, just cleaning up, it may not e mounted and will throw
+        }
         
     }
     override func tearDown() async throws {
@@ -115,6 +120,36 @@ final class MountDataTests: BaseTest {
         }
         
     }
+//    func testMultiConnect() async throws{
+//        let mount = MountData(scheme: "smb", host: "synology", port: nil, user: "tassinari", password: "mar4721k", shareName: "")
+//        let expexted = "smb://tassinari:mar4721k@synology:445"
+//        //XCTAssertEqual(expexted, try mount.url.absoluteString)
+//        print(try mount.url.absoluteString)
+//        do{
+//            let r = try await  mount.mount()
+//            switch r{
+//                
+//            case .genericError(let e):
+//                print(String(describing: e))
+//            case .success(let str):
+//                print(str)
+//            case .authenticationError:
+//                break
+//            case .cannotFindHost:
+//                break
+//            case .timeout:
+//                break
+//            case .noSuchFileOrDirectory:
+//                break
+//            case .connectionRefused:
+//                break
+//            case .alreadyMounted:
+//                break
+//            }
+//        }catch{
+//            print(String(describing: error))
+//        }
+//    }
     func testURLProducedWithNoPort(){
         let mount = MountData(scheme: "smb", host: "localhost", port: nil, user: "user1", password: "Password1", shareName: "share")
         let expexted = "smb://user1:Password1@localhost:445/share"
@@ -150,9 +185,8 @@ final class MountDataTests: BaseTest {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try await mountData.mount()
         switch mounts {
-        case .success(let mounts):
-            XCTAssert(mounts.count == 1)
-            XCTAssert(mounts.first == "/Volumes/smbTestShare")
+        case .success(let share):
+            XCTAssert(share.mountPoint == "/Volumes/smbTestShare")
         default:
             XCTFail()
             
@@ -166,9 +200,8 @@ final class MountDataTests: BaseTest {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         do{
             switch try await mountData.mount(){
-            case .success( _):
+            case .success( let share):
                 XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-                guard let share = MountInfo.mountedVolumes().first(where: ({$0.name == shareName})) else {XCTFail(); return}
                 try await share.unmount()
                 XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
             default:
@@ -189,11 +222,10 @@ final class MountDataTests: BaseTest {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let _ = try await mountData.mount()
         let volumes = MountInfo.mountedVolumes()
-        XCTAssert(volumes.count > 1) //one for test mount and one for mac HD
         guard let test = volumes.first(where: { $0.name == shareName}) else { XCTFail() ; return}
-        XCTAssertEqual(test.url, URL(string: "smb://samba@localhost:1445/smbTestShare")!)
+        XCTAssertEqual(test.remountURL, URL(string: "smb://samba@localhost:1445/smbTestShare")!)
         XCTAssertEqual(test.name, shareName)
-        XCTAssertEqual(test.mountPoint, "/Volumes/\(shareName)")
+        XCTAssertEqual(test.path, "/Volumes/\(shareName)")
         
     }
     
@@ -218,7 +250,7 @@ final class MountDataTests: BaseTest {
         case .authenticationError:
             break
         default:
-            XCTFail()
+            XCTFail("expected auth error, got \(String(describing: mounts))")
         }
     }
     func testMountWithWrongPortFails() async throws{
@@ -303,12 +335,9 @@ final class MountDataTests: BaseTest {
 
         let response = try await mountData.mount()
         switch response{
-        case .success(let paths):
-            guard let url = paths.first else {
-                XCTFail()
-                return
-            }
-            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: url, directoryHint: .isDirectory)))
+        case .success(let share):
+            
+            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: share.mountPoint, directoryHint: .isDirectory)))
         default:
             XCTFail()
         }

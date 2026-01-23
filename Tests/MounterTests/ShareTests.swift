@@ -44,8 +44,8 @@ final class ShareTests: BaseTest {
         let result = try await share.mount()
 
         switch result {
-        case .success(let mounts):
-            XCTAssertTrue(mounts.contains("/Volumes/smbTestShare"))
+        case .success(let share):
+            XCTAssertTrue(share.mountPoint == "/Volumes/smbTestShare")
             XCTAssertTrue(FileManager.default.fileExists(
                 atPath: "/Volumes/smbTestShare/empty_file.txt"
             ))
