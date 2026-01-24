@@ -18,7 +18,7 @@ public enum MountResponse{
     case alreadyMounted
    
 }
-struct MountedVolumesData: Equatable{
+internal struct MountedVolumesData: Equatable{
     let name : String
     let remountURL : URL
     let path : String
@@ -31,7 +31,7 @@ struct MountedVolumesData: Equatable{
     }
 }
 
-public struct MountInfo{
+internal struct MountInfo{
     static func mountedVolumes() -> [MountedVolumesData] {
         guard let urls = FileManager.default.mountedVolumeURLs(
             includingResourceValuesForKeys: [
@@ -72,16 +72,13 @@ public struct MountInfo{
             return false
         }
         for url in urls {
-            let values = try? url.resourceValues(forKeys: [
-                .volumeURLForRemountingKey
-            ])
             if url.relativePath == local.relativePath { return true }
         }
         return false
     }
 }
 
-public struct MountData{
+internal struct MountData{
     public let scheme: String
     public let host: String
     public let port : Int?
@@ -112,7 +109,7 @@ public struct MountData{
             return url
         }
     }
-    public func mount() async throws -> MountResponse {
+    internal func mount() async throws -> MountResponse {
        
         let url = try self.url
         var cfArray: Unmanaged<CFArray>?
@@ -155,7 +152,7 @@ public struct MountData{
         
     }
 
-    public static func unmount(url: URL) async throws {
+    internal static func unmount(url: URL) async throws {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw CocoaError(.fileNoSuchFile)
         }

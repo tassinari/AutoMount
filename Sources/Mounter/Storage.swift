@@ -8,21 +8,52 @@
 import Foundation
 import AppKit
 
+/// Represents the connection state of a share.
+///
+/// - mounted: The share is currently mounted and accessible.
+/// - unmounted: The share is currently not mounted.
+/// - mounting: The share is in the process of being mounted.
+/// - unmounting: The share is in the process of being unmounted.
 public enum ConnectionState: Codable{
     case mounted, unmounted, mounting, unmounting
 }
 
+/// Errors that can be thrown by `StorageManager`.
+///
+/// - doesNotExsist: Thrown when attempting to delete a mount that does not exist in storage.
+/// - noUserDefaults: Thrown when the underlying `UserDefaults` instance is not available.
 public enum StorageManagerError : Error {
     case doesNotExsist, noUserDefaults
 }
 
+/// Manages persistence of user-managed shares and merges them with currently mounted volumes.
+///
+/// This manager persists shares added or removed by the user in a designated `UserDefaults` suite.
+/// It provides a combined view of all mounted volumes and user-managed shares via `fullMountList`.
+/// This class is not inherently thread-safe; external synchronization is required if accessed concurrently.
+/// The storage suite key used is `"group.org.tassinari.magicmount"`.
 public class StorageManager{
+    /// The key used in UserDefaults to persist the encoded shares.
     public static let storeKey : String = "ShareStoreKey"
+    
+    /// Initializes the storage manager with a specific `UserDefaults` instance.
+    ///
+    /// - Parameter defaults: The `UserDefaults` instance to use for persistence.
+    ///   Defaults to the suite named `"group.org.tassinari.magicmount"`.
+    ///   Passing `nil` disables persistence and causes methods to throw `.noUserDefaults`.
     public init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.magicmount")) {
         self.userDefaults = defaults
     }
     let userDefaults: UserDefaults?
     
+    /// Adds a share to the list of managed mounts and persists the updated list.
+    ///
+    /// Marks the share as managed, appends it to the current list if present, or creates a new list.
+    /// Persists the updated list encoded as JSON in `UserDefaults`.
+    ///
+    /// - Parameter mount: The `Share` instance to add.
+    /// - Throws: `StorageManagerError.noUserDefaults` if the `UserDefaults` instance is unavailable.
+    ///           Encoding errors if JSON encoding fails.
     public func addMount(_ mount: Share) throws {
         mount.managed = true
         guard let defaults = userDefaults else {
@@ -40,6 +71,17 @@ public class StorageManager{
             defaults.set(data, forKey: StorageManager.storeKey)
         }
     }
+    
+    /// Deletes a share from the list of managed mounts and persists the updated list.
+    ///
+    /// Marks the share as unmanaged, removes all shares equal to the given one from storage,
+    /// and persists the updated list encoded as JSON in `UserDefaults`.
+    ///
+    /// - Parameter mount: The `Share` instance to delete.
+    /// - Throws: `StorageManagerError.noUserDefaults` if the `UserDefaults` instance is unavailable.
+    ///           `StorageManagerError.doesNotExsist` if no stored mounts exist to delete from.
+    ///
+    /// - Note: All shares that are equal to `mount` will be removed.
     public func deleteMount(_ mount: Share) throws {
         mount.managed = false
         guard let defaults = userDefaults else {
@@ -55,7 +97,12 @@ public class StorageManager{
         defaults.set(data, forKey: StorageManager.storeKey)
         
     }
-    /// The list of shares in User defaults.  These are added/managed by user.  Connected status is not guarenteed. Use fullMountList for true status
+    
+    /// Reads and decodes the list of shares stored in UserDefaults.
+    ///
+    /// Returns the array of stored shares decoded from JSON,
+    /// or `nil` if no data is present.
+    /// Returns an empty array if decoding fails.
     internal var mounts: [Share]? {
         guard let defaults = userDefaults, let data = defaults.data(forKey: StorageManager.storeKey) else {
             return nil
@@ -66,12 +113,28 @@ public class StorageManager{
            
             return shares
         }catch{
-            //FIXME: logger
+            libMounter.error("Error decoding Share: \(String(describing: error))")
             return []
         }
        
     }
-    /// The list of all external mounted volumes and volumes managed by user that may not be mounted
+    
+    /// Merges currently mounted volumes with user-managed shares to produce a comprehensive list.
+    ///
+    /// This property retrieves the list of currently mounted volumes via `MountInfo.mountedVolumes()`,
+    /// and the user-managed shares from storage. It marks user-managed shares as managed,
+    /// and if any mounted volume matches a managed share (using `Share.equal(to:)`), it marks the share as connected,
+    /// and removes the mounted volume from the non-managed list.
+    ///
+    /// Remaining mounted volumes that are not managed by the user are converted to `Share` instances
+    /// using their `.share` property and appended to the result.
+    ///
+    /// The final list is sorted by `Share.name`.
+    ///
+    /// - Returns: A sorted array of `Share` instances representing all managed and currently mounted shares,
+    ///            or `nil` if there are no managed shares and no mounted volumes.
+    ///
+    /// - Note: This method assumes `Share.equal(to:)` and `Equatable` semantics are consistent to identify shares correctly.
     public var fullMountList: [Share]? {
         let connected = MountInfo.mountedVolumes()
         var managed = self.mounts ?? []

@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import OSLog
 @testable import libMounter
 
 final class StorageManagerTests: BaseTest {
@@ -37,6 +38,16 @@ final class StorageManagerTests: BaseTest {
         XCTAssert(first.user == user)
         XCTAssert(first.password  == testPassword)
     
+        
+    }
+    @MainActor func testMountsLogsBadData()   async throws {
+        //Put bad data in user defaults and test that the error was logged
+        UserDefaults(suiteName: defaultsSuiteName)?.setValue(Data([11]), forKey: StorageManager.storeKey)
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let d = manager.mounts
+        XCTAssertTrue(d?.count == 0)
+        let logs = try getLogs()
+        XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Error decoding Share")}))
         
     }
     @MainActor func testStorageManagerTHrowsWithNoDefaults()   async throws {
@@ -145,6 +156,7 @@ final class StorageManagerTests: BaseTest {
         XCTAssertEqual(expected.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}), allMounts.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}))
     }
     func testFullMountListIncludesMountedSMBShare() async throws {
+        let sm = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
         let mountData = MountData(
             scheme: "smb",
             host: "localhost",
@@ -156,14 +168,73 @@ final class StorageManagerTests: BaseTest {
 
         _ = try await mountData.mount()
 
-        guard let mounts = StorageManager().fullMountList else{  XCTFail(); return}
+        guard let mounts = sm.fullMountList else{  XCTFail(); return}
 
         XCTAssertFalse(mounts.isEmpty)
 
         let smb = mounts.first { $0.name == "smbTestShare" }
+        XCTAssert(smb?.managed == false)
         XCTAssertNotNil(smb)
         XCTAssertEqual(smb?.mountPoint, "/Volumes/smbTestShare")
     }
+    func testFullMountListIncludesManagedMountedSMBShare() async throws {
+        let sm = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let mountData = MountData(
+            scheme: "smb",
+            host: "localhost",
+            port: 1445,
+            user: "samba",
+            password: "secret123",
+            shareName: "smbTestShare"
+        )
+
+        _ = try await mountData.mount()
+
+        guard let mounts = sm.fullMountList else{  XCTFail(); return}
+
+        XCTAssertFalse(mounts.isEmpty)
+
+        guard let smb = mounts.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
+        XCTAssert(smb.managed == false)
+        XCTAssertEqual(smb.mountPoint, "/Volumes/smbTestShare")
+        try sm.addMount(smb)
+        try await smb.unmount()
+        
+        guard let mounts2 = sm.fullMountList else{  XCTFail(); return}
+        XCTAssert(mounts2.count == 1)
+        guard let smb2 = mounts2.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
+        XCTAssert(smb2.managed == true)
+        XCTAssert(smb.connected == .unmounted)
+        
+        _ = try await mountData.mount()
+        
+        guard let mounts3 = sm.fullMountList else{  XCTFail(); return}
+        XCTAssertFalse(mounts3.isEmpty)
+        guard let smb3 = mounts3.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
+        XCTAssert(smb3.managed == true)
+        XCTAssert(smb3.connected == .mounted)
+
+    }
+    
 
 
+    func getLogs() throws -> [OSLogEntryLog]{
+        let store = try OSLogStore(scope: .currentProcessIdentifier)
+        let position = store.position(date: .now.addingTimeInterval(-5))
+        let predicate = NSPredicate(format:
+                                        "(subsystem == %@ && category == %@)",
+                                    Bundle.main.bundleIdentifier!, "Mounter")
+        let entries = try OSLogStore.local().getEntries(at: position, matching: predicate)
+        let it = entries.makeIterator()
+        var msgs : [OSLogEntryLog] = []
+        var msg = it.next()
+        while(msg != nil){
+            if let entrylog = msg as? OSLogEntryLog{
+                msgs.append(entrylog)
+            }
+            msg = it.next()
+        }
+        return msgs
+    }
+    
 }

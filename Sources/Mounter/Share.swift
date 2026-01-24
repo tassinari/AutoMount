@@ -23,14 +23,18 @@ import AppKit
         self.connected = .unmounted
     }
     public required init(from decoder: Decoder) throws {
-           let container = try decoder.container(keyedBy: CodingKeys.self)
-           user = try container.decode(String.self, forKey: .user)
-           password = try container.decode(String.self, forKey: .password)
-           url = try container.decode(URL.self, forKey: .url)
-           name = try container.decode(String.self, forKey: .name)
-           mountPoint = try container.decode(String.self, forKey: .mountPoint)
-           managed = try container.decode(Bool.self, forKey: .managed)
-           connected = try container.decode(ConnectionState.self, forKey: .connected)
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let u = try? container.decode(String.self, forKey: .user){
+            user = u
+        }
+        if let p = try? container.decode(String.self, forKey: .password){
+            password = p
+        }
+        url = try container.decode(URL.self, forKey: .url)
+        name = try container.decode(String.self, forKey: .name)
+        mountPoint = try container.decode(String.self, forKey: .mountPoint)
+        managed = try container.decode(Bool.self, forKey: .managed)
+        connected = try container.decode(ConnectionState.self, forKey: .connected)
     }
     public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
@@ -68,7 +72,7 @@ import AppKit
 //FIXME: put mount unmount into an actor to preserve state access
 extension Share {
     
-    public var mountData : MountData?{
+    internal var mountData : MountData?{
         if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false),let scheme = comp.scheme, let host = comp.host{
             return MountData(scheme: scheme , host: host, port: comp.port, user: comp.user, password: comp.password, shareName: name)
         }
@@ -128,6 +132,7 @@ extension Share: Hashable, Identifiable{
         
     }
 }
+//FIXME: move this to client
 extension Share{
     public func open(){
         let url = URL(filePath: mountPoint)
