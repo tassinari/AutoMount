@@ -13,14 +13,14 @@ import AppKit
 @Observable public class Share: Codable{
     
     //FIXME: make this failable if URL does not conform to smb/afp/nfs??
-    public init(user: String?, password: String?, url: URL, name: String, mountPoint: String, managed: Bool, connected: Bool) {
+    public init(user: String?, password: String?, url: URL, name: String, mountPoint: String, managed: Bool, connected: ConnectionState) {
         self.user = user
         self.password = password
         self.url = url
         self.name = name
         self.mountPoint = mountPoint
         self.managed = managed
-        self.connected = .unmounted
+        self.connected = connected
     }
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

@@ -27,7 +27,7 @@ internal struct MountedVolumesData: Equatable{
         return remountURL.scheme == to.url.scheme && remountURL.host == to.url.host && remountURL.path() == to.url.path()
     }
     var share: Share {
-        return Share(user: nil, password: nil, url: remountURL, name: name, mountPoint: path, managed: false, connected: true)
+        return Share(user: nil, password: nil, url: remountURL, name: name, mountPoint: path, managed: false, connected: .mounted)
     }
 }
 
@@ -128,7 +128,7 @@ internal struct MountData{
                     let anyArray = arrayRef as [AnyObject]
                     return anyArray.compactMap { $0 as? String }
                 }()
-                let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: true)
+                let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: .mounted)
                 retVal =  .success(share)
   //
             case EAUTH:

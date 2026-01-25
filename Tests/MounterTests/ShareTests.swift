@@ -19,7 +19,7 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/smbTestShare",
             managed: true,
-            connected: true
+            connected: .mounted
         )
 
         let mountData = share.mountData
@@ -29,6 +29,7 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(mountData?.port, 1445)
         XCTAssertEqual(mountData?.user, "samba")
         XCTAssertEqual(mountData?.shareName, "smbTestShare")
+        XCTAssertEqual(share.connected, .mounted)
     }
     
     @MainActor
@@ -38,7 +39,7 @@ final class ShareTests: BaseTest {
                             url: URL(string: "smb://samba:secret123@localhost:1445/smbTestShare")!,
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
-                            connected: true
+                            connected: .unmounted
         )
         
         let result = try await share.mount()
@@ -60,7 +61,7 @@ final class ShareTests: BaseTest {
                             url: URL(filePath: ""),
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
-                            connected: true
+                            connected: .unmounted
         )
        
         do{
@@ -80,11 +81,10 @@ final class ShareTests: BaseTest {
                             url: URL(string: "smb://samba:secret123@localhost:1445/smbTestShare")!,
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
-                            connected: true
+                            connected: .mounted
         )
        
         do{
-            share.connected = .mounted
             let r = try await share.mount()
             switch r{
             case .alreadyMounted:
@@ -106,9 +106,8 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/smbTestShare",
             managed: true,
-            connected: true
+            connected: .unmounting
         )
-        share.connected = .unmounting
         try await share.unmount()
         XCTAssert(share.connected == .unmounting)
         
@@ -122,9 +121,9 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
-            connected: true
+            connected: .mounted
         )
-        share.connected = .mounted
+       
         do{
             try await share.unmount()
             XCTFail("Should have thrown")
@@ -143,7 +142,7 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
-            connected: true
+            connected: .unmounted
         )
         let share2 = Share(
             user: "samba",
@@ -152,7 +151,7 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
-            connected: true
+            connected: .unmounted
         )
         let share3 = Share(
             user: "samba",
@@ -161,7 +160,7 @@ final class ShareTests: BaseTest {
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
-            connected: true
+            connected: .unmounted
         )
         let set1 : Set<Share> = [share1,share2]
         let set2 : Set<Share> = [share2,share3]
