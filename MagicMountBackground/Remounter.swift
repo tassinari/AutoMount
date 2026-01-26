@@ -9,53 +9,55 @@ import Foundation
 import libMounter
 
 actor Remounter{
-    init(debounceSeconds : TimeInterval = 20){
+    init(debounceSeconds : TimeInterval = 20, storage: Storage = StorageManager()){
         self.debounceSeconds = debounceSeconds
         callDate = .now
+        self.storage = storage
     }
     private var debounceSeconds: TimeInterval
     private var callDate: Date
+    private let storage : Storage
     
     func checkAndRemount() async{
         if Date.now.timeIntervalSince(callDate) < debounceSeconds{
-            await debug("Cache still valid, not remounting")
+            debug("Cache still valid, not remounting")
             return
         }
         callDate = .now
-        let mountedVolumes = MountInfo.mountedVolumes()
-        let manager = StorageManager()
-        for mount in manager.mounts ?? []{
-            if !mountedVolumes.contains(mount){
-                await notice("\(mount.name) is not connected, connecting..")
-                guard let md = mount.mountData else {
-                    await error("could not get mountdata for \(mount.name)")
-                    return
-                }
-                do{
-                    switch try await md.mount(){
-                        
-                    case .genericError(let e):
-                        await error("Generic error in mount attempt: \(String(describing: e))")
-                    case .success(let mp):
-                        await notice("Success, \(mount.name) is mounted on \(mp.first ?? "unknown")")
-                    case .authenticationError:
-                        await notice("Mount failure for \(mount.name): auth error")
-                    case .cannotFindHost:
-                        await notice("Mount failure for \(mount.name): no host")
-                    case .timeout:
-                        await notice("Mount failure for \(mount.name): timeout")
-                    case .noSuchFileOrDirectory:
-                        await notice("Mount failure for \(mount.name): no such file or directory")
-                    case .connectionRefused:
-                        await notice("Mount failure for \(mount.name): connection refused")
-                    case .alreadyMounted:
-                        await notice("Mount failure for \(mount.name): already mounted")
+        await reconnectAll()
+    }
+    @MainActor private func reconnectAll() async{
+        let shares = await storage.fullMountList ?? []
+        for share in shares{
+            if share.managed{
+                if share.connected == .unmounted{
+                    notice("\(share.name) is not connected, connecting..")
+                    do{
+                        switch try await share.mount(){
+                            
+                        case .genericError(let e):
+                            error("Generic error in mount attempt: \(String(describing: e))")
+                        case .success(let mounted):
+                            notice("Success, \(mounted.name) is mounted on \(mounted.mountPoint)")
+                        case .authenticationError:
+                            notice("Mount failure for \(share.name): auth error")
+                        case .cannotFindHost:
+                            notice("Mount failure for \(share.name): no host")
+                        case .timeout:
+                            notice("Mount failure for \(share.name): timeout")
+                        case .noSuchFileOrDirectory:
+                            notice("Mount failure for \(share.name): no such file or directory")
+                        case .connectionRefused:
+                            notice("Mount failure for \(share.name): connection refused")
+                        case .alreadyMounted:
+                            notice("Mount failure for \(share.name): already mounted")
+                        }
+                    }catch {
+                        MagicMountBackground.error("Mount(\(share.name) threw:  \(String(describing: error))")
                     }
-                }catch {
-                    await MagicMountBackground.error("Mount(\(mount.name) threw:  \(String(describing: error))")
+                }else{
+                     notice("\(share.name) connected, not attempting remount")
                 }
-            }else{
-                await notice("\(mount.name) connected, not attempting remount")
             }
         }
     }

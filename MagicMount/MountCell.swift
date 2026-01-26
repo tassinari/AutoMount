@@ -11,14 +11,15 @@ import libMounter
 @Observable class MountCellModel {
     let share: Share
     let manageHandler: ((Share) -> Void)?
+    let storage : Storage
     var autoMount: Bool {
         set {
             share.managed = newValue
             do {
                 if newValue {
-                    try StorageManager().addMount(share)
+                    try storage.addMount(share)
                 } else {
-                    try StorageManager().deleteMount(share)
+                    try storage.deleteMount(share)
                 }
             } catch {
                 MagicMount.error(
@@ -31,9 +32,10 @@ import libMounter
         }
     }
 
-    init(share: Share, handler: ((Share) -> Void)? = nil) {
+    init(share: Share, storage: Storage = StorageManager() , handler: ((Share) -> Void)? = nil) {
         self.share = share
         self.manageHandler = handler
+        self.storage = storage
     }
 
     func eject() {

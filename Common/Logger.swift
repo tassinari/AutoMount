@@ -9,32 +9,42 @@
 import Foundation
 import os
 
-
-internal func debug( _ msg : String){
-    MagicMountLog.shared.debug(msg)
-}
-internal func notice( _ msg : String){
-    MagicMountLog.shared.notice(msg)
-}
-internal func error( _ msg : String){
-    MagicMountLog.shared.error(msg)
+internal nonisolated func debug(_ msg: String) {
+    Task {
+        await MagicMountLog.shared.debug(msg)
+    }
 }
 
-internal class MagicMountLog{
-    
+internal nonisolated func notice(_ msg: String) {
+    Task {
+        await MagicMountLog.shared.notice(msg)
+    }
+}
+
+internal nonisolated func error(_ msg: String) {
+    Task {
+        await MagicMountLog.shared.error(msg)
+    }
+}
+
+internal actor MagicMountLog {
+
     static let shared = MagicMountLog()
+
     private let logger = Logger(
-            subsystem: Bundle.main.bundleIdentifier!,
-            category: "MagicMount"
+        subsystem: Bundle.main.bundleIdentifier!,
+        category: "MagicMount"
     )
-    
-    func debug(_ msg: String){
+
+    func debug(_ msg: String) {
         logger.debug("\(msg)")
     }
-    func notice(_ msg: String){
+
+    func notice(_ msg: String) {
         logger.notice("\(msg)")
     }
-    func error(_ msg: String){
+
+    func error(_ msg: String) {
         logger.error("\(msg, privacy: .public)")
     }
 }

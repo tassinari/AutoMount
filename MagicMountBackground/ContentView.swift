@@ -17,22 +17,33 @@ import libMounter
 @Observable class MenuModel{
     
     var shares : [Share]
+    let storage : Storage
     
-    init(){
+    init(storage : Storage = StorageManager()){
+        self.storage = storage
         shares = StorageManager().fullMountList ?? []
-        refresh()
     }
     func refresh(){
-        let connected = MountInfo.mountedVolumes().filter({$0.type != "file"})
-        
-        //update status of shares we know about
-        for share in shares {
-            share.connected = connected.contains(share) ? .mounted : .unmounted
-            print("\(share.name) -> \(share.connected)")
+        //current state
+        let updated = storage.fullMountList ?? []
+        //find new shares
+        let added = Set(updated).subtracting(shares)
+        //find missing shares, shares that were switched to unmanaged and unmounted
+        let missing = Set(shares).subtracting(updated)
+        //make and updated list with same instances
+        var fullUpdated : [Share] = []
+        for share in shares{
+            if missing.contains(share){
+                continue;
+            }
+            if let sameShareFromUpdated = updated.first(where: {$0 == share}){
+                share.connected = sameShareFromUpdated.connected
+                share.managed = sameShareFromUpdated.managed
+            }
+            fullUpdated.append(share)
         }
-        //append any new shares
-        let newShares = Set(connected).subtracting(shares)
-        shares.append(contentsOf: newShares)
+        fullUpdated.append(contentsOf: added)
+        shares = fullUpdated
     }
     func openApp(){
         let config = NSWorkspace.OpenConfiguration()

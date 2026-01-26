@@ -56,7 +56,7 @@ final class newModelTests: XCTestCase {
         let model = CreateMountModel(urlString: urlStr, username: user, password: pass)
         try await model.saveAll()
         
-        guard let share = StorageManager().mounts?.first else {XCTFail(); return}
+        guard let share = StorageManager().fullMountList?.first else {XCTFail(); return}
         
         XCTAssertEqual(share.user, user)
         XCTAssertEqual(share.password, pass)

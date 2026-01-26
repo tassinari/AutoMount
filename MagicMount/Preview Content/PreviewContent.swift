@@ -15,7 +15,7 @@ class PreviewData {
               name: "Media",
               mountPoint: "/Volumes/Media",
               managed: true,
-              connected: false
+              connected: .mounted
              ),
         Share(user: "",
               password: "",
@@ -23,7 +23,7 @@ class PreviewData {
               name: "Projects",
               mountPoint: "/Volumes/Projects",
               managed: true,
-              connected: true
+              connected: .mounted
              ),
         Share(user: "",
               password: "",
@@ -31,7 +31,7 @@ class PreviewData {
               name: "Projects",
               mountPoint: "/Volumes/Backup",
               managed: true,
-              connected: false
+              connected: .unmounted
              ),
         Share(user: "",
               password: "",
@@ -39,7 +39,7 @@ class PreviewData {
               name: "USB",
               mountPoint: "/Volumes/USB Drive",
               managed: false,
-              connected: true
+              connected: .mounted
              ),
        
     ]

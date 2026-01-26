@@ -14,11 +14,13 @@ enum NewMountModelError : Swift.Error {
     var urlString: String
     var username: String
     var password: String
+    private let storage : Storage
 
-    init(urlString: String = "", username: String = "", password: String = "") {
+    init(urlString: String = "", username: String = "", password: String = "",storage: Storage = StorageManager()) {
         self.password = password
         self.urlString = urlString
         self.username = username
+        self.storage = storage
     }
 
     func clear() {
@@ -32,10 +34,10 @@ enum NewMountModelError : Swift.Error {
             throw NewMountModelError.missingValues
         }
 
-        let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path",managed: true, connected: false)
+        let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path",managed: true, connected: .mounted)
 
         try await Task {
-            try StorageManager().addMount(mount)
+            try storage.addMount(mount)
         }.value
     }
 }

@@ -79,5 +79,5 @@ struct EditShareView: View {
 }
 
 #Preview {
-    EditShareView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path", managed: true,connected: false))
+    EditShareView(share: Share(user: "", password: "", url: URL(fileURLWithPath:""), name: "Photo", mountPoint: "/some/path", managed: true,connected: .unmounted))
 }

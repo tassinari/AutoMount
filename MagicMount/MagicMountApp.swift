@@ -7,22 +7,15 @@
 
 import SwiftUI
 
-enum MounterConstants {
-    static let newMountWindowID: String = "newMountWindowID"
-}
 
 @main
 struct MagicMountApp: App {
-    private var model: MountsViewModel = MountsViewModel()
+    private var model: MountsViewModel = MountsViewModel( service: DefaultServiceInterface())
     var body: some Scene {
         WindowGroup {
             MountsView()
                 .environment(model)
         }
         
-        //FIXME: deprecate?
-        WindowGroup(id: MounterConstants.newMountWindowID) {
-            NewMount()
-        }
     }
 }

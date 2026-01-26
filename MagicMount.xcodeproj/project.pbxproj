@@ -86,7 +86,15 @@
 		487A921E2F01AF100095BDA6 /* Exceptions for "Common" folder in "MagicMountBackground" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Common.swift,
 				Logger.swift,
+			);
+			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
+		};
+		488F8C982F2691EA004E8664 /* Exceptions for "MagicMount" folder in "MagicMountBackground" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Preview Content/MockStorage.swift",
 			);
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 		};
@@ -95,6 +103,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		482995F22EFC63CF003AB633 /* MagicMount */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				488F8C982F2691EA004E8664 /* Exceptions for "MagicMount" folder in "MagicMountBackground" target */,
+			);
 			path = MagicMount;
 			sourceTree = "<group>";
 		};
