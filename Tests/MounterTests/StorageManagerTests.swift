@@ -13,7 +13,7 @@ final class StorageManagerTests: BaseTest {
     let defaultsSuiteName = "group.org.tassinari.magicmount.test"
     override func setUpWithError() throws {
         try super.setUpWithError()
-        UserDefaults(suiteName: defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
+        UserDefaults(suiteName: Self.defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
     }
 
     @MainActor func testStorageManagerSavesAndLoads()   async throws {
@@ -22,7 +22,7 @@ final class StorageManagerTests: BaseTest {
         let testPassword = "testPassword"
         let name = "testName"
         
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", managed: true, connected: .unmounted)
         try manager.addMount(mount)
         guard let mounts = manager.mounts else {
@@ -42,8 +42,8 @@ final class StorageManagerTests: BaseTest {
     }
     @MainActor func testMountsLogsBadData()   async throws {
         //Put bad data in user defaults and test that the error was logged
-        UserDefaults(suiteName: defaultsSuiteName)?.setValue(Data([11]), forKey: StorageManager.storeKey)
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        UserDefaults(suiteName: Self.defaultsSuiteName)?.setValue(Data([11]), forKey: StorageManager.storeKey)
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let d = manager.mounts
         XCTAssertTrue(d?.count == 0)
         let logs = try getLogs()
@@ -95,7 +95,7 @@ final class StorageManagerTests: BaseTest {
         let testURL = URL(string: "testUrl")!
         let testPassword = "testPassword"
         let name = "testName"
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         do{
             try manager.deleteMount(mount)
@@ -113,7 +113,7 @@ final class StorageManagerTests: BaseTest {
         let testPassword = "testPassword"
         let name = "testName"
         let uuid = UUID().uuidString
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let n = 10
         var expected : [Share] = []
         for i in 0..<n{
@@ -139,7 +139,7 @@ final class StorageManagerTests: BaseTest {
         
         let testPassword = "testPassword"
         let name = "testName"
-        let manager =  StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let n = 10
         var expected : [Share] = []
         for i in 0..<n{
@@ -156,7 +156,7 @@ final class StorageManagerTests: BaseTest {
         XCTAssertEqual(expected.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}), allMounts.sorted(by: {$0.url.absoluteString > $1.url.absoluteString}))
     }
     func testFullMountListIncludesMountedSMBShare() async throws {
-        let sm = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+        let sm = StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let mountData = MountData(
             scheme: "smb",
             host: "localhost",
@@ -177,8 +177,8 @@ final class StorageManagerTests: BaseTest {
         XCTAssertNotNil(smb)
         XCTAssertEqual(smb?.mountPoint, "/Volumes/smbTestShare")
     }
-    func testFullMountListIncludesManagedMountedSMBShare() async throws {
-        let sm = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+    @MainActor func testFullMountListIncludesManagedMountedSMBShare() async throws {
+        let sm = StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let mountData = MountData(
             scheme: "smb",
             host: "localhost",
@@ -198,7 +198,7 @@ final class StorageManagerTests: BaseTest {
         XCTAssert(smb.managed == false)
         XCTAssertEqual(smb.mountPoint, "/Volumes/smbTestShare")
         try sm.addMount(smb)
-        try await smb.unmount()
+        try await storage.unmount(smb)
         
         guard let mounts2 = sm.fullMountList else{  XCTFail(); return}
         guard let smb2 = mounts2.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}

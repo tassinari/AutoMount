@@ -155,3 +155,37 @@ public class StorageManager{
     }
     
 }
+
+public extension StorageManager {
+    @MainActor func mount(_ share : Share) async throws -> MountResponse {
+        if share.connected != .unmounted{
+            return .alreadyMounted
+        }
+        if let md = share.mountData{
+            do{
+                share.connected = .mounting
+                let data =  try await md.mount()
+                share.connected = .unmounted
+                return data
+            }catch{
+                share.connected = .unmounted
+                throw error
+            }
+        }
+        throw MountError.noMountData
+    }
+    @MainActor func unmount(_ share: Share) async throws{
+        if share.connected == .unmounting{
+            return
+        }
+        let url = URL(filePath: share.mountPoint)
+        share.connected = .unmounting
+        do{
+            try await MountData.unmount(url: url)
+            share.connected = .unmounted
+        }catch{
+            share.connected = .mounted
+            throw error
+        }
+    }
+}

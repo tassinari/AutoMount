@@ -7,7 +7,7 @@ public enum MountError: Error{
 }
 /// Errors:
 ///  os errors are defined in <sys/errno.h>
-public enum MountResponse{
+public enum MountResponse : Sendable{
     case genericError(Error)
     case success(Share)
     case authenticationError

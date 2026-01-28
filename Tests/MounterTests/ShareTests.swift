@@ -42,7 +42,7 @@ final class ShareTests: BaseTest {
                             connected: .unmounted
         )
         
-        let result = try await share.mount()
+        let result = try await storage.mount(share)
 
         switch result {
         case .success(let share):
@@ -65,7 +65,7 @@ final class ShareTests: BaseTest {
         )
        
         do{
-            let _ = try await share.mount()
+            let _ = try await storage.mount(share)
             XCTFail("should have thrown")
         }catch let error as MountError{
             XCTAssert(error == .noMountData)
@@ -85,7 +85,7 @@ final class ShareTests: BaseTest {
         )
        
         do{
-            let r = try await share.mount()
+            let r = try await storage.mount(share)
             switch r{
             case .alreadyMounted:
                 break
@@ -98,7 +98,7 @@ final class ShareTests: BaseTest {
         }
     
     }
-    func testUnmountingDoesNothingWhenAlreadyUnmounting() async throws {
+    @MainActor func testUnmountingDoesNothingWhenAlreadyUnmounting() async throws {
         let share = Share(
             user: "samba",
             password: "",
@@ -108,12 +108,12 @@ final class ShareTests: BaseTest {
             managed: true,
             connected: .unmounting
         )
-        try await share.unmount()
+        try await storage.unmount(share)
         XCTAssert(share.connected == .unmounting)
         
         
     }
-    func testUnmountingThrowsWhenWrongFile() async throws {
+    @MainActor func testUnmountingThrowsWhenWrongFile() async throws {
         let share = Share(
             user: "samba",
             password: "",
@@ -125,7 +125,7 @@ final class ShareTests: BaseTest {
         )
        
         do{
-            try await share.unmount()
+            try await storage.unmount(share)
             XCTFail("Should have thrown")
         }catch let error as NSError{
             XCTAssertTrue(error.domain == NSCocoaErrorDomain)

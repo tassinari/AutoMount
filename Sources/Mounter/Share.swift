@@ -9,8 +9,9 @@ import Foundation
 import AppKit
 
 
+//TODO: fix unchecked sendable, its there because of storagemanager mount class function, maybe make that @mainactor?
 
-@Observable public class Share: Codable{
+@Observable public class Share: Codable, @unchecked Sendable {
     
     //FIXME: make this failable if URL does not conform to smb/afp/nfs??
     public init(user: String?, password: String?, url: URL, name: String, mountPoint: String, managed: Bool, connected: ConnectionState) {
@@ -77,38 +78,6 @@ extension Share {
             return MountData(scheme: scheme , host: host, port: comp.port, user: comp.user, password: comp.password, shareName: name)
         }
         return nil
-    }
-   
-    public func unmount() async throws{
-        if connected == .unmounting{
-            return
-        }
-        let url = URL(filePath: mountPoint)
-        self.connected = .unmounting
-        do{
-            try await MountData.unmount(url: url)
-            self.connected = .unmounted
-        }catch{
-            self.connected = .mounted
-            throw error
-        }
-    }
-    public func mount() async throws -> MountResponse{
-        if connected != .unmounted{
-            return .alreadyMounted
-        }
-        if let mountData{
-            do{
-                self.connected = .mounting
-                let data =  try await mountData.mount()
-                self.connected = .unmounted
-                return data
-            }catch{
-                self.connected = .unmounted
-                throw error
-            }
-        }
-        throw MountError.noMountData
     }
 }
 extension Share: Hashable, Identifiable{

@@ -13,11 +13,13 @@ enum ShellError: Error {
 }
 
 class BaseTest : XCTestCase{
+    static let defaultsSuiteName = "group.org.tassinari.magicmount.test"
     let hostName = "localhost"
     let port = 1445
     let password = "secret123"
     let userName = "samba"
     let shareName = "smbTestShare"
+    let storage = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
     
     static func runPreTestScript(script: String) {
         do {
@@ -99,7 +101,7 @@ class BaseTest : XCTestCase{
 
 
 final class MountDataTests: BaseTest {
-    
+
 
     
     override func setUp() async throws {
@@ -194,7 +196,7 @@ final class MountDataTests: BaseTest {
         
         
     }
-    func testUnmountWorks() async throws{
+    @MainActor func testUnmountWorks() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "secret123", shareName: shareName)
         //FIXME: unmount after every test
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
@@ -202,7 +204,7 @@ final class MountDataTests: BaseTest {
             switch try await mountData.mount(){
             case .success( let share):
                 XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-                try await share.unmount()
+                try await storage.unmount( share)
                 XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
             default:
                 XCTFail()
