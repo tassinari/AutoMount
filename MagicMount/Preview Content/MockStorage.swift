@@ -9,15 +9,41 @@ import Foundation
 import libMounter
 import ServiceManagement
 
-class MockStorage: Storage {
-    let addHandler : (Share) -> Void
-    let deleteHandler : (Share) -> Void
-    var mockMountList: [Share]
+
+
+class MockStorage: Storage{
+    func mount(_: libMounter.Share) async throws -> libMounter.MountResponse {
+        mountCalled = true
+        if let err = throwError {
+            throw err
+        }
+        return mountResponse
+    }
     
-    init(list: [Share] = [], addHandler: @escaping (Share) -> Void = {_ in }, deleteHandler : @escaping (Share) -> Void = { _ in }) {
+    func unmount(_: libMounter.Share) async throws {
+        unmountCalled = true
+        if let err = throwError {
+            throw err
+        }
+    }
+    let mountResponse : MountResponse
+    let addHandler : (Share) throws -> Void
+    let deleteHandler : (Share) throws -> Void
+    var mockMountList: [Share]
+    var mountCalled : Bool = false
+    var unmountCalled : Bool = false
+    var throwError : Error? = nil
+    
+    init(list: [Share] = [],
+         mountResponse: MountResponse = .timeout,
+         addHandler: @escaping (Share) throws -> Void = {_ in },
+         throwError: Error? = nil,
+         deleteHandler : @escaping (Share) throws -> Void = { _ in }) {
         self.mockMountList = list
         self.addHandler = addHandler
         self.deleteHandler = deleteHandler
+        self.mountResponse = mountResponse
+        self.throwError = throwError
     }
     
     var fullMountList: [Share]?{
@@ -25,11 +51,11 @@ class MockStorage: Storage {
     }
     
     func addMount(_ mount: Share) throws {
-        addHandler(mount)
+        try addHandler(mount)
     }
     
     func deleteMount(_ mount: Share) throws {
-        deleteHandler(mount)
+        try deleteHandler(mount)
     }
    
 }

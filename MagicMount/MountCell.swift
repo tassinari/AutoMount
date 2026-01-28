@@ -8,87 +8,8 @@
 import SwiftUI
 import libMounter
 
-@Observable class MountCellModel {
-    let share: Share
-    let manageHandler: ((Share) -> Void)?
-    let storage : Storage
-    var autoMount: Bool {
-        set {
-            share.managed = newValue
-            do {
-                if newValue {
-                    try storage.addMount(share)
-                } else {
-                    try storage.deleteMount(share)
-                }
-            } catch {
-                MagicMount.error(
-                    "Cell mount/unmount error: \(String(describing: error))"
-                )
-            }
-        }
-        get {
-            return share.managed
-        }
-    }
-
-    init(share: Share, storage: Storage = StorageManager() , handler: ((Share) -> Void)? = nil) {
-        self.share = share
-        self.manageHandler = handler
-        self.storage = storage
-    }
-
-    func eject() {
-        Task {
-            do {
-                try await share.unmount()
-            } catch {
-                MagicMount.error("unmount error : \(String(describing: error))")
-            }
-        }
-    }
-    
-    func mount() {
-        Task {
-            do {
-                switch try await share.mount() {
-                case .success(_):
-                    break
-                default:
-                    MagicMount.error("mount error, non success returned")
-                }
-            } catch {
-                MagicMount.error("mount error : \(String(describing: error))")
-            }
-        }
-    }
-    
-    func edit() {
-        manageHandler?(share)
-    }
-    
-    func mountUnmountPressed() {
-        switch share.connected {
-        case .mounted:
-            eject()
-        case .unmounted:
-            mount()
-        default:
-            //no op the other cases
-            break
-        }
-    }
-    var shouldShowOpenIcon: Bool {
-        share.connected == .mounted || share.connected == .unmounting
-    }
-    var shouldDisableMountBoutton: Bool {
-        share.connected == .mounting || share.connected == .unmounting
-    }
-
-}
-
 struct MountCell: View {
-    @Bindable var model: MountCellModel
+    @Bindable var model: MountCellViewModel
     var body: some View {
         VStack {
             HStack(alignment: .top) {

@@ -57,9 +57,9 @@ import libMounter
             do{
                 switch share.connected{
                 case .mounted:
-                    try await share.unmount()
+                    try await storage.unmount(share)
                 case .unmounted:
-                    switch try await share.mount(){
+                    switch try await storage.mount(share){
                         
                     case .success(_):
                         print("mount")

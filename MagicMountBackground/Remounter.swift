@@ -33,7 +33,7 @@ actor Remounter{
                 if share.connected == .unmounted{
                     notice("\(share.name) is not connected, connecting..")
                     do{
-                        switch try await share.mount(){
+                        switch try await storage.mount(share){
                             
                         case .genericError(let e):
                             error("Generic error in mount attempt: \(String(describing: e))")

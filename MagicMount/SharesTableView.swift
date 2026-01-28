@@ -28,7 +28,7 @@ struct SharesListView: View {
             if !connectedShares.isEmpty {
                 Section("Connected") {
                     ForEach(connectedShares) { share in
-                        MountCell(model: MountCellModel(share: share, handler: { passedShare in
+                        MountCell(model: MountCellViewModel(share: share, handler: { passedShare in
                             self.selectedShare = passedShare
                         }))
                     }
@@ -38,7 +38,7 @@ struct SharesListView: View {
             if !notConnectedShares.isEmpty {
                 Section("Not Connected") {
                     ForEach(notConnectedShares) { share in
-                        MountCell(model: MountCellModel(share: share, handler: { passedShare in
+                        MountCell(model: MountCellViewModel(share: share, handler: { passedShare in
                             self.selectedShare = passedShare
                         }))
                     }

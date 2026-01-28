@@ -17,6 +17,9 @@ public protocol Storage {
     var fullMountList: [Share]? { get }
     func addMount(_ mount: Share) throws
     func deleteMount(_ mount: Share) throws
+    
+    func mount(_ : Share) async throws -> MountResponse
+    func unmount(_ : Share) async throws
 }
 
 
