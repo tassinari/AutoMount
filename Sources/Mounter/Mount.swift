@@ -109,45 +109,51 @@ internal struct MountData{
             return url
         }
     }
+    
     internal func mount() async throws -> MountResponse {
        
         let url = try self.url
-        var cfArray: Unmanaged<CFArray>?
-        let mountD = NSMutableDictionary()
-        let optD = NSMutableDictionary()
-        mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
+       
         return await withCheckedContinuation { cont in
-            let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
-            print("Responses: \(response)")
-            var retVal: MountResponse = .alreadyMounted
-            switch response{
-            case 0:
-                let messages: [String] = {
-                    guard let unmanaged = cfArray else { return [] }
-                    let arrayRef: CFArray = unmanaged.takeUnretainedValue()
-                    let anyArray = arrayRef as [AnyObject]
-                    return anyArray.compactMap { $0 as? String }
-                }()
-                let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: .mounted)
-                retVal =  .success(share)
-  //
-            case EAUTH:
-                retVal =  .authenticationError
-            case EHOSTUNREACH:
-                retVal =  .cannotFindHost
-            case ETIMEDOUT:
-                retVal =  .timeout
-            case ECONNREFUSED, ELOOP:
-                retVal =  .connectionRefused
-            case ENOENT:
-                retVal =  .noSuchFileOrDirectory
-            case EEXIST:
-                retVal =  .alreadyMounted
+            Task.detached(priority: .userInitiated) {
+                var cfArray: Unmanaged<CFArray>?
+                let mountD = NSMutableDictionary()
+                let optD = NSMutableDictionary()
+                mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
                 
-            default:
-                retVal =  .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
+                let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
+                print("Responses: \(response)")
+                var retVal: MountResponse = .alreadyMounted
+                switch response{
+                case 0:
+                    let messages: [String] = {
+                        guard let unmanaged = cfArray else { return [] }
+                        let arrayRef: CFArray = unmanaged.takeUnretainedValue()
+                        let anyArray = arrayRef as [AnyObject]
+                        return anyArray.compactMap { $0 as? String }
+                    }()
+                    //FIXME: managed == true, is that rue for all cases here..
+                    let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: .mounted)
+                    retVal =  .success(share)
+                    //
+                case EAUTH:
+                    retVal =  .authenticationError
+                case EHOSTUNREACH:
+                    retVal =  .cannotFindHost
+                case ETIMEDOUT:
+                    retVal =  .timeout
+                case ECONNREFUSED, ELOOP:
+                    retVal =  .connectionRefused
+                case ENOENT:
+                    retVal =  .noSuchFileOrDirectory
+                case EEXIST:
+                    retVal =  .alreadyMounted
+                    
+                default:
+                    retVal =  .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
+                }
+                cont.resume(returning: retVal)
             }
-            cont.resume(returning: retVal)
         }
         
     }

@@ -9,68 +9,69 @@ import Foundation
 import AppKit
 
 
+
 //TODO: fix unchecked sendable, its there because of storagemanager mount class function, maybe make that @mainactor?
 
 @Observable public class Share: Codable, @unchecked Sendable {
     
-    //FIXME: make this failable if URL does not conform to smb/afp/nfs??
-    public init(user: String?, password: String?, url: URL, name: String, mountPoint: String, managed: Bool, connected: ConnectionState) {
-        self.user = user
-        self.password = password
-        self.url = url
-        self.name = name
-        self.mountPoint = mountPoint
-        self.managed = managed
-        self.connected = connected
-    }
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        if let u = try? container.decode(String.self, forKey: .user){
-            user = u
-        }
-        if let p = try? container.decode(String.self, forKey: .password){
-            password = p
-        }
-        url = try container.decode(URL.self, forKey: .url)
-        name = try container.decode(String.self, forKey: .name)
-        mountPoint = try container.decode(String.self, forKey: .mountPoint)
-        managed = try container.decode(Bool.self, forKey: .managed)
-        connected = try container.decode(ConnectionState.self, forKey: .connected)
-    }
-    public func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(user, forKey: .user)
-            try container.encode(password, forKey: .password)
-            try container.encode(url, forKey: .url)
-            try container.encode(name, forKey: .name)
-            try container.encode(mountPoint, forKey: .mountPoint)
-            try container.encode(managed, forKey: .managed)
-            try container.encode(connected, forKey: .connected)
-    }
-    
-    public var user : String?
-    public var password : String?
+    private let state : ShareState
+    private let cachedSnapShot : ShareSnapshot
     public let url : URL
     public let name: String
     public let mountPoint: String
-    public var  type: String {
+    public var type: String {
         URLComponents(url: url, resolvingAgainstBaseURL: false)?.scheme ?? ""
     }
-    public var managed : Bool
-    public var connected : ConnectionState
     
+    //FIXME: make this failable if URL does not conform to smb/afp/nfs??
+    public init(user: String?, password: String?, url: URL, name: String, mountPoint: String, managed: Bool, connected: ConnectionState) {
+        self.url = url
+        self.name = name
+        self.mountPoint = mountPoint
+        self.state = ShareState(user: user, password: password, managed: managed, connected: connected)
+        self.cachedSnapShot = ShareSnapshot(user: user, password: password, managed: managed, connected: connected)
+    }
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        url = try container.decode(URL.self, forKey: .url)
+        name = try container.decode(String.self, forKey: .name)
+        mountPoint = try container.decode(String.self, forKey: .mountPoint)
+        
+        let snap = try container.decode(ShareSnapshot.self, forKey: .snapshot)
+        self.state = ShareState(
+            user: snap.user,
+            password: snap.password,
+            managed: snap.managed,
+            connected: snap.connected
+        )
+        self.cachedSnapShot = snap
+    }
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(url, forKey: .url)
+        try container.encode(name, forKey: .name)
+        try container.encode(mountPoint, forKey: .mountPoint)
+        try container.encode(cachedSnapShot, forKey: .snapshot)
+    }
+   
+    //MARK: mutable getters/setters
+    func getUser() async -> String?{ await state.currentUser() }
+    func setUser(_ user: String?) async{  await state.setUser(user) }
+    func getPassword() async -> String?{ await state.currentPassword() }
+    func setPassword(_ pw: String?) async{  await state.setPassword(pw) }
+    func getManaged() async -> Bool{ await state.isManaged() }
+    func setManaged(_ man: Bool) async{  await state.setManaged(man) }
+    func getConnected() async -> ConnectionState{ await state.connection() }
+    func setConnected(_ con: ConnectionState) async{  await state.updateConnection(con) }
+}
+extension Share{
     public  enum CodingKeys: String, CodingKey {
-        case user
-        case password
         case url
         case name
         case mountPoint
-        case managed
-        case connected
+        case snapshot
     }
-   
 }
-//FIXME: put mount unmount into an actor to preserve state access
 extension Share {
     
     internal var mountData : MountData?{
@@ -110,4 +111,48 @@ extension Share{
         }
         
     }
+}
+
+private actor ShareState {
+    private var user: String?
+    private var password: String?
+    private var managed: Bool
+    private var connected: ConnectionState
+
+    init(user: String?, password: String?, managed: Bool, connected: ConnectionState) {
+        self.user = user
+        self.password = password
+        self.managed = managed
+        self.connected = connected
+    }
+
+    // Reads
+    func currentUser() -> String? { user }
+    func currentPassword() -> String? { password }
+    func isManaged() -> Bool { managed }
+    func connection() -> ConnectionState { connected }
+
+    // Writes
+    func setUser(_ newUser: String?) { user = newUser }
+    func setPassword(_ newPassword: String?) { password = newPassword }
+    func setManaged(_ flag: Bool) { managed = flag }
+    func updateConnection(_ state: ConnectionState) { connected = state }
+
+    // Snapshot for Codable/UI/Equality
+    func snapshot() -> ShareSnapshot {
+        ShareSnapshot(
+            user: user,
+            password: password,
+            managed: managed,
+            connected: connected
+        )
+    }
+}
+
+// A Sendable value type that mirrors the mutable bits
+private struct ShareSnapshot: Sendable, Codable, Equatable {
+    var user: String?
+    var password: String?
+    var managed: Bool
+    var connected: ConnectionState
 }

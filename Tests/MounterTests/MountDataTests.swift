@@ -288,7 +288,7 @@ final class MountDataTests: BaseTest {
         case .timeout:
             break
         default:
-            XCTFail()
+            XCTFail("Got \(mounts)")
         }
     }
     func testMountWithBadShareFails() async throws{

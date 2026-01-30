@@ -11,7 +11,7 @@ import XCTest
 
 final class ShareTests: BaseTest {
 
-    func testShareProducesCorrectMountData() {
+    func testShareProducesCorrectMountData() async throws{
         let share = Share(
             user: "samba",
             password: "",
@@ -29,7 +29,8 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(mountData?.port, 1445)
         XCTAssertEqual(mountData?.user, "samba")
         XCTAssertEqual(mountData?.shareName, "smbTestShare")
-        XCTAssertEqual(share.connected, .mounted)
+        let state = await share.getConnected()
+        XCTAssert(state == .mounted)
     }
     
     @MainActor
@@ -109,7 +110,8 @@ final class ShareTests: BaseTest {
             connected: .unmounting
         )
         try await storage.unmount(share)
-        XCTAssert(share.connected == .unmounting)
+        let state = await share.getConnected()
+        XCTAssert(state == .unmounting)
         
         
     }

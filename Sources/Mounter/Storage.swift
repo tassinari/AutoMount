@@ -14,7 +14,7 @@ import AppKit
 /// - unmounted: The share is currently not mounted.
 /// - mounting: The share is in the process of being mounted.
 /// - unmounting: The share is in the process of being unmounted.
-public enum ConnectionState: Codable{
+public enum ConnectionState: Codable, Sendable{
     case mounted, unmounted, mounting, unmounting
 }
 
@@ -54,8 +54,8 @@ public class StorageManager{
     /// - Parameter mount: The `Share` instance to add.
     /// - Throws: `StorageManagerError.noUserDefaults` if the `UserDefaults` instance is unavailable.
     ///           Encoding errors if JSON encoding fails.
-    public func addMount(_ mount: Share) throws {
-        mount.managed = true
+    public func addMount(_ mount: Share) async throws {
+        await mount.setManaged(false)
         guard let defaults = userDefaults else {
             throw StorageManagerError.noUserDefaults
         }
@@ -82,8 +82,8 @@ public class StorageManager{
     ///           `StorageManagerError.doesNotExsist` if no stored mounts exist to delete from.
     ///
     /// - Note: All shares that are equal to `mount` will be removed.
-    public func deleteMount(_ mount: Share) throws {
-        mount.managed = false
+    public func deleteMount(_ mount: Share) async throws {
+        await mount.setManaged(false)
         guard let defaults = userDefaults else {
             throw StorageManagerError.noUserDefaults
         }
@@ -135,57 +135,62 @@ public class StorageManager{
     ///            or `nil` if there are no managed shares and no mounted volumes.
     ///
     /// - Note: This method assumes `Share.equal(to:)` and `Equatable` semantics are consistent to identify shares correctly.
-    public var fullMountList: [Share]? {
-        let connected = MountInfo.mountedVolumes()
-        var managed = self.mounts ?? []
-        var notMananged = connected
-        for m in managed{
-            m.managed = true
-            for mnt in connected{
-                if mnt.equal(to: m){
-                    m.connected = .mounted
-                    notMananged.removeAll(where: {$0 == mnt})
+   @MainActor public var fullMountList: [Share]? {
+        get async{
+            let connected = MountInfo.mountedVolumes()
+            var managed = self.mounts ?? []
+            var notMananged = connected
+            for m in managed{
+                await m.setManaged(true)
+                var isConnected = false
+                for mnt in connected{
+                    if mnt.equal(to: m){
+                        isConnected = true
+                        notMananged.removeAll(where: {$0 == mnt})
+                    }
                 }
+                await m.setConnected(isConnected ? .mounted : .unmounted)
             }
+            //Add notManaged as Shares
+            let nonMananedShares: [Share] = notMananged.compactMap({$0.share})
+            managed.append(contentsOf: nonMananedShares)
+            return managed.sorted(by: {$0.name < $1.name})
         }
-        //Add notManaged as Shares
-        let nonMananedShares: [Share] = notMananged.compactMap({$0.share})
-        managed.append(contentsOf: nonMananedShares)
-        return managed.sorted(by: {$0.name < $1.name})
     }
     
 }
 
 public extension StorageManager {
     @MainActor func mount(_ share : Share) async throws -> MountResponse {
-        if share.connected != .unmounted{
+        if await share.getConnected() != .unmounted{
             return .alreadyMounted
         }
         if let md = share.mountData{
             do{
-                share.connected = .mounting
+                await share.setConnected(.mounting)
                 let data =  try await md.mount()
-                share.connected = .unmounted
+                await share.setConnected(.unmounted)
                 return data
             }catch{
-                share.connected = .unmounted
+                await share.setConnected(.unmounted)
                 throw error
             }
         }
         throw MountError.noMountData
     }
     @MainActor func unmount(_ share: Share) async throws{
-        if share.connected == .unmounting{
+        if await share.getConnected() == .unmounting{
             return
         }
         let url = URL(filePath: share.mountPoint)
-        share.connected = .unmounting
+        await share.setConnected(.unmounting)
         do{
             try await MountData.unmount(url: url)
-            share.connected = .unmounted
+            await share.setConnected(.unmounted)
         }catch{
-            share.connected = .mounted
+            await share.setConnected(.mounted)
             throw error
         }
     }
 }
+
