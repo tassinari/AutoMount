@@ -32,7 +32,7 @@ public enum StorageManagerError : Error {
 /// It provides a combined view of all mounted volumes and user-managed shares via `fullMountList`.
 /// This class is not inherently thread-safe; external synchronization is required if accessed concurrently.
 /// The storage suite key used is `"group.org.tassinari.magicmount"`.
-public class StorageManager{
+public actor StorageManager{
     /// The key used in UserDefaults to persist the encoded shares.
     public static let storeKey : String = "ShareStoreKey"
     
@@ -60,7 +60,7 @@ public class StorageManager{
             throw StorageManagerError.noUserDefaults
         }
         let encoder = JSONEncoder()
-        if let mounts {
+        if let mounts = mounts(){
             var updated = mounts
             updated.append(mount)
             let data = try encoder.encode(updated)
@@ -87,7 +87,7 @@ public class StorageManager{
         guard let defaults = userDefaults else {
             throw StorageManagerError.noUserDefaults
         }
-        guard let mounts else {
+        guard let mounts = mounts() else {
             throw StorageManagerError.doesNotExsist
         }
         var modified = mounts
@@ -103,7 +103,7 @@ public class StorageManager{
     /// Returns the array of stored shares decoded from JSON,
     /// or `nil` if no data is present.
     /// Returns an empty array if decoding fails.
-    internal var mounts: [Share]? {
+    internal func mounts() -> [Share]? {
         guard let defaults = userDefaults, let data = defaults.data(forKey: StorageManager.storeKey) else {
             return nil
         }
@@ -114,7 +114,7 @@ public class StorageManager{
             return shares
         }catch{
             libMounter.error("Error decoding Share: \(String(describing: error))")
-            return []
+            return nil
         }
        
     }
@@ -135,10 +135,10 @@ public class StorageManager{
     ///            or `nil` if there are no managed shares and no mounted volumes.
     ///
     /// - Note: This method assumes `Share.equal(to:)` and `Equatable` semantics are consistent to identify shares correctly.
-   @MainActor public var fullMountList: [Share]? {
-        get async{
+    public func fullMountList() async -> [Share]{
+       
             let connected = MountInfo.mountedVolumes()
-            var managed = self.mounts ?? []
+            var managed = mounts() ?? []
             var notMananged = connected
             for m in managed{
                 await m.setManaged(true)
@@ -155,13 +155,13 @@ public class StorageManager{
             let nonMananedShares: [Share] = notMananged.compactMap({$0.share})
             managed.append(contentsOf: nonMananedShares)
             return managed.sorted(by: {$0.name < $1.name})
-        }
+        
     }
     
 }
 
 public extension StorageManager {
-    @MainActor func mount(_ share : Share) async throws -> MountResponse {
+    func mount(_ share : Share) async throws -> MountResponse {
         if await share.getConnected() != .unmounted{
             return .alreadyMounted
         }
@@ -178,7 +178,7 @@ public extension StorageManager {
         }
         throw MountError.noMountData
     }
-    @MainActor func unmount(_ share: Share) async throws{
+    func unmount(_ share: Share) async throws{
         if await share.getConnected() == .unmounting{
             return
         }

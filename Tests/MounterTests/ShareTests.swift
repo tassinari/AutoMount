@@ -46,8 +46,8 @@ final class ShareTests: BaseTest {
         let result = try await storage.mount(share)
 
         switch result {
-        case .success(let share):
-            XCTAssertTrue(share.mountPoint == "/Volumes/smbTestShare")
+        case .success(let shareName):
+            XCTAssertTrue(shareName == "/Volumes/smbTestShare")
             XCTAssertTrue(FileManager.default.fileExists(
                 atPath: "/Volumes/smbTestShare/empty_file.txt"
             ))
@@ -171,6 +171,83 @@ final class ShareTests: BaseTest {
         XCTAssertNotEqual(set1, set2)
         XCTAssertEqual(share1.id,share2.id)
     }
+    func testTypeCorrect() async throws{
+        let share = Share(
+            user: "samba",
+            password: "",
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .unmounted
+        )
+        
+        XCTAssertTrue(share.type == "smb")
+        let share2 = Share(
+            user: "samba",
+            password: "",
+            url: URL(string: "afp://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .unmounted
+        )
+        
+        XCTAssertTrue(share2.type == "afp")
+    }
     
+    func testEncodeDecodeWithSnapshotWorking() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: "samba",
+            password: "",
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .unmounted
+        )
+        var currentPass = await share.getPassword()
+        var currentUser = await share.getUser()
+        var currentManaged = await share.getManaged()
+        var currentStatus = await share.getConnected()
+        
+        XCTAssertNotEqual(currentPass, p)
+        XCTAssertNotEqual(currentUser, u)
+        XCTAssertNotEqual(currentManaged, false)
+        XCTAssertNotEqual(currentStatus, .mounted)
+        
+        await share.setUser(u)
+        await share.setPassword(p)
+        await share.setManaged(false)
+        await share.setConnected(.mounted)
+        
+        currentPass = await share.getPassword()
+        currentUser = await share.getUser()
+        currentManaged = await share.getManaged()
+        currentStatus = await share.getConnected()
+        
+        XCTAssertEqual(currentPass, p)
+        XCTAssertEqual(currentUser, u)
+        XCTAssertEqual(currentManaged, false)
+        XCTAssertEqual(currentStatus, .mounted)
+        
+        let data = try JSONEncoder().encode(share)
+        let share2 = try JSONDecoder().decode(Share.self, from: data)
+        
+        
+        let currentPass2 = await share2.getPassword()
+        let currentUser2 = await share2.getUser()
+        let currentManaged2 = await share2.getManaged()
+        let currentStatus2 = await share2.getConnected()
+        
+        XCTAssertEqual(currentPass2, p)
+        XCTAssertEqual(currentUser2, u)
+        XCTAssertEqual(currentManaged2, false)
+        XCTAssertEqual(currentStatus2, .mounted)
+        
+      
+    }
 
 }

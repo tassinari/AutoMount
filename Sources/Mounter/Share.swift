@@ -8,14 +8,11 @@
 import Foundation
 import AppKit
 
-
-
-//TODO: fix unchecked sendable, its there because of storagemanager mount class function, maybe make that @mainactor?
-
-@Observable public class Share: Codable, @unchecked Sendable {
+// @unchecked Sendable because of one mutable property cached snapshot, but that should be ok, only mutated in setters 
+public final class Share: Codable, @unchecked Sendable {
     
     private let state : ShareState
-    private let cachedSnapShot : ShareSnapshot
+    private var cachedSnapShot : ShareSnapshot
     public let url : URL
     public let name: String
     public let mountPoint: String
@@ -56,13 +53,26 @@ import AppKit
    
     //MARK: mutable getters/setters
     func getUser() async -> String?{ await state.currentUser() }
-    func setUser(_ user: String?) async{  await state.setUser(user) }
     func getPassword() async -> String?{ await state.currentPassword() }
-    func setPassword(_ pw: String?) async{  await state.setPassword(pw) }
     func getManaged() async -> Bool{ await state.isManaged() }
-    func setManaged(_ man: Bool) async{  await state.setManaged(man) }
     func getConnected() async -> ConnectionState{ await state.connection() }
-    func setConnected(_ con: ConnectionState) async{  await state.updateConnection(con) }
+    
+    func setUser(_ user: String?) async{
+        await state.setUser(user)
+        cachedSnapShot = await state.snapshot()
+    }
+    func setPassword(_ pw: String?) async{
+        await state.setPassword(pw)
+        cachedSnapShot = await state.snapshot()
+    }
+    func setManaged(_ man: Bool) async{
+        await state.setManaged(man)
+        cachedSnapShot = await state.snapshot()
+    }
+    func setConnected(_ con: ConnectionState) async{
+        await state.updateConnection(con)
+        cachedSnapShot = await state.snapshot()
+    }
 }
 extension Share{
     public  enum CodingKeys: String, CodingKey {

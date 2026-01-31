@@ -187,8 +187,8 @@ final class MountDataTests: BaseTest {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let mounts = try await mountData.mount()
         switch mounts {
-        case .success(let share):
-            XCTAssert(share.mountPoint == "/Volumes/smbTestShare")
+        case .success(let shareName):
+            XCTAssert(shareName == "/Volumes/smbTestShare")
         default:
             XCTFail()
             
@@ -202,7 +202,8 @@ final class MountDataTests: BaseTest {
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         do{
             switch try await mountData.mount(){
-            case .success( let share):
+            case .success( _):
+                guard let share = await storage.fullMountList().first(where: {$0.name == shareName}) else {XCTFail(); return}
                 XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
                 try await storage.unmount( share)
                 XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
@@ -223,6 +224,7 @@ final class MountDataTests: BaseTest {
         
         XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
         let _ = try await mountData.mount()
+        try await Task.sleep(nanoseconds: 10000)
         let volumes = MountInfo.mountedVolumes()
         guard let test = volumes.first(where: { $0.name == shareName}) else { XCTFail() ; return}
         XCTAssertEqual(test.remountURL, URL(string: "smb://samba@localhost:1445/smbTestShare")!)
@@ -337,9 +339,12 @@ final class MountDataTests: BaseTest {
 
         let response = try await mountData.mount()
         switch response{
-        case .success(let share):
-            
-            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: share.mountPoint, directoryHint: .isDirectory)))
+        case .success(let shareName):
+            guard let shareName else {
+                XCTFail("Expected share name")
+                return
+            }
+            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: shareName, directoryHint: .isDirectory)))
         default:
             XCTFail()
         }

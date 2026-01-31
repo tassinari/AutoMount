@@ -25,7 +25,7 @@ final class StorageManagerTests: BaseTest {
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", managed: true, connected: .unmounted)
         try await manager.addMount(mount)
-        guard let mounts = manager.mounts else {
+        guard let mounts = await manager.mounts() else {
             XCTFail()
             return
         }
@@ -46,8 +46,8 @@ final class StorageManagerTests: BaseTest {
         //Put bad data in user defaults and test that the error was logged
         UserDefaults(suiteName: Self.defaultsSuiteName)?.setValue(Data([11]), forKey: StorageManager.storeKey)
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
-        let d = manager.mounts
-        XCTAssertTrue(d?.count == 0)
+        let d = await manager.mounts()
+        XCTAssertNil(d)
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Error decoding Share")}))
         
@@ -88,7 +88,7 @@ final class StorageManagerTests: BaseTest {
     @MainActor func testStorageManagerNilWithNoDefaults()   async throws {
         let manager =  StorageManager(defaults: nil)
         
-        let mounts = manager.mounts
+        let mounts = await manager.mounts()
         XCTAssertNil(mounts)
         
     }
@@ -126,7 +126,7 @@ final class StorageManagerTests: BaseTest {
         let j = "3"
         let delete = Share(user: user, password: testPassword, url: URL(string: "testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         try await manager.deleteMount(delete)
-        guard let allMounts = manager.mounts else {
+        guard let allMounts = await manager.mounts() else {
             XCTFail()
             return
         }
@@ -149,7 +149,7 @@ final class StorageManagerTests: BaseTest {
             try await manager.addMount(d)
             expected.append(d)
         }
-        guard let allMounts = manager.mounts else {
+        guard let allMounts = await manager.mounts() else {
             XCTFail()
             return
         }
@@ -169,7 +169,7 @@ final class StorageManagerTests: BaseTest {
 
         _ = try await mountData.mount()
 
-        guard let mounts = await sm.fullMountList else{  XCTFail(); return}
+        let mounts = await sm.fullMountList()
 
         XCTAssertFalse(mounts.isEmpty)
 
@@ -192,7 +192,7 @@ final class StorageManagerTests: BaseTest {
 
         _ = try await mountData.mount()
 
-        guard let mounts = await sm.fullMountList else{  XCTFail(); return}
+        let mounts = await sm.fullMountList()
 
         XCTAssertFalse(mounts.isEmpty)
 
@@ -203,7 +203,7 @@ final class StorageManagerTests: BaseTest {
         try await sm.addMount(smb)
         try await storage.unmount(smb)
         
-        guard let mounts2 = await sm.fullMountList else{  XCTFail(); return}
+        let mounts2 = await sm.fullMountList()
         guard let smb2 = mounts2.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
         let managed2 = await smb2.getManaged()
         let state = await smb2.getConnected()
@@ -212,7 +212,7 @@ final class StorageManagerTests: BaseTest {
         
         _ = try await mountData.mount()
         
-        guard let mounts3 = await sm.fullMountList else{  XCTFail(); return}
+        let mounts3 = await sm.fullMountList()
         XCTAssertFalse(mounts3.isEmpty)
        
         guard let smb3 = mounts3.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}

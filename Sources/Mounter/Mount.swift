@@ -9,7 +9,7 @@ public enum MountError: Error{
 ///  os errors are defined in <sys/errno.h>
 public enum MountResponse : Sendable{
     case genericError(Error)
-    case success(Share)
+    case success(String?)
     case authenticationError
     case cannotFindHost
     case timeout
@@ -115,7 +115,7 @@ internal struct MountData{
         let url = try self.url
        
         return await withCheckedContinuation { cont in
-            Task.detached(priority: .userInitiated) {
+            DispatchQueue.global().async {
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
                 let optD = NSMutableDictionary()
@@ -132,9 +132,7 @@ internal struct MountData{
                         let anyArray = arrayRef as [AnyObject]
                         return anyArray.compactMap { $0 as? String }
                     }()
-                    //FIXME: managed == true, is that rue for all cases here..
-                    let share = Share(user: self.user, password: self.password, url: url, name: "", mountPoint: messages.first ?? "--", managed: true, connected: .mounted)
-                    retVal =  .success(share)
+                    retVal =  .success(messages.first)
                     //
                 case EAUTH:
                     retVal =  .authenticationError
