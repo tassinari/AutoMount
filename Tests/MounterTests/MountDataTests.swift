@@ -95,6 +95,12 @@ class BaseTest : XCTestCase{
             RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         }
     }
+    override func setUp() async throws {
+        for m in  await storage.mounts() ?? []{
+            try await storage.unmount(m)
+        }
+        
+    }
     
 }
 

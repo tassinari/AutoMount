@@ -12,6 +12,7 @@ import XCTest
 final class ShareTests: BaseTest {
 
     func testShareProducesCorrectMountData() async throws{
+     
         let share = Share(
             user: "samba",
             password: "",
@@ -23,14 +24,13 @@ final class ShareTests: BaseTest {
         )
 
         let mountData = share.mountData
-
         XCTAssertEqual(mountData?.scheme, "smb")
         XCTAssertEqual(mountData?.host, "localhost")
         XCTAssertEqual(mountData?.port, 1445)
         XCTAssertEqual(mountData?.user, "samba")
         XCTAssertEqual(mountData?.shareName, "smbTestShare")
-        let state = await share.getConnected()
-        XCTAssert(state == .mounted)
+       
+        
     }
     
     @MainActor
@@ -106,14 +106,16 @@ final class ShareTests: BaseTest {
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/smbTestShare",
-            managed: true,
+            managed: false,
             connected: .unmounting
         )
+        let _ = try await storage.mount(share)
+        
+        //try to unmount, its a no op, its really  mounted, should still be there
         try await storage.unmount(share)
-        let state = await share.getConnected()
-        XCTAssert(state == .unmounting)
-        
-        
+        let mountedShare = await storage.fullMountList().first(where: {$0.name == share.name})
+        XCTAssertNotNil(mountedShare)
+        XCTAssert(mountedShare?.connected == .mounted)
     }
     @MainActor func testUnmountingThrowsWhenWrongFile() async throws {
         let share = Share(
@@ -200,54 +202,85 @@ final class ShareTests: BaseTest {
         let u = "user2"
         let p = "pass2"
         let share = Share(
-            user: "samba",
-            password: "",
+            user: u,
+            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
             connected: .unmounted
         )
-        var currentPass = await share.getPassword()
-        var currentUser = await share.getUser()
-        var currentManaged = await share.getManaged()
-        var currentStatus = await share.getConnected()
+        XCTAssertEqual(share.password, p)
+        XCTAssertEqual(share.user, u)
+        XCTAssertEqual(share.managed, true)
+        XCTAssertEqual(share.connected, .unmounted)
         
-        XCTAssertNotEqual(currentPass, p)
-        XCTAssertNotEqual(currentUser, u)
-        XCTAssertNotEqual(currentManaged, false)
-        XCTAssertNotEqual(currentStatus, .mounted)
-        
-        await share.setUser(u)
-        await share.setPassword(p)
-        await share.setManaged(false)
-        await share.setConnected(.mounted)
-        
-        currentPass = await share.getPassword()
-        currentUser = await share.getUser()
-        currentManaged = await share.getManaged()
-        currentStatus = await share.getConnected()
-        
-        XCTAssertEqual(currentPass, p)
-        XCTAssertEqual(currentUser, u)
-        XCTAssertEqual(currentManaged, false)
-        XCTAssertEqual(currentStatus, .mounted)
         
         let data = try JSONEncoder().encode(share)
         let share2 = try JSONDecoder().decode(Share.self, from: data)
         
-        
-        let currentPass2 = await share2.getPassword()
-        let currentUser2 = await share2.getUser()
-        let currentManaged2 = await share2.getManaged()
-        let currentStatus2 = await share2.getConnected()
-        
-        XCTAssertEqual(currentPass2, p)
-        XCTAssertEqual(currentUser2, u)
-        XCTAssertEqual(currentManaged2, false)
-        XCTAssertEqual(currentStatus2, .mounted)
+        XCTAssertEqual(share2.password, p)
+        XCTAssertEqual(share2.user, u)
+        XCTAssertEqual(share2.managed, true)
+        XCTAssertEqual(share2.connected, .unmounted)
         
       
+    }
+    func testManagedCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: false,
+            connected: .unmounted
+        )
+        XCTAssertTrue(share.managedCopy.managed)
+    }
+    func testUnManagedCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .unmounted
+        )
+        XCTAssertFalse(share.unmanagedCopy.managed)
+    }
+    func testConnectedCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: false,
+            connected: .unmounted
+        )
+        XCTAssertTrue(share.mountedCopy.connected == .mounted)
+    }
+    func testNonConnectedCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .mounted
+        )
+        XCTAssertTrue(share.unmountedCopy.connected == .unmounted)
     }
 
 }

@@ -35,10 +35,8 @@ final class StorageManagerTests: BaseTest {
         }
         XCTAssert(mounts.count == 1)
         XCTAssert(first.url == testURL)
-        let user1 = await first.getUser()
-        let pass = await first.getPassword()
-        XCTAssert(user1 == user)
-        XCTAssert(pass == testPassword)
+        XCTAssert(first.user == user)
+        XCTAssert(first.password == testPassword)
     
         
     }
@@ -173,11 +171,10 @@ final class StorageManagerTests: BaseTest {
 
         XCTAssertFalse(mounts.isEmpty)
 
-        let smb = mounts.first { $0.name == "smbTestShare" }
-        let managed = await smb?.getManaged()
-        XCTAssert( managed == false)
-        XCTAssertNotNil(smb)
-        XCTAssertEqual(smb?.mountPoint, "/Volumes/smbTestShare")
+        guard let smb = mounts.first(where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
+        XCTAssert( smb.managed == false)
+      
+        XCTAssertEqual(smb.mountPoint, "/Volumes/smbTestShare")
     }
     @MainActor func testFullMountListIncludesManagedMountedSMBShare() async throws {
         let sm = StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
@@ -197,18 +194,16 @@ final class StorageManagerTests: BaseTest {
         XCTAssertFalse(mounts.isEmpty)
 
         guard let smb = mounts.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
-        let managed = await smb.getManaged()
-        XCTAssert(managed == false)
+       
+        XCTAssert(smb.managed == false)
         XCTAssertEqual(smb.mountPoint, "/Volumes/smbTestShare")
         try await sm.addMount(smb)
         try await storage.unmount(smb)
         
         let mounts2 = await sm.fullMountList()
         guard let smb2 = mounts2.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
-        let managed2 = await smb2.getManaged()
-        let state = await smb2.getConnected()
-        XCTAssert(managed2 == true)
-        XCTAssert(state == .unmounted)
+        XCTAssert(smb2.managed == true)
+        XCTAssert(smb2.connected == .unmounted)
         
         _ = try await mountData.mount()
         
@@ -216,10 +211,8 @@ final class StorageManagerTests: BaseTest {
         XCTAssertFalse(mounts3.isEmpty)
        
         guard let smb3 = mounts3.first (where: { $0.name == "smbTestShare" }) else {XCTFail(); return}
-        let managed3 = await smb3.getManaged()
-        let state3 = await smb3.getConnected()
-        XCTAssert(managed3 == true)
-        XCTAssert(state3 == .mounted)
+        XCTAssert(smb3.managed == true)
+        XCTAssert(smb3.connected == .mounted)
 
     }
     
