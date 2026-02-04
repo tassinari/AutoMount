@@ -87,7 +87,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Common.swift,
+				Constants.swift,
 				Logger.swift,
+				ShareDataModel.swift,
 			);
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 		};

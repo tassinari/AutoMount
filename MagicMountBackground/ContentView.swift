@@ -21,29 +21,36 @@ import libMounter
     
     init(storage : Storage = StorageManager()){
         self.storage = storage
-        shares = StorageManager().fullMountList ?? []
+        shares = []
+        Task{
+            shares = await storage.fullMountList()
+        }
+        
     }
     func refresh(){
-        //current state
-        let updated = storage.fullMountList ?? []
-        //find new shares
-        let added = Set(updated).subtracting(shares)
-        //find missing shares, shares that were switched to unmanaged and unmounted
-        let missing = Set(shares).subtracting(updated)
-        //make and updated list with same instances
-        var fullUpdated : [Share] = []
-        for share in shares{
-            if missing.contains(share){
-                continue;
+        Task{
+            //current state
+            let updated = await storage.fullMountList()
+            //find new shares
+            let added = Set(updated).subtracting(shares)
+            //find missing shares, shares that were switched to unmanaged and unmounted
+            let missing = Set(shares).subtracting(updated)
+            //make and updated list with same instances
+            var fullUpdated : [Share] = []
+            for share in shares{
+                if missing.contains(share){
+                    continue;
+                }
+                if let sameShareFromUpdated = updated.first(where: {$0 == share}){
+    //                share.connected = sameShareFromUpdated.connected
+    //                share.managed = sameShareFromUpdated.managed
+                }
+                fullUpdated.append(share)
             }
-            if let sameShareFromUpdated = updated.first(where: {$0 == share}){
-                share.connected = sameShareFromUpdated.connected
-                share.managed = sameShareFromUpdated.managed
-            }
-            fullUpdated.append(share)
+            fullUpdated.append(contentsOf: added)
+            shares = fullUpdated
         }
-        fullUpdated.append(contentsOf: added)
-        shares = fullUpdated
+        
     }
     func openApp(){
         let config = NSWorkspace.OpenConfiguration()

@@ -27,7 +27,7 @@ actor Remounter{
         await reconnectAll()
     }
     @MainActor private func reconnectAll() async{
-        let shares = await storage.fullMountList ?? []
+        let shares = await storage.fullMountList()
         for share in shares{
             if share.managed{
                 if share.connected == .unmounted{
@@ -37,8 +37,8 @@ actor Remounter{
                             
                         case .genericError(let e):
                             error("Generic error in mount attempt: \(String(describing: e))")
-                        case .success(let mounted):
-                            notice("Success, \(mounted.name) is mounted on \(mounted.mountPoint)")
+                        case .success(let mp):
+                            notice("Success, \(share.name) is mounted on \(mp ?? "unknown")")
                         case .authenticationError:
                             notice("Mount failure for \(share.name): auth error")
                         case .cannotFindHost:

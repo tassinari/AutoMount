@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MountsView: View {
-    @Environment(MountsViewModel.self) var model
+    @Environment(ShareDataModel.self) var model
     @State private var showNew : Bool = false
     @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "group.org.tassinari.magicmount")) private var showMenuBar = true
     
@@ -37,7 +37,7 @@ struct MountsView: View {
             )
 
             // MARK: - List
-            SharesListView(shares: model.mounts)
+            SharesListView()
            
 
             // MARK: - Bottom Bar
@@ -52,7 +52,7 @@ struct MountsView: View {
 
                 Spacer()
                 Button {
-                    model.refresh()
+                   // model.refresh()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.title)
@@ -70,7 +70,7 @@ struct MountsView: View {
         }
         .frame(minWidth: 400, minHeight: 300)
         .sheet(isPresented: $showNew, content: {
-            NewMount()
+            AddEditMount(model: AddEditModel(store: model))
         })
     }
 }

@@ -6,16 +6,17 @@
 //
 
 import SwiftUI
+import libMounter
 
 
 @main
 struct MagicMountApp: App {
-    private var model: MountsViewModel = MountsViewModel( service: DefaultServiceInterface())
+    
+    private let model = ShareDataModel(storage: StorageManager())
     var body: some Scene {
         WindowGroup {
-            MountsView()
-                .environment(model)
+            ShareListView(model: model)
         }
-        
+        .commands{ MountCommandMenu(model: model) }
     }
 }

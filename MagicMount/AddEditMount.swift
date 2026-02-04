@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct NewMount: View {
-    @State private var model = CreateMountModel()
+struct AddEditMount: View {
+    @State var model : AddEditModel
 
     // Optional callbacks so a parent can handle actions
     var onSubmit: ((String, String, String) -> Void)? = nil
@@ -36,7 +36,7 @@ struct NewMount: View {
                 }
 
                 Section {
-                    TextField("User", text: $model.username)
+                    TextField("Username", text: $model.username)
                         .autocorrectionDisabled(true)
                     SecureField("Password", text: $model.password)
                 } header: {
@@ -53,10 +53,7 @@ struct NewMount: View {
                         Spacer()
                         Button("Cancel") {
                             if let onCancel { onCancel() }
-                            //  dismiss()
-                            var b : ObjCBool = false
-                            print( "--> \(FileManager.default.fileExists(atPath: "/Volumes/photo", isDirectory: &b) ? "true" : "false")")
-                            print(b)
+                            dismiss()
                         }
                         
                         Button("Submit") {
@@ -69,9 +66,6 @@ struct NewMount: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(model.urlString.isEmpty)
-                        
-                        
-                        
                     }
                 }
                 
@@ -84,7 +78,7 @@ struct NewMount: View {
 
 #Preview {
     NavigationStack{
-        NewMount()
+        AddEditMount(model: AddEditModel(store: MockStore.store))
     }
     
 }

@@ -6,21 +6,21 @@ enum CreateMountState{
     case create, edit
 }
 
-enum NewMountModelError : Swift.Error {
+enum AddEditModelError : Swift.Error {
     case missingValues
 }
-@MainActor @Observable final class CreateMountModel {
+@MainActor @Observable final class AddEditModel {
    
     var urlString: String
     var username: String
     var password: String
-    private let storage : Storage
+    private let store : ShareDataModel
 
-    init(urlString: String = "", username: String = "", password: String = "",storage: Storage = StorageManager()) {
+    init(urlString: String = "", username: String = "", password: String = "",store: ShareDataModel) {
         self.password = password
         self.urlString = urlString
         self.username = username
-        self.storage = storage
+        self.store = store
     }
 
     func clear() {
@@ -31,13 +31,11 @@ enum NewMountModelError : Swift.Error {
    
     func saveAll() async throws {
         guard !urlString.isEmpty, !username.isEmpty, !password.isEmpty else {
-            throw NewMountModelError.missingValues
+            throw AddEditModelError.missingValues
         }
-
         let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path",managed: true, connected: .mounted)
-
         try await Task {
-            try storage.addMount(mount)
+            try await store.manage(mount)
         }.value
     }
 }

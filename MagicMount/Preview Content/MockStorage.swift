@@ -9,9 +9,13 @@ import Foundation
 import libMounter
 import ServiceManagement
 
-
+enum MockStore{
+    static let store = ShareDataModel(storage: MockStorage(list: []))
+    
+}
 
 class MockStorage: Storage{
+    
     func mount(_: libMounter.Share) async throws -> libMounter.MountResponse {
         mountCalled = true
         if let err = throwError {
@@ -46,15 +50,15 @@ class MockStorage: Storage{
         self.throwError = throwError
     }
     
-    var fullMountList: [Share]?{
+    func fullMountList() async -> [Share]{
         return mockMountList
     }
     
-    func addMount(_ mount: Share) throws {
+    func addMount(_ mount: Share) async throws {
         try addHandler(mount)
     }
     
-    func deleteMount(_ mount: Share) throws {
+    func deleteMount(_ mount: Share) async throws {
         try deleteHandler(mount)
     }
    

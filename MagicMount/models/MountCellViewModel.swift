@@ -10,39 +10,40 @@ import SwiftUI
 import libMounter
 
 @Observable class MountCellViewModel {
+    let store: ShareDataModel
     let share: Share
     let manageHandler: ((Share) -> Void)?
-    let storage : Storage
-    var autoMount: Bool {
-        set {
-            share.managed = newValue
-            do {
-                if newValue {
-                    try storage.addMount(share)
-                } else {
-                    try storage.deleteMount(share)
+    var autoMount: Bool
+    {
+        didSet {
+            Task{
+                do {
+                    if autoMount {
+                        try await store.manage(share)
+                    } else {
+                        try await store.unmanage(share)
+                    }
+                } catch {
+                    MagicMount.error(
+                        "Cell mount/unmount error: \(String(describing: error))"
+                    )
                 }
-            } catch {
-                MagicMount.error(
-                    "Cell mount/unmount error: \(String(describing: error))"
-                )
             }
-        }
-        get {
-            return share.managed
+            
         }
     }
 
-    init(share: Share, storage: Storage = StorageManager() , handler: ((Share) -> Void)? = nil) {
+    init(share: Share, store: ShareDataModel , handler: ((Share) -> Void)? = nil) {
         self.share = share
         self.manageHandler = handler
-        self.storage = storage
+        self.store = store
+        autoMount = share.managed
     }
 
     func eject() {
         Task {
             do {
-                try await storage.unmount(share)
+                try await store.unmount(share)
             } catch {
                 MagicMount.error("unmount error : \(String(describing: error))")
             }
@@ -52,7 +53,7 @@ import libMounter
     func mount() {
         Task {
             do {
-                let result = try await storage.mount(share)
+                let result = try await store.mount(share)
                 switch result {
                 case .success(_):
                     break
@@ -87,4 +88,20 @@ import libMounter
         share.connected == .mounting || share.connected == .unmounting
     }
 
+    func driveIconName() -> String{
+        switch share.connected {
+        case .mounted:
+            return Constant.driveIconConnected
+        default:
+            return Constant.driveIconDisConnected
+        }
+    }
+    func driveIconColor() -> Color{
+        switch share.connected {
+        case .mounted:
+            return .green
+        default:
+            return .gray
+        }
+    }
 }

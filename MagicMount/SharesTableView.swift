@@ -11,16 +11,15 @@ import SwiftUI
 import libMounter
 
 struct SharesListView: View {
-
-    let shares: [Share]
+    @Environment(ShareDataModel.self) var model
     @State private var selectedShare: Share? = nil
 
     private var connectedShares: [Share] {
-        shares.filter { $0.connected == .mounted || $0.connected == .unmounting }
+        model.shares.filter { $0.connected == .mounted || $0.connected == .unmounting }
     }
 
     private var notConnectedShares: [Share] {
-        shares.filter { $0.connected == .unmounted || $0.connected == .mounting}
+        model.shares.filter { $0.connected == .unmounted || $0.connected == .mounting}
     }
 
     var body: some View {
@@ -28,9 +27,7 @@ struct SharesListView: View {
             if !connectedShares.isEmpty {
                 Section("Connected") {
                     ForEach(connectedShares) { share in
-                        MountCell(model: MountCellViewModel(share: share, handler: { passedShare in
-                            self.selectedShare = passedShare
-                        }))
+                        MountCell(share: share)
                     }
                 }
             }
@@ -38,20 +35,15 @@ struct SharesListView: View {
             if !notConnectedShares.isEmpty {
                 Section("Not Connected") {
                     ForEach(notConnectedShares) { share in
-                        MountCell(model: MountCellViewModel(share: share, handler: { passedShare in
-                            self.selectedShare = passedShare
-                        }))
+                        MountCell(share: share)
                     }
                 }
             }
         }
         .listStyle(.inset)
         .sheet(item: $selectedShare) { share in
-            if share.managed{
-                EditShareView(share: share)
-            }else{
-                AddManagedView(share: share)
-            }
+           // AddEditMount()
+            
            
         }
     }
@@ -60,5 +52,5 @@ struct SharesListView: View {
 }
 
 #Preview {
-    SharesListView(shares: PreviewData.mockShares)
+    SharesListView().environment(MockStore.store)
 }

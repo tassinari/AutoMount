@@ -13,11 +13,11 @@ import libMounter
 
 
 
-final class newModelTests: XCTestCase {
+final class AddEditModelTests: XCTestCase {
    
     
     @MainActor func testInitEmpty() async throws{
-        let model = CreateMountModel()
+        let model = AddEditModel()
         XCTAssertEqual(model.urlString, "")
         XCTAssertEqual(model.username, "")
         XCTAssertEqual(model.password, "")
@@ -27,7 +27,7 @@ final class newModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = CreateMountModel(urlString: url, username: user, password: pass)
+        let model = AddEditModel(urlString: url, username: user, password: pass)
         XCTAssertEqual(model.urlString, url)
         XCTAssertEqual(model.username, user)
         XCTAssertEqual(model.password, pass)
@@ -37,7 +37,7 @@ final class newModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = CreateMountModel(urlString: url, username: user, password: pass)
+        let model = AddEditModel(urlString: url, username: user, password: pass)
         XCTAssertEqual(model.urlString, url)
         XCTAssertEqual(model.username, user)
         XCTAssertEqual(model.password, pass)
@@ -53,10 +53,10 @@ final class newModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = CreateMountModel(urlString: urlStr, username: user, password: pass)
+        let model = AddEditModel(urlString: urlStr, username: user, password: pass)
         try await model.saveAll()
         
-        guard let share = StorageManager().fullMountList?.first else {XCTFail(); return}
+        guard let share = await StorageManager().fullMountList().first else {XCTFail(); return}
         
         XCTAssertEqual(share.user, user)
         XCTAssertEqual(share.password, pass)
@@ -64,11 +64,11 @@ final class newModelTests: XCTestCase {
     }
     @MainActor func testSaveAllThrowsAllEmpty() async throws{
         do{
-            let model = CreateMountModel()
+            let model = AddEditModel()
             try await model.saveAll()
             XCTFail("Should have thrown")
-        }catch let err as NewMountModelError{
-            XCTAssertEqual(err, NewMountModelError.missingValues)
+        }catch let err as AddEditModelError{
+            XCTAssertEqual(err, AddEditModelError.missingValues)
             
         }catch{
             XCTFail("Wrong error")
@@ -76,11 +76,11 @@ final class newModelTests: XCTestCase {
     }
     @MainActor func testSaveAllThrowsURLEmpty() async throws{
         do{
-            let model = CreateMountModel(username: "dde", password: "cdxc")
+            let model = AddEditModel(username: "dde", password: "cdxc")
             try await model.saveAll()
             XCTFail("Should have thrown")
-        }catch let err as NewMountModelError{
-            XCTAssertEqual(err, NewMountModelError.missingValues)
+        }catch let err as AddEditModelError{
+            XCTAssertEqual(err, AddEditModelError.missingValues)
             
         }catch{
             XCTFail("Wrong error")

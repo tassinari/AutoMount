@@ -11,21 +11,9 @@ import ServiceManagement
 import SwiftUI
 
 @Observable final class MountsViewModel{
-    private var unmountNote : NSObjectProtocol?
-    private var mountNote : NSObjectProtocol?
-    var mounts: [Share] = []
-    let storage: Storage
-    
-    deinit {
-        if let unmountNote = unmountNote {
-            NSWorkspace.shared.notificationCenter.removeObserver(unmountNote)
-        }
-        if let mountNote = mountNote {
-            NSWorkspace.shared.notificationCenter.removeObserver(mountNote)
-        }
-    }
-    @MainActor init(storage : Storage = StorageManager(), service : AppServiceInterface) {
-        self.storage = storage
+   
+    @MainActor init( service : AppServiceInterface) {
+        
         do{
             switch service.status {
             case .notRegistered:
@@ -46,40 +34,11 @@ import SwiftUI
             MagicMount.error("SMService start threw error: \(String(describing: error))")
         }
         refresh()
-        mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
-            if let info = note.userInfo{
-                self?.updateConnection(mounted: true, dict: info)
-            }
-        }
-        unmountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didUnmountNotification, object: nil, queue: .main) {[weak self] note in
-            if let info = note.userInfo{
-                self?.updateConnection(mounted: false, dict: info)
-            }
-        }
-    }
-    /// updates Share from a user info dictionary passed by the mount/unmount notification
-    func updateConnection(mounted: Bool, dict: [AnyHashable: Any]){
-        if  let path = dict["NSDevicePath"] as? String{
-            var found = false
-            for mount in mounts{
-                if mount.mountPoint == path{
-                    found = true
-                    withAnimation {
-                        mount.connected = mounted ? .mounted : .unmounted
-                    }
-                }
-            }
-            if !found{
-                self.refresh()
-            }
-        }
-        else{
-            self.refresh()
-        }
+        
     }
    
     func refresh(){
-        mounts = storage.fullMountList ?? []
+        
     }
     
 

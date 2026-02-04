@@ -10,13 +10,14 @@ import libMounter
 import ServiceManagement
 
 
+
 extension StorageManager : Storage {}
 
 public protocol Storage {
     
-    var fullMountList: [Share]? { get }
-    func addMount(_ mount: Share) throws
-    func deleteMount(_ mount: Share) throws
+    func fullMountList() async -> [Share]
+    func addMount(_ mount: Share) async throws
+    func deleteMount(_ mount: Share) async throws
     
     func mount(_ : Share) async throws -> MountResponse
     func unmount(_ : Share) async throws

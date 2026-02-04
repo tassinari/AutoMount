@@ -11,6 +11,7 @@ import libMounter
 import Observation
 internal import ServiceManagement
 import OSLog
+import SwiftUI
 
 
 final class MountsCellViewModelTests: BaseTest {
@@ -53,7 +54,7 @@ final class MountsCellViewModelTests: BaseTest {
     }
     
     @MainActor func testMountCalls() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
         
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertFalse(mockStorage.mountCalled)
@@ -108,8 +109,8 @@ final class MountsCellViewModelTests: BaseTest {
     }
     
     @MainActor func testMountPressedButtonCallsEject() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
-        baseshare.connected = .mounted
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+       
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertFalse(mockStorage.unmountCalled)
         model.mountUnmountPressed()
@@ -118,8 +119,8 @@ final class MountsCellViewModelTests: BaseTest {
         XCTAssertFalse(mockStorage.mountCalled)
     }
     @MainActor func testMountPressedButtonCallsMount() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
-        baseshare.connected = .unmounted
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+       
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertFalse(mockStorage.mountCalled)
         model.mountUnmountPressed()
@@ -128,8 +129,8 @@ final class MountsCellViewModelTests: BaseTest {
         XCTAssertFalse(mockStorage.unmountCalled)
     }
     @MainActor func testMountPressedButtonNoOp() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
-        baseshare.connected = .mounting
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+       
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertFalse(mockStorage.mountCalled)
         XCTAssertFalse(mockStorage.unmountCalled)
@@ -139,8 +140,8 @@ final class MountsCellViewModelTests: BaseTest {
         XCTAssertFalse(mockStorage.unmountCalled)
     }
     @MainActor func testManageGetsManaged() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
-        baseshare.managed = true
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertTrue(baseshare.managed)
         XCTAssertTrue(model.autoMount)
@@ -148,8 +149,8 @@ final class MountsCellViewModelTests: BaseTest {
         
     }
     @MainActor func testManageGetsUnManaged() async throws{
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare))
-        baseshare.managed = false
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+       
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         XCTAssertFalse(baseshare.managed)
         XCTAssertFalse(model.autoMount)
@@ -158,12 +159,12 @@ final class MountsCellViewModelTests: BaseTest {
     }
     @MainActor func testManageSetsUnManaged() async throws{
         let exp = expectation(description: "wait for manage")
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare), deleteHandler: { share in
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint), deleteHandler: { share in
             XCTAssertEqual(share, self.baseshare)
             XCTAssertFalse(self.baseshare.managed)
             exp.fulfill()
         })
-        baseshare.managed = true
+       
         XCTAssertTrue(baseshare.managed)
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         model.autoMount.toggle()
@@ -173,12 +174,12 @@ final class MountsCellViewModelTests: BaseTest {
     }
     @MainActor func testManageSetsManaged() async throws{
         let exp = expectation(description: "wait for manage")
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare), addHandler: { share in
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint), addHandler: { share in
             XCTAssertEqual(share, self.baseshare)
             XCTAssertTrue(self.baseshare.managed)
             exp.fulfill()
         })
-        baseshare.managed = false
+        
         XCTAssertFalse(baseshare.managed)
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         model.autoMount.toggle()
@@ -191,15 +192,63 @@ final class MountsCellViewModelTests: BaseTest {
         enum TestError : Error{
             case thatError
         }
-        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare), addHandler: { share in
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint), addHandler: { share in
             throw TestError.thatError
         })
-        baseshare.managed = false
+       
         XCTAssertFalse(baseshare.managed)
         let model = MountCellViewModel(share: baseshare, storage: mockStorage)
         model.autoMount.toggle()
         XCTAssertTrue(model.autoMount)
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Cell mount/unmount error: thatError")}))
+    }
+    @MainActor func testDriveIconMounted() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .mounted)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconName() == Constant.driveIconConnected)
+    }
+    @MainActor func testDriveIconUnMounted() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconName() == Constant.driveIconDisConnected)
+    }
+    @MainActor func testDriveIconMounting() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .mounting)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconName() == Constant.driveIconDisConnected)
+    }
+    @MainActor func testDriveIconUnMounting() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .unmounting)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconName() == Constant.driveIconDisConnected)
+    }
+    @MainActor func testDriveColorMounted() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .mounted)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconColor() == .green)
+    }
+    @MainActor func testDriveColorUnMounted() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconColor() == .gray)
+    }
+    @MainActor func testDriveColorMounting() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .mounting)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconColor() == .gray)
+    }
+    @MainActor func testDriveColorUnMounting() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "smb://localhost")!, name: "name", mountPoint: "/some/path", managed: true, connected: .unmounting)
+        let mockStorage: MockStorage = MockStorage(mountResponse: .success(baseshare.mountPoint))
+        let model = MountCellViewModel(share: share , storage: mockStorage)
+        XCTAssertTrue(model.driveIconColor() == .gray)
     }
 }
