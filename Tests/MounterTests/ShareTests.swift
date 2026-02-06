@@ -223,8 +223,7 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(share2.user, u)
         XCTAssertEqual(share2.managed, true)
         XCTAssertEqual(share2.connected, .unmounted)
-        
-      
+        try? Keychain().delete(url: share.url)
     }
     func testManagedCopyWorks() async throws{
         let u = "user2"

@@ -18,7 +18,7 @@ final class StorageManagerTests: BaseTest {
 
     @MainActor func testStorageManagerSavesAndLoads()   async throws {
         let user = "TestUser"
-        let testURL = URL(string: "testUrl")!
+        let testURL = URL(string: "smb://test.com")!
         let testPassword = "testPassword"
         let name = "testName"
         
@@ -37,7 +37,7 @@ final class StorageManagerTests: BaseTest {
         XCTAssert(first.url == testURL)
         XCTAssert(first.user == user)
         XCTAssert(first.password == testPassword)
-    
+        try? Keychain().delete(url: testURL)
         
     }
     @MainActor func testMountsLogsBadData()   async throws {
@@ -115,14 +115,16 @@ final class StorageManagerTests: BaseTest {
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let n = 10
         var expected : [Share] = []
+        var urls : [URL] = []
         for i in 0..<n{
-            let testURL = URL(string: "testUrl\(i)")!
+            let testURL = URL(string: "smb://testUrl\(i)")!
             let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
             try await manager.addMount(d)
             expected.append(d)
+            urls.append(testURL)
         }
         let j = "3"
-        let delete = Share(user: user, password: testPassword, url: URL(string: "testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+        let delete = Share(user: user, password: testPassword, url: URL(string: "smb://testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         try await manager.deleteMount(delete)
         guard let allMounts = await manager.mounts() else {
             XCTFail()
@@ -131,6 +133,10 @@ final class StorageManagerTests: BaseTest {
         
         XCTAssertFalse(allMounts.contains(delete))
         XCTAssert(allMounts.count == n - 1)
+        
+        for url in urls{
+            try? Keychain().delete(url: url)
+        }
         
     }
     @MainActor func testStorageManagerSavesAndLoadsMultiple()   async throws {

@@ -22,23 +22,38 @@ public struct Share: Codable,Sendable {
     }
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        user = try? container.decode(String.self, forKey: .user)
-        password = try? container.decode(String.self, forKey: .password)
         url = try container.decode(URL.self, forKey: .url)
         name = try container.decode(String.self, forKey: .name)
         mountPoint = try container.decode(String.self, forKey: .mountPoint)
         managed = try container.decode(Bool.self, forKey: .managed)
         connected = try container.decode(ConnectionState.self, forKey: .connected)
+        do{
+            let creds = try Keychain().retrieve(url: url)
+            user = creds.user
+            password = creds.password
+        }catch{
+            user = nil
+            password = nil
+        }
     }
     public func encode(to encoder: Encoder) throws {
-            var container = encoder.container(keyedBy: CodingKeys.self)
-            try container.encode(user, forKey: .user)
-            try container.encode(password, forKey: .password)
-            try container.encode(url, forKey: .url)
-            try container.encode(name, forKey: .name)
-            try container.encode(mountPoint, forKey: .mountPoint)
-            try container.encode(managed, forKey: .managed)
-            try container.encode(connected, forKey: .connected)
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(url, forKey: .url)
+        try container.encode(name, forKey: .name)
+        try container.encode(mountPoint, forKey: .mountPoint)
+        try container.encode(managed, forKey: .managed)
+        try container.encode(connected, forKey: .connected)
+        
+        //dont save user pass in this object, save in keychain, pull out in decoder
+        if let user, let password {
+            do{
+                try Keychain().save(user: user, password: password, url: url)
+            }catch{
+                libMounter.error("Encode keychain error: \(String(describing: error))")
+            }
+        }
+       
+        
     }
     
     public let user : String?
@@ -54,8 +69,6 @@ public struct Share: Codable,Sendable {
     
     
     public  enum CodingKeys: String, CodingKey {
-        case user
-        case password
         case url
         case name
         case mountPoint
