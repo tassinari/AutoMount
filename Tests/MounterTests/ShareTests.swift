@@ -282,5 +282,33 @@ final class ShareTests: BaseTest {
         )
         XCTAssertTrue(share.unmountedCopy.connected == .unmounted)
     }
+    func testMountingCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .mounted
+        )
+        XCTAssertTrue(share.mountingCopy.connected == .mounting)
+    }
+    func testUnMountingCopyWorks() async throws{
+        let u = "user2"
+        let p = "pass2"
+        let share = Share(
+            user: u,
+            password: p,
+            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+            name: "smbTestShare",
+            mountPoint: "/Volumes/DOESNTEXSIST",
+            managed: true,
+            connected: .mounted
+        )
+        XCTAssertTrue(share.unmountingCopy.connected == .unmounting)
+    }
 
 }

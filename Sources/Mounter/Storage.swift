@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AppKit
 
 /// Represents the connection state of a share.
 ///
@@ -14,7 +13,21 @@ import AppKit
 /// - unmounted: The share is currently not mounted.
 /// - mounting: The share is in the process of being mounted.
 /// - unmounting: The share is in the process of being unmounted.
-public enum ConnectionState: Codable, Sendable{
+public enum ConnectionState: Codable, Sendable, CustomStringConvertible{
+    public var description: String{
+        switch self{
+            
+        case .mounted:
+            "mounted"
+        case .unmounted:
+            "unmounted"
+        case .mounting:
+            "mounting"
+        case .unmounting:
+            "unmounting"
+        }
+    }
+    
     case mounted, unmounted, mounting, unmounting
 }
 
@@ -60,9 +73,10 @@ public actor StorageManager{
         }
         let encoder = JSONEncoder()
         if let mounts = mounts(){
-            var updated = mounts
-            updated.append(mount.managedCopy)
-            let data = try encoder.encode(updated)
+            //FIXME: relying on hash here to exclude dupes but hash not takes into account connect and managed, need to manually compare URL /Path
+            var updated = Set(mounts)
+            updated.insert(mount.managedCopy)
+            let data = try encoder.encode(Array(updated))
             defaults.set(data, forKey: StorageManager.storeKey)
             
         }else{

@@ -6,10 +6,7 @@
 //
 
 import Foundation
-import AppKit
 
-
-//TODO: fix unchecked sendable, its there because of storagemanager mount class function, maybe make that @mainactor?
 
 public struct Share: Codable,Sendable {
     
@@ -78,7 +75,12 @@ public struct Share: Codable,Sendable {
     internal var unmountedCopy : Share {
         Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounted)
     }
-   
+    public var mountingCopy : Share {
+        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .mounting)
+    }
+    public var unmountingCopy : Share {
+        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounting)
+    }
 }
 //FIXME: put mount unmount into an actor to preserve state access
 extension Share {
@@ -92,32 +94,14 @@ extension Share {
 }
 extension Share: Hashable, Identifiable{
     public var id: String{
-        return url.absoluteString
+        let managed = managed ? "1" : "0"
+        return url.absoluteString + ":" + managed + ":" + connected.description
     }
     public static func == (lhs: Share, rhs: Share) -> Bool {
-        guard let lcomp = URLComponents(url: lhs.url, resolvingAgainstBaseURL: false),
-              let rcomp = URLComponents(url: rhs.url, resolvingAgainstBaseURL: false) else {return false}
-        return lcomp.scheme == rcomp.scheme && lcomp.host == rcomp.host && lcomp.path == rcomp.path
+       return lhs.id == rhs.id
         
     }
     public func hash(into hasher: inout Hasher) {
-        guard let uRLComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) else{
-            hasher.combine(id)
-            return
-        }
-        hasher.combine(uRLComponents.scheme)
-        hasher.combine(uRLComponents.host)
-        hasher.combine(uRLComponents.path)
-        
-    }
-}
-//FIXME: move this to client
-extension Share{
-    public func open(){
-        let url = URL(filePath: mountPoint)
-        if FileManager.default.fileExists(atPath: url.path){
-            NSWorkspace.shared.activateFileViewerSelecting([url])
-        }
-        
+        hasher.combine(id)
     }
 }
