@@ -1,0 +1,272 @@
+//
+//  ShareDataModelTests.swift
+//  MagicMountTests
+//
+//  Created by Mark Tassinari on 2/4/26.
+//
+
+import XCTest
+import Foundation
+import libMounter
+@testable import MagicMount
+
+@MainActor
+final class ShareDataModelTests: XCTestCase {
+
+    func testInitWithStorageLoadsShares() async throws{
+        let shares = [
+            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssert(model.shares.count == shares.count)
+        XCTAssertEqual(model.shares, shares)
+      
+        
+    }
+    func testMountNotificationCallsReload() async throws{
+        let shares = [
+            Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssert(model.shares.count == shares.count)
+        XCTAssertEqual(model.shares, shares)
+        let shares2 = [
+            Share(user: nil, password: nil, url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
+                
+        ]
+        storage.mockMountList = shares2
+        let info = ["NSDevicePath" : "/some/path/to/dosnt/matter"]
+        NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.didMountNotification, object: nil, userInfo: info)
+        XCTAssertNotEqual(shares, shares2)
+        
+        try await Task.sleep(nanoseconds: 1_000_000)
+        XCTAssert(model.shares.count == shares.count)
+        XCTAssertEqual(model.shares, shares2)
+    }
+    func testUnMountNotificationCallsReload() async throws{
+        let shares = [
+            Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssert(model.shares.count == shares.count)
+        XCTAssertEqual(model.shares, shares)
+        let shares2 = [
+            Share(user: nil, password: nil, url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
+                
+        ]
+        storage.mockMountList = shares2
+        let info = ["NSDevicePath" : "/some/path/to/dosnt/matter"]
+        NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.didUnmountNotification, object: nil, userInfo: info)
+        XCTAssertNotEqual(shares, shares2)
+        
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssert(model.shares.count == shares.count)
+        XCTAssertEqual(model.shares, shares2)
+    }
+    
+    func testMountSuccess() async throws{
+        let path = "works"
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares, mountResponse: .success(path))
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        let resp = try await model.mount(share)
+        switch resp{
+        case .success(let p):
+            XCTAssertEqual(p, path)
+        default:
+            XCTFail()
+        }
+    }
+    func testMountError() async throws{
+       
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares, mountResponse: .genericError(TestError.someError))
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        let resp = try await model.mount(share)
+        switch resp{
+        case .genericError(let err):
+            guard let error = err as? TestError else { XCTFail(); return }
+            XCTAssertEqual(error, TestError.someError)
+        default:
+            XCTFail()
+        }
+    }
+    func testMountThrows() async throws{
+       
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares, throwError: TestError.someError)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        do{
+            let resp = try await model.mount(share)
+            XCTFail("should not succeed but got \(resp)")
+        }catch let err as TestError{
+            XCTAssert(err == TestError.someError)
+        }catch{
+            XCTFail("wrong error got \(error)")
+        }
+    }
+    func testUnMountSuccess() async throws{
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertFalse(storage.unmountCalled)
+        try await model.unmount(share)
+        XCTAssertTrue(storage.unmountCalled)
+    }
+   
+    func testUnMountThrows() async throws{
+       
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+                
+        ]
+        let storage = MockStorage(list: shares, throwError: TestError.someError)
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        do{
+            try await model.unmount(share)
+            XCTFail("should not succeed but got")
+        }catch let err as TestError{
+            XCTAssert(err == TestError.someError)
+        }catch{
+            XCTFail("wrong error got \(error)")
+        }
+    }
+    func testAddSuccess() async throws{
+        
+        let exp = expectation(description: "wait")
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+        let storage = MockStorage(list: shares, addHandler:  { passedshare in
+            XCTAssert(passedshare == share)
+            exp.fulfill()
+        })
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        try await model.manage(share)
+        await fulfillment(of: [exp], timeout: 1)
+    }
+    
+    func testAddThrows() async throws{
+        
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+        let storage = MockStorage(list: shares, throwError: TestError.someError)
+    
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        do{
+            try await model.manage(share)
+            XCTFail("should have thrown")
+        }catch let err as TestError{
+            XCTAssert(err == .someError)
+        }catch{
+            XCTFail("Got \(error)")
+        }
+      
+    }
+    func testDeleteSuccess() async throws{
+        
+        let exp = expectation(description: "wait")
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+        let storage = MockStorage(list: shares,deleteHandler:  { passedshare in
+            XCTAssert(passedshare == share)
+            exp.fulfill()
+        })
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        try await model.unmanage(share)
+        await fulfillment(of: [exp], timeout: 1)
+    }
+    
+    func testDeleteThrows() async throws{
+        
+        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let shares = [
+            share,
+            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+        let storage = MockStorage(list: shares, throwError: TestError.someError)
+    
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        do{
+            try await model.unmanage(share)
+            XCTFail("should have thrown")
+        }catch let err as TestError{
+            XCTAssert(err == .someError)
+        }catch{
+            XCTFail("Got \(error)")
+        }
+      
+    }
+    
+    
+    enum TestError : Error{
+        case someError
+    }
+}

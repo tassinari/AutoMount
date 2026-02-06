@@ -97,30 +97,4 @@ import SwiftUI
             shares = theShares
         }
     }
-
-}
-
-extension Share {
-    var iconText : String{
-        switch connected{
-            
-        case .mounted:
-            return  "eject.fill"
-        case .unmounted:
-            return  "arrowshape.up.circle"
-        case .mounting:
-            return "trash.square"
-        case .unmounting:
-            return "arrowshape.down.circle"
-        }
-    }
-    var canOpen : Bool{
-        switch connected{
-            
-        case .mounted:
-           true
-        default:
-            false
-        }
-    }
 }

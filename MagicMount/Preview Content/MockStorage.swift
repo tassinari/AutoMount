@@ -55,10 +55,16 @@ class MockStorage: Storage{
     }
     
     func addMount(_ mount: Share) async throws {
+        if let err = throwError {
+            throw err
+        }
         try addHandler(mount)
     }
     
     func deleteMount(_ mount: Share) async throws {
+        if let err = throwError {
+            throw err
+        }
         try deleteHandler(mount)
     }
    

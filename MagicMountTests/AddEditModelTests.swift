@@ -14,10 +14,15 @@ import libMounter
 
 
 final class AddEditModelTests: XCTestCase {
+    var store : ShareDataModel!
+    
+    @MainActor override func setUpWithError() throws {
+        store = ShareDataModel(storage: MockStorage())
+    }
    
     
     @MainActor func testInitEmpty() async throws{
-        let model = AddEditModel()
+        let model = AddEditModel(store: store)
         XCTAssertEqual(model.urlString, "")
         XCTAssertEqual(model.username, "")
         XCTAssertEqual(model.password, "")
@@ -27,7 +32,7 @@ final class AddEditModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = AddEditModel(urlString: url, username: user, password: pass)
+        let model = AddEditModel(urlString: url, username: user, password: pass, store: store)
         XCTAssertEqual(model.urlString, url)
         XCTAssertEqual(model.username, user)
         XCTAssertEqual(model.password, pass)
@@ -37,7 +42,7 @@ final class AddEditModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = AddEditModel(urlString: url, username: user, password: pass)
+        let model = AddEditModel(urlString: url, username: user, password: pass, store: store)
         XCTAssertEqual(model.urlString, url)
         XCTAssertEqual(model.username, user)
         XCTAssertEqual(model.password, pass)
@@ -53,7 +58,7 @@ final class AddEditModelTests: XCTestCase {
         let user = "username"
         let pass = "password"
         
-        let model = AddEditModel(urlString: urlStr, username: user, password: pass)
+        let model = AddEditModel(urlString: urlStr, username: user, password: pass, store: store)
         try await model.saveAll()
         
         guard let share = await StorageManager().fullMountList().first else {XCTFail(); return}
@@ -64,7 +69,7 @@ final class AddEditModelTests: XCTestCase {
     }
     @MainActor func testSaveAllThrowsAllEmpty() async throws{
         do{
-            let model = AddEditModel()
+            let model = AddEditModel(store: store)
             try await model.saveAll()
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
@@ -76,7 +81,7 @@ final class AddEditModelTests: XCTestCase {
     }
     @MainActor func testSaveAllThrowsURLEmpty() async throws{
         do{
-            let model = AddEditModel(username: "dde", password: "cdxc")
+            let model = AddEditModel(username: "dde", password: "cdxc", store: store)
             try await model.saveAll()
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
