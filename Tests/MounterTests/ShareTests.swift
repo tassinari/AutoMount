@@ -28,7 +28,7 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(mountData?.host, "localhost")
         XCTAssertEqual(mountData?.port, 1445)
         XCTAssertEqual(mountData?.user, "samba")
-        XCTAssertEqual(mountData?.shareName, "smbTestShare")
+        XCTAssertEqual(mountData?.path, "smbTestShare")
        
         
     }

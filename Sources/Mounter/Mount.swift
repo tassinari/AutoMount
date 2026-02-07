@@ -84,14 +84,14 @@ internal struct MountData{
     public let port : Int?
     public let user: String?
     public let password: String?
-    public let shareName: String
+    public let path: String
     
     public var url: URL{
         get throws{
             var components = URLComponents()
             components.scheme = scheme
             components.host = host
-            components.path = shareName.isEmpty ? "" : "/\(shareName)"
+            components.path = path.isEmpty ? "" : "/\(path)"
             if let user{
                 components.user = user
             }

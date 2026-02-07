@@ -168,7 +168,7 @@ final class StorageManagerTests: BaseTest {
             port: 1445,
             user: "samba",
             password: "secret123",
-            shareName: "smbTestShare"
+            path: "smbTestShare"
         )
 
         _ = try await mountData.mount()
@@ -190,7 +190,7 @@ final class StorageManagerTests: BaseTest {
             port: 1445,
             user: "samba",
             password: "secret123",
-            shareName: "smbTestShare"
+            path: "smbTestShare"
         )
 
         _ = try await mountData.mount()

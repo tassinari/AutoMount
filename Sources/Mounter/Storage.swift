@@ -189,10 +189,14 @@ public extension StorageManager {
         throw MountError.noMountData
     }
     func unmount(_ share: Share) async throws{
+        //TODO: throw instead of return?
         if share.connected != .mounted{
             return
         }
-        let url = URL(filePath: share.mountPoint)
+        guard let path = share.mountPoint else{
+            return
+        }
+        let url = URL(filePath: path)
         try await MountData.unmount(url: url)
     }
 }
