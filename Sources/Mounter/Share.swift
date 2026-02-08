@@ -27,14 +27,8 @@ public struct Share: Codable,Sendable {
         mountPoint = try container.decode(String.self, forKey: .mountPoint)
         managed = try container.decode(Bool.self, forKey: .managed)
         connected = try container.decode(ConnectionState.self, forKey: .connected)
-        do{
-            let creds = try Keychain().retrieve(url: url)
-            user = creds.user
-            password = creds.password
-        }catch{
-            user = nil
-            password = nil
-        }
+        user = try? container.decode(String.self, forKey: .user)
+        password = try? container.decode(String.self, forKey: .password)
     }
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
@@ -43,17 +37,12 @@ public struct Share: Codable,Sendable {
         try container.encode(mountPoint, forKey: .mountPoint)
         try container.encode(managed, forKey: .managed)
         try container.encode(connected, forKey: .connected)
-        
-        //dont save user pass in this object, save in keychain, pull out in decoder
-        if let user, let password {
-            do{
-                try Keychain().save(user: user, password: password, url: url)
-            }catch{
-                libMounter.error("Encode keychain error: \(String(describing: error))")
-            }
+        if let password {
+            try container.encode(password, forKey: .password)
         }
-       
-        
+        if let user{
+            try container.encode(user, forKey: .user)
+        }
     }
     
     public let user : String?
@@ -74,6 +63,8 @@ public struct Share: Codable,Sendable {
         case mountPoint
         case managed
         case connected
+        case user
+        case password
     }
     
     internal var managedCopy : Share {
@@ -100,7 +91,7 @@ extension Share {
     
     internal var mountData : MountData?{
         if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false),let scheme = comp.scheme, let host = comp.host{
-            return MountData(scheme: scheme , host: host, port: comp.port, user: comp.user, password: comp.password, path: name)
+            return MountData(scheme: scheme , host: host, port: comp.port, user: self.user, password: self.password, path: name)
         }
         return nil
     }

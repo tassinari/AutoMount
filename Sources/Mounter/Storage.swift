@@ -103,12 +103,7 @@ public actor StorageManager{
             throw StorageManagerError.doesNotExsist
         }
         var modified = mounts
-        //remove from keychain
-        do{
-            try Keychain().delete(url: mount.url)
-        }catch{
-            //no op
-        }
+        
         modified.removeAll(where: {$0 == mount})
         let encoder = JSONEncoder()
         let data = try encoder.encode(modified)
@@ -179,7 +174,7 @@ public actor StorageManager{
 
 public extension StorageManager {
     func mount(_ share : Share) async throws -> MountResponse {
-        if share.connected != .unmounted{
+        if share.connected == .mounted{
             return .alreadyMounted
         }
         if let md = share.mountData{

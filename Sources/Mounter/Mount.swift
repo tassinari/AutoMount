@@ -92,12 +92,6 @@ internal struct MountData{
             components.scheme = scheme
             components.host = host
             components.path = path.isEmpty ? "" : "/\(path)"
-            if let user{
-                components.user = user
-            }
-            if let password{
-                components.password = password
-            }
             if let port{
                 components.port = port
             }else{
@@ -113,14 +107,13 @@ internal struct MountData{
     internal func mount() async throws -> MountResponse {
        
         let url = try self.url
-       
         return await withCheckedContinuation { cont in
             DispatchQueue.global().async {
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
                 let optD = NSMutableDictionary()
                 mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
-                
+
                 let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
                 print("Responses: \(response)")
                 var retVal: MountResponse = .alreadyMounted

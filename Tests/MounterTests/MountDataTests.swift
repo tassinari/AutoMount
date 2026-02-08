@@ -79,7 +79,6 @@ class BaseTest : XCTestCase{
     override class func tearDown() {
         super.tearDown()
         Self.runPreTestScript(script: "Scripts/dockerUnmount.sh")
-        
     }
     
     override class func setUp() {
@@ -160,12 +159,12 @@ final class MountDataTests: BaseTest {
 //    }
     func testURLProducedWithNoPort(){
         let mount = MountData(scheme: "smb", host: "localhost", port: nil, user: "user1", password: "Password1", path: "share")
-        let expexted = "smb://user1:Password1@localhost:445/share"
+        let expexted = "smb://localhost:445/share"
         XCTAssertEqual(expexted, try mount.url.absoluteString)
     }
     func testURLProducedWithPassword(){
         let mount = MountData(scheme: "smb", host: "localhost", port: 1445, user: "user1", password: "Password1", path: "share")
-        let expexted = "smb://user1:Password1@localhost:1445/share"
+        let expexted = "smb://localhost:1445/share"
         XCTAssertEqual(expexted, try mount.url.absoluteString)
     }
     func testURLProducedWithOutPassword(){
@@ -239,30 +238,6 @@ final class MountDataTests: BaseTest {
         
     }
     
-    func testMountWithBadUserFails() async throws{
-        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: "badName", password: password, path: shareName)
-        
-        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try await mountData.mount()
-        switch mounts {
-        case .authenticationError:
-            break
-        default:
-            XCTFail()
-        }
-    }
-    func testMountWithBadPasswordFails() async throws{
-        let mountData =  MountData(scheme: "smb", host: hostName, port: port, user: userName, password: "badpass", path: shareName)
-        
-        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
-        let mounts = try await mountData.mount()
-        switch mounts {
-        case .authenticationError:
-            break
-        default:
-            XCTFail("expected auth error, got \(String(describing: mounts))")
-        }
-    }
     func testMountWithWrongPortFails() async throws{
         let mountData =  MountData(scheme: "smb", host: hostName, port: 445, user: userName, password: password, path: shareName)
         

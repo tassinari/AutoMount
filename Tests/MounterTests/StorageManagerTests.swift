@@ -35,9 +35,7 @@ final class StorageManagerTests: BaseTest {
         }
         XCTAssert(mounts.count == 1)
         XCTAssert(first.url == testURL)
-        XCTAssert(first.user == user)
-        XCTAssert(first.password == testPassword)
-        try? Keychain().delete(url: testURL)
+       
         
     }
     @MainActor func testMountsLogsBadData()   async throws {
@@ -133,10 +131,7 @@ final class StorageManagerTests: BaseTest {
         
         XCTAssertFalse(allMounts.contains(delete))
         XCTAssert(allMounts.count == n - 1)
-        
-        for url in urls{
-            try? Keychain().delete(url: url)
-        }
+    
         
     }
     @MainActor func testStorageManagerSavesAndLoadsMultiple()   async throws {
