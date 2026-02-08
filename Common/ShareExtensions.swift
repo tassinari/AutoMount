@@ -32,7 +32,9 @@ extension Share {
         }
     }
     public func open(){
-        let url = URL(filePath: mountPoint)
+        //TODO: throw instead?
+        guard let path = self.mountPoint else {return}
+        let url = URL(filePath: path)
         if FileManager.default.fileExists(atPath: url.path){
             NSWorkspace.shared.activateFileViewerSelecting([url])
         }

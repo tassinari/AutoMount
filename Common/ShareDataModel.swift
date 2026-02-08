@@ -60,7 +60,7 @@ import SwiftUI
         }
     }
 
-    func mount(_ share : Share) async throws -> MountResponse{
+    func mount(_ share : Share, ui: Bool = false) async throws -> MountResponse{
         //swap out the share to a mounting copy
         let loading = share.mountingCopy
         var mutableShares = shares
@@ -68,7 +68,7 @@ import SwiftUI
             mutableShares[index] = loading
             shares = mutableShares
         }
-        let response = try await storage.mount(share)
+        let response = try await storage.mount(share, ui: ui)
         await load()
         return response
     }

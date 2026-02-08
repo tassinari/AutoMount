@@ -16,7 +16,7 @@ enum MockStore{
 
 class MockStorage: Storage{
     
-    func mount(_: libMounter.Share) async throws -> libMounter.MountResponse {
+    func mount(_: libMounter.Share, ui: Bool) async throws -> libMounter.MountResponse {
         mountCalled = true
         if let err = throwError {
             throw err

@@ -11,7 +11,7 @@ struct AddEditMount: View {
     @State var model : AddEditModel
 
     // Optional callbacks so a parent can handle actions
-    var onSubmit: ((String, String, String) -> Void)? = nil
+    var onSubmit: ((String) -> Void)? = nil
     var onCancel: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
@@ -25,28 +25,17 @@ struct AddEditMount: View {
                 Spacer()
             }
             Form {
-                Section() {
+                Section {
                     TextField("URL", text: $model.urlString, prompt: Text("smb://host:port/share"))
+                       // .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
-                    TextField("Location", text: $model.urlString, prompt: Text("/Volumes/share"))
+                    TextField("Location", text: $model.location, prompt: Text("/Volumes/share"))
+                       // .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                     Text("Optional, leave blank to default to standard /Volumes/share")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-
-                Section {
-                    TextField("Username", text: $model.username)
-                        .autocorrectionDisabled(true)
-                    SecureField("Password", text: $model.password)
-                } header: {
-                    HStack {
-                        Toggle("Use Credentials", isOn: Binding<Bool>.constant(true))
-                    }
-                    .padding([.top, .bottom], 8)
-                }
-
-
                 Section {
                     HStack {
                         Toggle("Auto mount", isOn: Binding<Bool>.constant(true))
@@ -57,7 +46,7 @@ struct AddEditMount: View {
                         }
                         
                         Button("Submit") {
-                            if let onSubmit { onSubmit(model.urlString, model.username, model.password) }
+                            if let onSubmit { onSubmit(model.urlString) }
                             //FIXME: wrap
                             Task{
                                 try? await model.saveAll()
@@ -68,11 +57,10 @@ struct AddEditMount: View {
                         .disabled(model.urlString.isEmpty)
                     }
                 }
-                
-          
+            }
+ 
         }
-        }
-            .padding()
+        .padding()
     }
 }
 
@@ -82,3 +70,4 @@ struct AddEditMount: View {
     }
     
 }
+

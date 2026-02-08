@@ -19,7 +19,7 @@ public protocol Storage {
     func addMount(_ mount: Share) async throws
     func deleteMount(_ mount: Share) async throws
     
-    func mount(_ : Share) async throws -> MountResponse
+    func mount(_ : Share, ui: Bool) async throws -> MountResponse
     func unmount(_ : Share) async throws
 }
 

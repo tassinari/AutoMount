@@ -7,36 +7,40 @@ enum CreateMountState{
 }
 
 enum AddEditModelError : Swift.Error {
-    case missingValues
+    case missingValues, badURL
 }
 @MainActor @Observable final class AddEditModel {
    
     var urlString: String
-    var username: String
-    var password: String
     private let store : ShareDataModel
+    var location: String
 
-    init(urlString: String = "", username: String = "", password: String = "",store: ShareDataModel) {
-        self.password = password
-        self.urlString = urlString
-        self.username = username
+    init(urlString: String = "",store: ShareDataModel) {
         self.store = store
+        self.urlString = urlString
+        self.location = ""
     }
 
     func clear() {
         urlString = ""
-        username = ""
-        password = ""
+        location = ""
     }
    
     func saveAll() async throws {
-        guard !urlString.isEmpty, !username.isEmpty, !password.isEmpty else {
-            throw AddEditModelError.missingValues
+      
+        guard let url = URL(string: urlString) else { throw AddEditModelError.badURL }
+        let mount = Share( url: url, name: "media", mountPoint: nil,managed: true, connected: .unmounted)
+        
+        let resp = try await store.mount(mount, ui: true)
+        switch resp {
+        case .success:
+            print("success")
+        default:
+            print("got \(resp)")
         }
-        let mount = Share(user: username, password: password, url: URL(string: urlString)!, name: "Mount", mountPoint: "/some/path",managed: true, connected: .mounted)
-        try await Task {
-            try await store.manage(mount)
-        }.value
+//        try await Task {
+//            //try await store.manage(mount)
+//        }.value
     }
 }
 

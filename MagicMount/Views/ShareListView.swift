@@ -53,13 +53,13 @@ struct ShareListView: View {
                         Button {
                             share.open()
                         } label: {
-                            Text(share.mountPoint)
+                            Text(share.mountPoint ?? "--")
                                 .lineLimit(1)
                         }
                         .buttonStyle(.link)
 
                     }else{
-                        Text(share.mountPoint)
+                        Text(share.mountPoint ?? "")
                             .lineLimit(1)
                     }
                    
@@ -255,7 +255,7 @@ struct ShareListView_Previews: PreviewProvider {
 
     final class MockStorage: Storage {
         func fullMountList() async -> [Share] { [] }
-        func mount(_ share: Share) async throws -> MountResponse { .success("/vol/mount") }
+        func mount(_ share: Share, ui: Bool) async throws -> MountResponse { .success("/vol/mount") }
         func unmount(_ share: Share) async throws {}
         func addMount(_ share: Share) async throws {}
         func deleteMount(_ share: Share) async throws {}

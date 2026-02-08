@@ -37,16 +37,16 @@ import libMounter
             let missing = Set(shares).subtracting(updated)
             //make and updated list with same instances
             var fullUpdated : [Share] = []
-            for share in shares{
-                if missing.contains(share){
-                    continue;
-                }
-                if let sameShareFromUpdated = updated.first(where: {$0 == share}){
-    //                share.connected = sameShareFromUpdated.connected
-    //                share.managed = sameShareFromUpdated.managed
-                }
-                fullUpdated.append(share)
-            }
+//            for share in shares{
+//                if missing.contains(share){
+//                    continue;
+//                }
+//                if let sameShareFromUpdated = updated.first(where: {$0 == share}){
+//    //                share.connected = sameShareFromUpdated.connected
+//    //                share.managed = sameShareFromUpdated.managed
+//                }
+//                fullUpdated.append(share)
+//            }
             fullUpdated.append(contentsOf: added)
             shares = fullUpdated
         }
@@ -66,7 +66,7 @@ import libMounter
                 case .mounted:
                     try await storage.unmount(share)
                 case .unmounted:
-                    switch try await storage.mount(share){
+                    switch try await storage.mount(share, ui: false){
                         
                     case .success(_):
                         print("mount")
