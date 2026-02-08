@@ -27,7 +27,7 @@ internal struct MountedVolumesData: Equatable{
         return remountURL.scheme == to.url.scheme && remountURL.host == to.url.host && remountURL.path() == to.url.path()
     }
     var share: Share {
-        return Share(user: nil, password: nil, url: remountURL, name: name, mountPoint: path, managed: false, connected: .mounted)
+        return Share( url: remountURL, name: name, mountPoint: path, managed: false, connected: .mounted)
     }
 }
 
@@ -82,8 +82,6 @@ internal struct MountData{
     public let scheme: String
     public let host: String
     public let port : Int?
-    public let user: String?
-    public let password: String?
     public let path: String
     
     public var url: URL{
@@ -104,7 +102,7 @@ internal struct MountData{
         }
     }
     
-    internal func mount() async throws -> MountResponse {
+    internal func mount(ui: Bool = false) async throws -> MountResponse {
        
         let url = try self.url
         return await withCheckedContinuation { cont in
@@ -112,8 +110,9 @@ internal struct MountData{
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
                 let optD = NSMutableDictionary()
-                mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
-
+                if !ui{
+                    mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
+                }
                 let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
                 print("Responses: \(response)")
                 var retVal: MountResponse = .alreadyMounted

@@ -16,8 +16,6 @@ final class ShareTests: BaseTest {
     func testShareProducesCorrectMountData() async throws{
      
         let share = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/smbTestShare",
@@ -29,7 +27,6 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(mountData?.scheme, "smb")
         XCTAssertEqual(mountData?.host, "localhost")
         XCTAssertEqual(mountData?.port, 1445)
-        XCTAssertEqual(mountData?.user, "samba")
         XCTAssertEqual(mountData?.path, "smbTestShare")
        
         
@@ -37,8 +34,7 @@ final class ShareTests: BaseTest {
     
     @MainActor
     func testShareMountWorks() async throws {
-        let share = Share(  user: "samba",
-                            password: "",
+        let share = Share(
                             url: URL(string: "smb://samba:secret123@localhost:1445/smbTestShare")!,
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
@@ -59,8 +55,7 @@ final class ShareTests: BaseTest {
     }
     @MainActor
     func testShareMountThrowsNoMountData() async throws {
-        let share = Share(  user: "samba",
-                            password: "",
+        let share = Share(
                             url: URL(filePath: ""),
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
@@ -79,8 +74,7 @@ final class ShareTests: BaseTest {
     }
     @MainActor
     func testShareMountReturnsAlreadyMounted() async throws {
-        let share = Share(  user: "samba",
-                            password: "",
+        let share = Share(
                             url: URL(string: "smb://samba:secret123@localhost:1445/smbTestShare")!,
                             name: "smbTestShare",
                             mountPoint: "/Volumes/smbTestShare", managed: true,
@@ -103,8 +97,6 @@ final class ShareTests: BaseTest {
     }
     @MainActor func testUnmountingDoesNothingWhenAlreadyUnmounting() async throws {
         let share = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/smbTestShare",
@@ -121,8 +113,6 @@ final class ShareTests: BaseTest {
     }
     @MainActor func testUnmountingThrowsWhenWrongFile() async throws {
         let share = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -142,8 +132,6 @@ final class ShareTests: BaseTest {
     }
     func testEqualAndHash(){
         let share1 = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -151,8 +139,6 @@ final class ShareTests: BaseTest {
             connected: .unmounted
         )
         let share2 = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@localhost:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -160,8 +146,6 @@ final class ShareTests: BaseTest {
             connected: .unmounted
         )
         let share3 = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -177,8 +161,6 @@ final class ShareTests: BaseTest {
     }
     func testTypeCorrect() async throws{
         let share = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -188,8 +170,6 @@ final class ShareTests: BaseTest {
         
         XCTAssertTrue(share.type == "smb")
         let share2 = Share(
-            user: "samba",
-            password: "",
             url: URL(string: "afp://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -201,19 +181,13 @@ final class ShareTests: BaseTest {
     }
     
     func testEncodeDecodeWithSnapshotWorking() async throws{
-        let u = "user2"
-        let p = "pass2"
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
             connected: .unmounted
         )
-        XCTAssertEqual(share.password, p)
-        XCTAssertEqual(share.user, u)
         XCTAssertEqual(share.managed, true)
         XCTAssertEqual(share.connected, .unmounted)
         
@@ -221,17 +195,12 @@ final class ShareTests: BaseTest {
         let data = try JSONEncoder().encode(share)
         let share2 = try JSONDecoder().decode(Share.self, from: data)
         
-        XCTAssertEqual(share2.password, p)
-        XCTAssertEqual(share2.user, u)
         XCTAssertEqual(share2.managed, true)
         XCTAssertEqual(share2.connected, .unmounted)
     }
     func testManagedCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+     
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -241,11 +210,8 @@ final class ShareTests: BaseTest {
         XCTAssertTrue(share.managedCopy.managed)
     }
     func testUnManagedCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+       
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -255,11 +221,8 @@ final class ShareTests: BaseTest {
         XCTAssertFalse(share.unmanagedCopy.managed)
     }
     func testConnectedCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+       
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -269,12 +232,9 @@ final class ShareTests: BaseTest {
         XCTAssertTrue(share.mountedCopy.connected == .mounted)
     }
     func testNonConnectedCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+      
         let share = Share(
-            user: u,
-            password: p,
-            url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
+           url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
             managed: true,
@@ -283,11 +243,8 @@ final class ShareTests: BaseTest {
         XCTAssertTrue(share.unmountedCopy.connected == .unmounted)
     }
     func testMountingCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+       
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",
@@ -297,11 +254,8 @@ final class ShareTests: BaseTest {
         XCTAssertTrue(share.mountingCopy.connected == .mounting)
     }
     func testUnMountingCopyWorks() async throws{
-        let u = "user2"
-        let p = "pass2"
+       
         let share = Share(
-            user: u,
-            password: p,
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
             mountPoint: "/Volumes/DOESNTEXSIST",

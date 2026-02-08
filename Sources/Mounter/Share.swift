@@ -11,9 +11,7 @@ import Foundation
 public struct Share: Codable,Sendable {
     
     //FIXME: make this failable if URL does not conform to smb/afp/nfs??
-    public init(user: String?, password: String?, url: URL, name: String, mountPoint: String?, managed: Bool, connected: ConnectionState) {
-        self.user = user
-        self.password = password
+    public init( url: URL, name: String, mountPoint: String?, managed: Bool, connected: ConnectionState) {
         self.url = url
         self.name = name
         self.mountPoint = mountPoint
@@ -27,8 +25,7 @@ public struct Share: Codable,Sendable {
         mountPoint = try container.decode(String.self, forKey: .mountPoint)
         managed = try container.decode(Bool.self, forKey: .managed)
         connected = try container.decode(ConnectionState.self, forKey: .connected)
-        user = try? container.decode(String.self, forKey: .user)
-        password = try? container.decode(String.self, forKey: .password)
+      
     }
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
@@ -37,16 +34,9 @@ public struct Share: Codable,Sendable {
         try container.encode(mountPoint, forKey: .mountPoint)
         try container.encode(managed, forKey: .managed)
         try container.encode(connected, forKey: .connected)
-        if let password {
-            try container.encode(password, forKey: .password)
-        }
-        if let user{
-            try container.encode(user, forKey: .user)
-        }
+       
     }
     
-    public let user : String?
-    public let password : String?
     public let url : URL
     public let name: String
     public let mountPoint: String?
@@ -63,27 +53,25 @@ public struct Share: Codable,Sendable {
         case mountPoint
         case managed
         case connected
-        case user
-        case password
     }
     
     internal var managedCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: true, connected: connected)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: true, connected: connected)
     }
     internal var unmanagedCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: false, connected: connected)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: false, connected: connected)
     }
     internal var mountedCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .mounted)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .mounted)
     }
     internal var unmountedCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounted)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounted)
     }
     public var mountingCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .mounting)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .mounting)
     }
     public var unmountingCopy : Share {
-        Share(user: user, password: password, url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounting)
+        Share( url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounting)
     }
 }
 //FIXME: put mount unmount into an actor to preserve state access
@@ -91,7 +79,7 @@ extension Share {
     
     internal var mountData : MountData?{
         if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false),let scheme = comp.scheme, let host = comp.host{
-            return MountData(scheme: scheme , host: host, port: comp.port, user: self.user, password: self.password, path: name)
+            return MountData(scheme: scheme , host: host, port: comp.port, path: name)
         }
         return nil
     }

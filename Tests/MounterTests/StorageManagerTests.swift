@@ -23,7 +23,7 @@ final class StorageManagerTests: BaseTest {
         let name = "testName"
         
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share", managed: true, connected: .unmounted)
+        let mount = Share( url: testURL, name: name, mountPoint: "/Volumes/share", managed: true, connected: .unmounted)
         try await manager.addMount(mount)
         guard let mounts = await manager.mounts() else {
             XCTFail()
@@ -55,7 +55,7 @@ final class StorageManagerTests: BaseTest {
         let name = "testName"
        
         let manager =  StorageManager(defaults: nil)
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+        let mount = Share( url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         do{
             try await manager.addMount(mount)
             XCTFail("should have thrown")
@@ -71,7 +71,7 @@ final class StorageManagerTests: BaseTest {
         let testPassword = "testPassword"
         let name = "testName"
         let manager =  StorageManager(defaults: nil)
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+        let mount = Share(url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         do{
             try await manager.deleteMount(mount)
             XCTFail("should have thrown")
@@ -94,7 +94,7 @@ final class StorageManagerTests: BaseTest {
         let testPassword = "testPassword"
         let name = "testName"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
-        let mount = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+        let mount = Share(url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         do{
             try await manager.deleteMount(mount)
             XCTFail("should have thrown")
@@ -116,13 +116,13 @@ final class StorageManagerTests: BaseTest {
         var urls : [URL] = []
         for i in 0..<n{
             let testURL = URL(string: "smb://testUrl\(i)")!
-            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+            let d = Share(url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
             try await manager.addMount(d)
             expected.append(d)
             urls.append(testURL)
         }
         let j = "3"
-        let delete = Share(user: user, password: testPassword, url: URL(string: "smb://testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+        let delete = Share(url: URL(string: "smb://testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
         try await manager.deleteMount(delete)
         guard let allMounts = await manager.mounts() else {
             XCTFail()
@@ -144,7 +144,7 @@ final class StorageManagerTests: BaseTest {
         var expected : [Share] = []
         for i in 0..<n{
             let testURL = URL(string: "testUrl\(i)")!
-            let d = Share(user: user, password: testPassword, url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+            let d = Share(url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
             try await manager.addMount(d)
             expected.append(d)
         }
@@ -161,8 +161,6 @@ final class StorageManagerTests: BaseTest {
             scheme: "smb",
             host: "localhost",
             port: 1445,
-            user: "samba",
-            password: "secret123",
             path: "smbTestShare"
         )
 
@@ -183,8 +181,6 @@ final class StorageManagerTests: BaseTest {
             scheme: "smb",
             host: "localhost",
             port: 1445,
-            user: "samba",
-            password: "secret123",
             path: "smbTestShare"
         )
 

@@ -173,12 +173,12 @@ public actor StorageManager{
 }
 
 public extension StorageManager {
-    func mount(_ share : Share) async throws -> MountResponse {
+    func mount(_ share : Share, ui : Bool = false) async throws -> MountResponse {
         if share.connected == .mounted{
             return .alreadyMounted
         }
         if let md = share.mountData{
-            let data =  try await md.mount()
+            let data =  try await md.mount(ui: ui)
             return data
         }
         throw MountError.noMountData
