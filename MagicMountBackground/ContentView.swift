@@ -161,7 +161,7 @@ struct ContentCellView: View {
             actionHandler(share, .open)
         } label: {
             HStack(spacing: 0){
-                Text(share.name)
+                Text(share.name ?? "--")
                     .foregroundStyle(share.textColor)
                 Spacer()
                 Button {

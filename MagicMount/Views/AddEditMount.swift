@@ -15,6 +15,7 @@ struct AddEditMount: View {
     var onCancel: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @State private var useCustomLocation: Bool = false
 
     var body: some View {
        
@@ -27,18 +28,23 @@ struct AddEditMount: View {
             Form {
                 Section {
                     TextField("URL", text: $model.urlString, prompt: Text("smb://host:port/share"))
-                       // .textInputAutocapitalization(.never)
+                        // .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
-                    TextField("Location", text: $model.location, prompt: Text("/Volumes/share"))
-                       // .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                    Text("Optional, leave blank to default to standard /Volumes/share")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .padding()
+
+                    Toggle("Mount to custom location", isOn: $useCustomLocation)
+
+                    if useCustomLocation {
+                        TextField("Location", text: $model.location, prompt: Text("/Volumes/share"))
+                            // .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .padding()
+                       
+                    }
                 }
                 Section {
                     HStack {
-                        Toggle("Auto mount", isOn: Binding<Bool>.constant(true))
+                        Toggle("Always keep mounted", isOn: $model.manage)
                         Spacer()
                         Button("Cancel") {
                             if let onCancel { onCancel() }
@@ -47,7 +53,6 @@ struct AddEditMount: View {
                         
                         Button("Submit") {
                             if let onSubmit { onSubmit(model.urlString) }
-                            //FIXME: wrap
                             Task{
                                 try? await model.saveAll()
                             }
@@ -68,6 +73,7 @@ struct AddEditMount: View {
     NavigationStack{
         AddEditMount(model: AddEditModel(store: MockStore.store))
     }
+    .frame(width: 500, height: 400)
     
 }
 

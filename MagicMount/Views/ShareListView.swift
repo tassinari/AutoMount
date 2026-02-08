@@ -33,7 +33,7 @@ struct ShareListView: View {
                 .width(90)
                 TableColumn("Name") { $share in
                     HStack{
-                        Text(share.name)
+                        Text(share.name ?? "--")
                         Spacer()
                         MountButtonCell(
                             share: $share,

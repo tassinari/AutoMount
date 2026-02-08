@@ -14,27 +14,33 @@ enum AddEditModelError : Swift.Error {
     var urlString: String
     private let store : ShareDataModel
     var location: String
+    var manage: Bool = true
 
     init(urlString: String = "",store: ShareDataModel) {
         self.store = store
         self.urlString = urlString
         self.location = ""
+        
     }
 
     func clear() {
         urlString = ""
         location = ""
+        manage = true
     }
    
     func saveAll() async throws {
       
         guard let url = URL(string: urlString) else { throw AddEditModelError.badURL }
-        let mount = Share( url: url, name: "media", mountPoint: nil,managed: true, connected: .unmounted)
+        let mount = Share( url: url, name: nil, mountPoint: nil,managed: true, connected: .unmounted)
         
         let resp = try await store.mount(mount, ui: true)
         switch resp {
-        case .success:
-            print("success")
+        case .success(_):
+            if manage, let mountedShare = store.shareMatching(url: url){
+                try await store.manage(mountedShare)
+            }
+            
         default:
             print("got \(resp)")
         }

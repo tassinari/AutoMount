@@ -97,4 +97,14 @@ import SwiftUI
             shares = theShares
         }
     }
+    func shareMatching(url: URL) -> Share?{
+        return self.shares.first { share in
+            guard let comp = URLComponents(url: share.url, resolvingAgainstBaseURL: false) else { return false}
+            guard let matchComp = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return false}
+            if comp.path == matchComp.path && comp.host == matchComp.host && comp.scheme == matchComp.scheme  {
+                return true
+            }
+            return false
+        }
+    }
 }
