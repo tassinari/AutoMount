@@ -89,7 +89,12 @@ internal struct MountData{
             var components = URLComponents()
             components.scheme = scheme
             components.host = host
-            components.path = path.isEmpty ? "" : "/\(path)"
+            if !path.isEmpty, !path.hasPrefix("/"){
+                components.path = "/\(path)"
+            }else{
+                components.path = path
+            }
+            
             if let port{
                 components.port = port
             }else{

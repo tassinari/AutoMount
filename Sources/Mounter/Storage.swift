@@ -166,7 +166,7 @@ public actor StorageManager{
         //Add notManaged as Shares
         let nonMananedShares: [Share] = notMananged.compactMap({$0.share})
         results.append(contentsOf: nonMananedShares)
-        return results.sorted(by: {$0.name < $1.name})
+        return results.sorted(by: {$0.name ?? "" < $1.name ?? ""})
         
     }
     

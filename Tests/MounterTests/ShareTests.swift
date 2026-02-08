@@ -27,7 +27,7 @@ final class ShareTests: BaseTest {
         XCTAssertEqual(mountData?.scheme, "smb")
         XCTAssertEqual(mountData?.host, "localhost")
         XCTAssertEqual(mountData?.port, 1445)
-        XCTAssertEqual(mountData?.path, "smbTestShare")
+        XCTAssertEqual(mountData?.path, "/smbTestShare")
        
         
     }
@@ -50,7 +50,7 @@ final class ShareTests: BaseTest {
                 atPath: "/Volumes/smbTestShare/empty_file.txt"
             ))
         default:
-            XCTFail("Expected successful mount")
+            XCTFail("Expected successful mount, got \(result)")
         }
     }
     @MainActor

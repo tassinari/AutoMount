@@ -11,7 +11,7 @@ import Foundation
 public struct Share: Codable,Sendable {
     
     //FIXME: make this failable if URL does not conform to smb/afp/nfs??
-    public init( url: URL, name: String, mountPoint: String?, managed: Bool, connected: ConnectionState) {
+    public init( url: URL, name: String?, mountPoint: String?, managed: Bool, connected: ConnectionState) {
         self.url = url
         self.name = name
         self.mountPoint = mountPoint
@@ -38,7 +38,7 @@ public struct Share: Codable,Sendable {
     }
     
     public let url : URL
-    public let name: String
+    public let name: String?
     public let mountPoint: String?
     public let managed : Bool
     public let connected : ConnectionState
@@ -79,7 +79,7 @@ extension Share {
     
     internal var mountData : MountData?{
         if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false),let scheme = comp.scheme, let host = comp.host{
-            return MountData(scheme: scheme , host: host, port: comp.port, path: name)
+            return MountData(scheme: scheme , host: host, port: comp.port, path: comp.path)
         }
         return nil
     }
