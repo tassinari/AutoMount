@@ -15,9 +15,9 @@ final class ShareDataModelTests: XCTestCase {
 
     func testInitWithStorageLoadsShares() async throws{
         let shares = [
-            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares)
@@ -30,9 +30,9 @@ final class ShareDataModelTests: XCTestCase {
     }
     func testMountNotificationCallsReload() async throws{
         let shares = [
-            Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares)
@@ -41,9 +41,9 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssert(model.shares.count == shares.count)
         XCTAssertEqual(model.shares, shares)
         let shares2 = [
-            Share(user: nil, password: nil, url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
                 
         ]
         storage.mockMountList = shares2
@@ -57,9 +57,9 @@ final class ShareDataModelTests: XCTestCase {
     }
     func testUnMountNotificationCallsReload() async throws{
         let shares = [
-            Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares)
@@ -68,9 +68,9 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssert(model.shares.count == shares.count)
         XCTAssertEqual(model.shares, shares)
         let shares2 = [
-            Share(user: nil, password: nil, url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost4")!, name: "test4", mountPoint: "/some/path4", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost5")!, name: "test5", mountPoint: "/some/path5", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost6")!, name: "test6", mountPoint: "/some/path6", managed: true, connected: .mounted)
                 
         ]
         storage.mockMountList = shares2
@@ -85,11 +85,11 @@ final class ShareDataModelTests: XCTestCase {
     
     func testMountSuccess() async throws{
         let path = "works"
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares, mountResponse: .success(path))
@@ -105,11 +105,11 @@ final class ShareDataModelTests: XCTestCase {
     }
     func testMountError() async throws{
        
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares, mountResponse: .genericError(TestError.someError))
@@ -126,11 +126,11 @@ final class ShareDataModelTests: XCTestCase {
     }
     func testMountThrows() async throws{
        
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares, throwError: TestError.someError)
@@ -146,11 +146,11 @@ final class ShareDataModelTests: XCTestCase {
         }
     }
     func testUnMountSuccess() async throws{
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares)
@@ -163,11 +163,11 @@ final class ShareDataModelTests: XCTestCase {
    
     func testUnMountThrows() async throws{
        
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
                 
         ]
         let storage = MockStorage(list: shares, throwError: TestError.someError)
@@ -185,11 +185,11 @@ final class ShareDataModelTests: XCTestCase {
     func testAddSuccess() async throws{
         
         let exp = expectation(description: "wait")
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
         ]
         let storage = MockStorage(list: shares, addHandler:  { passedshare in
             XCTAssert(passedshare == share)
@@ -203,11 +203,11 @@ final class ShareDataModelTests: XCTestCase {
     
     func testAddThrows() async throws{
         
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
         ]
         let storage = MockStorage(list: shares, throwError: TestError.someError)
     
@@ -226,11 +226,11 @@ final class ShareDataModelTests: XCTestCase {
     func testDeleteSuccess() async throws{
         
         let exp = expectation(description: "wait")
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
         ]
         let storage = MockStorage(list: shares,deleteHandler:  { passedshare in
             XCTAssert(passedshare == share)
@@ -244,11 +244,11 @@ final class ShareDataModelTests: XCTestCase {
     
     func testDeleteThrows() async throws{
         
-        let share = Share(user: nil, password: nil, url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
         let shares = [
             share,
-            Share(user: nil, password: nil, url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
-            Share(user: nil, password: nil, url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
         ]
         let storage = MockStorage(list: shares, throwError: TestError.someError)
     

@@ -24,47 +24,39 @@ final class AddEditModelTests: XCTestCase {
     @MainActor func testInitEmpty() async throws{
         let model = AddEditModel(store: store)
         XCTAssertEqual(model.urlString, "")
-        XCTAssertEqual(model.username, "")
-        XCTAssertEqual(model.password, "")
+      
     }
     @MainActor func testInitHoldsAllValues() async throws{
         let url = "urlString"
         let user = "username"
         let pass = "password"
         
-        let model = AddEditModel(urlString: url, username: user, password: pass, store: store)
+        let model = AddEditModel(urlString: url, store: store)
         XCTAssertEqual(model.urlString, url)
-        XCTAssertEqual(model.username, user)
-        XCTAssertEqual(model.password, pass)
+       
     }
     @MainActor func testClearWorks() async throws{
         let url = "urlString"
         let user = "username"
         let pass = "password"
         
-        let model = AddEditModel(urlString: url, username: user, password: pass, store: store)
+        let model = AddEditModel(urlString: url,  store: store)
         XCTAssertEqual(model.urlString, url)
-        XCTAssertEqual(model.username, user)
-        XCTAssertEqual(model.password, pass)
+    
         model.clear()
         XCTAssertEqual(model.urlString, "")
-        XCTAssertEqual(model.username, "")
-        XCTAssertEqual(model.password, "")
+   
         
     }
     @MainActor func testSaveAllWorks() async throws{
         let urlStr = "smb://localhost:445/test"
         guard let url = URL(string: urlStr) else {XCTFail(); return}
-        let user = "username"
-        let pass = "password"
-        
-        let model = AddEditModel(urlString: urlStr, username: user, password: pass, store: store)
+      
+        let model = AddEditModel(urlString: urlStr, store: store)
         try await model.saveAll()
         
         guard let share = await StorageManager().fullMountList().first else {XCTFail(); return}
         
-        XCTAssertEqual(share.user, user)
-        XCTAssertEqual(share.password, pass)
         XCTAssertEqual(share.url, url)
     }
     @MainActor func testSaveAllThrowsAllEmpty() async throws{
@@ -81,7 +73,7 @@ final class AddEditModelTests: XCTestCase {
     }
     @MainActor func testSaveAllThrowsURLEmpty() async throws{
         do{
-            let model = AddEditModel(username: "dde", password: "cdxc", store: store)
+            let model = AddEditModel( store: store)
             try await model.saveAll()
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
