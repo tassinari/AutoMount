@@ -264,7 +264,28 @@ final class ShareDataModelTests: XCTestCase {
         }
       
     }
+
+    func testURLMatchWorks() async throws{
+        let share = Share(url: URL(string: "smb://localhost1/some/path")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        let share2 = Share(url: URL(string: "afp://localhost1/some/other/path")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted)
+        let shares = [
+            share,
+            share2,
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+        let storage = MockStorage(list: shares, throwError: TestError.someError)
     
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+        guard let testURL = URL(string: "smb://localhost1/some/path") else {XCTFail() ; return}
+        XCTAssert(model.shareMatching(url: testURL) == share)
+        guard let failtestURL = URL(string: "smb://localhost1/some/bad/path") else {XCTFail() ; return}
+        XCTAssertNil(model.shareMatching(url: failtestURL) )
+        guard let test2URL = URL(string: "afp://localhost1/some/other/path") else {XCTFail() ; return}
+        XCTAssert(model.shareMatching(url: test2URL) == share2 )
+        guard let failtestHttp = URL(string: "http://localhost1/some/path") else {XCTFail() ; return}
+        XCTAssertNil(model.shareMatching(url: failtestHttp) )
+    }
     
     enum TestError : Error{
         case someError

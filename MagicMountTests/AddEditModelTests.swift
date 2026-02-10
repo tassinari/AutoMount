@@ -28,56 +28,68 @@ final class AddEditModelTests: XCTestCase {
     }
     @MainActor func testInitHoldsAllValues() async throws{
         let url = "urlString"
-        let user = "username"
-        let pass = "password"
-        
+       
         let model = AddEditModel(urlString: url, store: store)
         XCTAssertEqual(model.urlString, url)
        
     }
     @MainActor func testClearWorks() async throws{
         let url = "urlString"
-        let user = "username"
-        let pass = "password"
-        
-        let model = AddEditModel(urlString: url,  store: store)
+         let model = AddEditModel(urlString: url,  store: store)
+        model.manage = false
         XCTAssertEqual(model.urlString, url)
     
         model.clear()
         XCTAssertEqual(model.urlString, "")
+        XCTAssertTrue(model.manage)
    
         
     }
-    @MainActor func testSaveAllWorks() async throws{
+    @MainActor func testSaveAllCallsMount() async throws{
+        let mockStore = MockStorage()
+        store = ShareDataModel(storage: mockStore)
         let urlStr = "smb://localhost:445/test"
-        guard let url = URL(string: urlStr) else {XCTFail(); return}
-      
         let model = AddEditModel(urlString: urlStr, store: store)
+        XCTAssertFalse(mockStore.mountCalled)
         try await model.saveAll()
-        
-        guard let share = await StorageManager().fullMountList().first else {XCTFail(); return}
-        
-        XCTAssertEqual(share.url, url)
+        XCTAssertTrue(mockStore.mountCalled)
     }
-    @MainActor func testSaveAllThrowsAllEmpty() async throws{
-        do{
-            let model = AddEditModel(store: store)
-            try await model.saveAll()
-            XCTFail("Should have thrown")
-        }catch let err as AddEditModelError{
-            XCTAssertEqual(err, AddEditModelError.missingValues)
-            
-        }catch{
-            XCTFail("Wrong error")
-        }
+    @MainActor func testSaveAllDoesntCallAddMountWhenFlagFalse() async throws{
+        let share = Share(url: URL(string: "smb://localhost:445/test")!, name: "test", mountPoint: nil, managed: false, connected: .unmounted)
+        let mockStore = MockStorage(list:[share],mountResponse: .success("/some/path"), addHandler:{ _ in
+            XCTFail()
+        })
+        store = ShareDataModel(storage: mockStore)
+        let urlStr = "smb://localhost:445/test"
+        let model = AddEditModel(urlString: urlStr, store: store)
+        model.manage = false
+        XCTAssertFalse(mockStore.mountCalled)
+        try await model.saveAll()
+        XCTAssertTrue(mockStore.mountCalled)
+        try await Task.sleep(nanoseconds: 1_000_000)
     }
+    @MainActor func testSaveAllCallsAddMountWhenFlagSet() async throws{
+        let share = Share(url: URL(string: "smb://localhost:445/test")!, name: "test", mountPoint: nil, managed: false, connected: .unmounted)
+        let exp = expectation(description: "wait for add")
+        let mockStore = MockStorage(list:[share],mountResponse: .success("/some/path"), addHandler:{ _ in
+            exp.fulfill()
+        })
+        store = ShareDataModel(storage: mockStore)
+        let urlStr = "smb://localhost:445/test"
+        let model = AddEditModel(urlString: urlStr, store: store)
+        XCTAssertFalse(mockStore.mountCalled)
+        try await model.saveAll()
+        XCTAssertTrue(mockStore.mountCalled)
+        await fulfillment(of: [exp], timeout: 1)
+    }
+
     @MainActor func testSaveAllThrowsURLEmpty() async throws{
         do{
             let model = AddEditModel( store: store)
             try await model.saveAll()
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
-            XCTAssertEqual(err, AddEditModelError.missingValues)
+            XCTAssertEqual(err, AddEditModelError.badURL)
             
         }catch{
             XCTFail("Wrong error")

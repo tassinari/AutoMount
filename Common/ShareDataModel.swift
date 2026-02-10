@@ -14,6 +14,7 @@ import SwiftUI
 
 @MainActor @Observable final class ShareDataModel {
     
+    
     var shares: [Share] = []
     private var storage: Storage
     var showAddShare : Bool = false
