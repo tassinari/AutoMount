@@ -180,7 +180,7 @@ struct StatusCell: View {
         case .mounting:
             return "Connecting"
         case .unmounting:
-            return "Error"
+            return "Ejecting"
         }
     }
 
@@ -193,7 +193,7 @@ struct StatusCell: View {
         case .mounting:
             return .orange
         case .unmounting:
-            return .red
+            return .orange
         }
     }
 }
@@ -208,15 +208,20 @@ struct MountButtonCell: View {
     @State private var isWorking = false
 
     var body: some View {
-        Button {
-            handleAction()
-        } label: {
-            Image(systemName:  share.iconText)
-                .font(.body)
-                .foregroundStyle(.gray)
+        if share.showProgressView {
+            ProgressView()
+                .controlSize(.small)
+        }else{
+            Button {
+                handleAction()
+            } label: {
+                Image(systemName:  share.iconText)
+                    .font(.body)
+                    .foregroundStyle(.gray)
+            }
+            .buttonStyle(.plain)
+            .disabled(isWorking)
         }
-        .buttonStyle(.plain)
-        .disabled(isWorking)
     }
 
 
@@ -252,14 +257,6 @@ struct MountButtonCell: View {
 #if DEBUG
 
 struct ShareListView_Previews: PreviewProvider {
-
-    final class MockStorage: Storage {
-        func fullMountList() async -> [Share] { [] }
-        func mount(_ share: Share, ui: Bool) async throws -> MountResponse { .success("/vol/mount") }
-        func unmount(_ share: Share) async throws {}
-        func addMount(_ share: Share) async throws {}
-        func deleteMount(_ share: Share) async throws {}
-    }
 
     static var previews: some View {
         ShareListView(model: MockStore.store)

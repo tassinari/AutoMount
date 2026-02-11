@@ -44,4 +44,20 @@ final class ShareExtensionTests: XCTestCase {
         let share = Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounting)
         XCTAssertFalse(share.canOpen)
     }
+    func testShareShouldShowSpinnerFalseMounted() {
+        let share = Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted)
+        XCTAssertFalse(share.showProgressView)
+    }
+    func testShareShouldShowSpinnerFalseUnMounted() {
+        let share = Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounted)
+        XCTAssertFalse(share.showProgressView)
+    }
+    func testShareShouldShowSpinnerFalseMounting() {
+        let share = Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounting)
+        XCTAssertTrue(share.showProgressView)
+    }
+    func testShareShouldShowSpinnerFalseUnMounting() {
+        let share = Share(url: URL(string: "localhost")!, name: "test", mountPoint: "/some/path", managed: true, connected: .unmounting)
+        XCTAssertTrue(share.showProgressView)
+    }
 }

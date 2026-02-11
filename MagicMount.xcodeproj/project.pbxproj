@@ -98,6 +98,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"Preview Content/MockStorage.swift",
+				"Preview Content/PreviewContent.swift",
 			);
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 		};

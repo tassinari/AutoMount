@@ -31,6 +31,15 @@ extension Share {
             false
         }
     }
+    var showProgressView : Bool{
+        switch connected{
+            
+        case .mounting, .unmounting:
+           true
+        default:
+            false
+        }
+    }
     public func open(){
         //TODO: throw instead?
         guard let path = self.mountPoint else {return}

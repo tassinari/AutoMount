@@ -33,6 +33,13 @@ class PreviewData {
               managed: false,
               connected: .mounted
              ),
+        Share(url: URL( string:"nfs://fileserver/USB%20Drive")!,
+              name: "Storage",
+              mountPoint: "/Volumes/USB Drive 2",
+              managed: true,
+              connected: .unmounting
+             ),
+        
        
     ]
 
