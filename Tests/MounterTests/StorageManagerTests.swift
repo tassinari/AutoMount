@@ -134,10 +134,34 @@ final class StorageManagerTests: BaseTest {
     
         
     }
-    @MainActor func testStorageManagerSavesAndLoadsMultiple()   async throws {
-        let user = "TestUser"
+    @MainActor func testDeleteMountWorksUnMounted() async throws {
+       
+        let name = "testName"
+        let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
+        let n = 10
+        var expected : [Share] = []
+        var urls : [URL] = []
+        for i in 0..<n{
+            let testURL = URL(string: "smb://testUrl\(i)")!
+            let d = Share(url: testURL, name: name, mountPoint: "/Volumes/share",managed: true, connected: .unmounted)
+            try await manager.addMount(d)
+            expected.append(d)
+            urls.append(testURL)
+        }
+        let j = "3"
+        let delete = Share(url: URL(string: "smb://testUrl\(j)")!, name: name, mountPoint: "/Volumes/share",managed: true, connected: .mounted)
+        try await manager.deleteMount(delete)
+        guard let allMounts = await manager.mounts() else {
+            XCTFail()
+            return
+        }
         
-        let testPassword = "testPassword"
+        XCTAssertFalse(allMounts.contains(delete))
+        XCTAssert(allMounts.count == n - 1)
+    
+        
+    }
+    @MainActor func testStorageManagerSavesAndLoadsMultiple()   async throws {
         let name = "testName"
         let manager =  StorageManager(defaults: UserDefaults(suiteName: Self.defaultsSuiteName))
         let n = 10

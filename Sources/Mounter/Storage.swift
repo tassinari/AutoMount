@@ -104,7 +104,7 @@ public actor StorageManager{
         }
         var modified = mounts
         
-        modified.removeAll(where: {$0 == mount})
+        modified.removeAll(where: {$0.sameURL(as: mount)})
         let encoder = JSONEncoder()
         let data = try encoder.encode(modified)
         defaults.set(data, forKey: StorageManager.storeKey)

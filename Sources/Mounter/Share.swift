@@ -84,6 +84,7 @@ extension Share {
         return nil
     }
 }
+/// id, equatible, and hashable are important for UI, connected, managed needed so the UI can update accordingly
 extension Share: Hashable, Identifiable{
     public var id: String{
         let managed = managed ? "1" : "0"
@@ -95,5 +96,8 @@ extension Share: Hashable, Identifiable{
     }
     public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+    }
+    public func sameURL(as other: Share) -> Bool {
+        return url.host == other.url.host && url.path() == other.url.path() && url.scheme == other.url.scheme
     }
 }
