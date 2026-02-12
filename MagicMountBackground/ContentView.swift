@@ -7,87 +7,10 @@
 
 import SwiftUI
 import libMounter
-//struct MountViewModel{
-//    var mounts : [Share]
-//    
-//    func refresh(){
-//        
-//    }
-//}
-@Observable class MenuModel{
-    
-    var shares : [Share]
-    let storage : Storage
-    
-    init(storage : Storage = StorageManager()){
-        self.storage = storage
-        shares = []
-        Task{
-            shares = await storage.fullMountList()
-        }
-        
-    }
-    func refresh(){
-        Task{
-            //current state
-            let updated = await storage.fullMountList()
-            //find new shares
-            let added = Set(updated).subtracting(shares)
-            //find missing shares, shares that were switched to unmanaged and unmounted
-            let missing = Set(shares).subtracting(updated)
-            //make and updated list with same instances
-            var fullUpdated : [Share] = []
-//            for share in shares{
-//                if missing.contains(share){
-//                    continue;
-//                }
-//                if let sameShareFromUpdated = updated.first(where: {$0 == share}){
-//    //                share.connected = sameShareFromUpdated.connected
-//    //                share.managed = sameShareFromUpdated.managed
-//                }
-//                fullUpdated.append(share)
-//            }
-            fullUpdated.append(contentsOf: added)
-            shares = fullUpdated
-        }
-        
-    }
-    func openApp(){
-        let config = NSWorkspace.OpenConfiguration()
-        config.activates = true
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.MagicMount"){
-            NSWorkspace.shared.openApplication(at: url, configuration: config)
-        }
-    }
-    func toggleMount(share: Share){
-        Task{
-            do{
-                switch share.connected{
-                case .mounted:
-                    try await storage.unmount(share)
-                case .unmounted:
-                    switch try await storage.mount(share, ui: false){
-                        
-                    case .success(_):
-                        print("mount")
-                        break;
-                    default:
-                        print("no success")
-                        break
-                    }
-                case .mounting, .unmounting:
-                    //no op
-                    break
-                }
-            }catch{
-                MagicMountBackground.error(String(describing: error))
-            }
-        }
-    }
-}
+
 
 struct ContentView: View {
-    @State var model : MenuModel
+    @State var model : ShareDataModel
     
     var body: some View {
         VStack(spacing: 0) {
@@ -113,14 +36,30 @@ struct ContentView: View {
                 .padding([.top], 12)
             List() {
                 if !model.shares.isEmpty {
-                    ForEach(model.shares) { share in
+                    ForEach(model.shares, id:\.self) { share in
                         ContentCellView(share: share) { passedShare, type in
                             switch type{
                                 
                             case .open:
                                 share.open()
                             case .mount:
-                                model.toggleMount(share: share)
+                                Task{
+                                    do{
+                                        switch passedShare.connected{
+                                            
+                                        case .mounted:
+                                            _ = try await  model.unmount(passedShare)
+                                        case .unmounted:
+                                            _ = try await  model.mount(passedShare)
+                                        default:
+                                            break
+                                        }
+                                       
+                                    }catch{
+                                        MagicMountBackground.error("mount/unmout error \(String(describing: error))")
+                                    }
+                                }
+                               
                             }
                         }
                     }
@@ -205,5 +144,5 @@ struct ContentCellView: View {
 
 
 #Preview {
-    ContentView(model: MenuModel())
+    ContentView(model: MockStore.store)
 }

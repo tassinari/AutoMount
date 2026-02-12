@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Network
+import libMounter
 
 @main
 struct MagicMountBackgroundApp: App {
@@ -15,14 +16,14 @@ struct MagicMountBackgroundApp: App {
   
     var body: some Scene {
         MenuBarExtra("Magic Mount", systemImage: "externaldrive", isInserted: $showMenuBar) {
-            ContentView(model: model.menuModel)
+            ContentView(model: model.store)
         }
         .menuBarExtraStyle(.window)
     }
 }
 
 class Model{
-    let menuModel = MenuModel()
+    let store = ShareDataModel(storage: StorageManager())
     let remounter = Remounter()
     let detector: Detector = Detector()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
@@ -32,6 +33,7 @@ class Model{
     }
     
 }
+
 extension Model: DetectorDelegate{
     func didDetectEvent(_ event: DetectorEvent) {
         switch event{
@@ -45,10 +47,22 @@ extension Model: DetectorDelegate{
         case .sleep:
             debug("Sleep event")
         case .volume:
-            menuModel.refresh()
+            Task{
+                await store.load()
+            }
+            
         }
         
     }
     
     
+}
+extension ShareDataModel{
+    func openApp(){
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = true
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.MagicMount"){
+            NSWorkspace.shared.openApplication(at: url, configuration: config)
+        }
+    }
 }

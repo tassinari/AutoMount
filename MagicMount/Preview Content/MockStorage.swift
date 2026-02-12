@@ -16,10 +16,14 @@ enum MockStore{
 
 class MockStorage: Storage{
     
-    func mount(_: libMounter.Share, ui: Bool) async throws -> libMounter.MountResponse {
+    func mount(_ share: libMounter.Share, ui: Bool) async throws -> libMounter.MountResponse {
         mountCalled = true
+        shareCalled = share
         if let err = throwError {
             throw err
+        }
+        if let mountHandler{
+            return try await mountHandler(share)
         }
         return mountResponse
     }
@@ -32,22 +36,26 @@ class MockStorage: Storage{
     }
     let mountResponse : MountResponse
     let addHandler : (Share) throws -> Void
+    @MainActor let mountHandler : ((Share) async throws -> MountResponse)?
     let deleteHandler : (Share) throws -> Void
     var mockMountList: [Share]
     var mountCalled : Bool = false
     var unmountCalled : Bool = false
     var throwError : Error? = nil
+    var shareCalled : Share? = nil
     
     init(list: [Share] = [],
          mountResponse: MountResponse = .timeout,
          addHandler: @escaping (Share) throws -> Void = {_ in },
          throwError: Error? = nil,
-         deleteHandler : @escaping (Share) throws -> Void = { _ in }) {
+         deleteHandler : @escaping (Share) throws -> Void = { _ in },
+         mountHandler :  ((Share) async throws -> MountResponse)? = nil) {
         self.mockMountList = list
         self.addHandler = addHandler
         self.deleteHandler = deleteHandler
         self.mountResponse = mountResponse
         self.throwError = throwError
+        self.mountHandler = mountHandler
     }
     
     func fullMountList() async -> [Share]{

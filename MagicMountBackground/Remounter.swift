@@ -30,33 +30,34 @@ actor Remounter{
         let shares = await storage.fullMountList()
         for share in shares{
             if share.managed{
+                let name = share.name ?? "--"
                 if share.connected == .unmounted{
-                    notice("\(share.name) is not connected, connecting..")
+                    notice("\(name) is not connected, connecting..")
                     do{
                         switch try await storage.mount(share, ui: false){
                             
                         case .genericError(let e):
                             error("Generic error in mount attempt: \(String(describing: e))")
                         case .success(let mp):
-                            notice("Success, \(share.name) is mounted on \(mp ?? "unknown")")
+                            notice("Success, \(name) is mounted on \(mp ?? "unknown")")
                         case .authenticationError:
-                            notice("Mount failure for \(share.name): auth error")
+                            notice("Mount failure for \(name): auth error")
                         case .cannotFindHost:
-                            notice("Mount failure for \(share.name): no host")
+                            notice("Mount failure for \(name): no host")
                         case .timeout:
-                            notice("Mount failure for \(share.name): timeout")
+                            notice("Mount failure for \(name): timeout")
                         case .noSuchFileOrDirectory:
-                            notice("Mount failure for \(share.name): no such file or directory")
+                            notice("Mount failure for \(name): no such file or directory")
                         case .connectionRefused:
-                            notice("Mount failure for \(share.name): connection refused")
+                            notice("Mount failure for \(name): connection refused")
                         case .alreadyMounted:
-                            notice("Mount failure for \(share.name): already mounted")
+                            notice("Mount failure for \(name): already mounted")
                         }
                     }catch {
-                        MagicMountBackground.error("Mount(\(share.name) threw:  \(String(describing: error))")
+                        MagicMountBackground.error("Mount(\(name)) threw:  \(String(describing: error))")
                     }
                 }else{
-                     notice("\(share.name) connected, not attempting remount")
+                     notice("\(name) connected, not attempting remount")
                 }
             }
         }

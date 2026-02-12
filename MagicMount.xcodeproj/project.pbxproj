@@ -15,6 +15,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		480BDC042F3DEBF600147963 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 482995E82EFC63CF003AB633 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 487A91D82F006F260095BDA6;
+			remoteInfo = MagicMountBackground;
+		};
 		482995FE2EFC63D0003AB633 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 482995E82EFC63CF003AB633 /* Project object */;
@@ -37,13 +44,6 @@
 			remoteInfo = MagicMountBackground;
 		};
 		487A91F22F0075980095BDA6 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 482995E82EFC63CF003AB633 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 487A91D82F006F260095BDA6;
-			remoteInfo = MagicMountBackground;
-		};
-		487A92152F0160780095BDA6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 482995E82EFC63CF003AB633 /* Project object */;
 			proxyType = 1;
@@ -74,11 +74,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		480BDC002F3DEBF600147963 /* MagicMountBackgroundTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountBackgroundTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		482995F02EFC63CF003AB633 /* MagicMount.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagicMount.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		482995FD2EFC63D0003AB633 /* MagicMountTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		482996072EFC63D0003AB633 /* MagicMountUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		487A91D92F006F260095BDA6 /* MagicMountBackground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MagicMountBackground.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		487A92112F0160780095BDA6 /* MagicMountBackgroundTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MagicMountBackgroundTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		48D81D142F0558070046103D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -105,6 +105,11 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		480BDC012F3DEBF600147963 /* MagicMountBackgroundTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MagicMountBackgroundTests;
+			sourceTree = "<group>";
+		};
 		482995F22EFC63CF003AB633 /* MagicMount */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -128,11 +133,6 @@
 			path = MagicMountBackground;
 			sourceTree = "<group>";
 		};
-		487A92122F0160780095BDA6 /* MagicMountBackgroundTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MagicMountBackgroundTests;
-			sourceTree = "<group>";
-		};
 		487A921D2F01AEF00095BDA6 /* Common */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -144,6 +144,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		480BDBFD2F3DEBF600147963 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		482995ED2EFC63CF003AB633 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -175,13 +182,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		487A920E2F0160780095BDA6 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -193,7 +193,7 @@
 				482996002EFC63D0003AB633 /* MagicMountTests */,
 				4829960A2EFC63D0003AB633 /* MagicMountUITests */,
 				487A91DA2F006F260095BDA6 /* MagicMountBackground */,
-				487A92122F0160780095BDA6 /* MagicMountBackgroundTests */,
+				480BDC012F3DEBF600147963 /* MagicMountBackgroundTests */,
 				487A91EE2F0075760095BDA6 /* Frameworks */,
 				482995F12EFC63CF003AB633 /* Products */,
 			);
@@ -206,7 +206,7 @@
 				482995FD2EFC63D0003AB633 /* MagicMountTests.xctest */,
 				482996072EFC63D0003AB633 /* MagicMountUITests.xctest */,
 				487A91D92F006F260095BDA6 /* MagicMountBackground.app */,
-				487A92112F0160780095BDA6 /* MagicMountBackgroundTests.xctest */,
+				480BDC002F3DEBF600147963 /* MagicMountBackgroundTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -222,6 +222,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		480BDBFF2F3DEBF600147963 /* MagicMountBackgroundTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 480BDC062F3DEBF600147963 /* Build configuration list for PBXNativeTarget "MagicMountBackgroundTests" */;
+			buildPhases = (
+				480BDBFC2F3DEBF600147963 /* Sources */,
+				480BDBFD2F3DEBF600147963 /* Frameworks */,
+				480BDBFE2F3DEBF600147963 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				480BDC052F3DEBF600147963 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				480BDC012F3DEBF600147963 /* MagicMountBackgroundTests */,
+			);
+			name = MagicMountBackgroundTests;
+			packageProductDependencies = (
+			);
+			productName = MagicMountBackgroundTests;
+			productReference = 480BDC002F3DEBF600147963 /* MagicMountBackgroundTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		482995EF2EFC63CF003AB633 /* MagicMount */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 482996112EFC63D0003AB633 /* Build configuration list for PBXNativeTarget "MagicMount" */;
@@ -319,29 +342,6 @@
 			productReference = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */;
 			productType = "com.apple.product-type.application";
 		};
-		487A92102F0160780095BDA6 /* MagicMountBackgroundTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 487A92172F0160780095BDA6 /* Build configuration list for PBXNativeTarget "MagicMountBackgroundTests" */;
-			buildPhases = (
-				487A920D2F0160780095BDA6 /* Sources */,
-				487A920E2F0160780095BDA6 /* Frameworks */,
-				487A920F2F0160780095BDA6 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				487A92162F0160780095BDA6 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				487A92122F0160780095BDA6 /* MagicMountBackgroundTests */,
-			);
-			name = MagicMountBackgroundTests;
-			packageProductDependencies = (
-			);
-			productName = MagicMountBackgroundTests;
-			productReference = 487A92112F0160780095BDA6 /* MagicMountBackgroundTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -352,6 +352,10 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					480BDBFF2F3DEBF600147963 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 487A91D82F006F260095BDA6;
+					};
 					482995EF2EFC63CF003AB633 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -364,9 +368,6 @@
 						TestTargetID = 482995EF2EFC63CF003AB633;
 					};
 					487A91D82F006F260095BDA6 = {
-						CreatedOnToolsVersion = 26.2;
-					};
-					487A92102F0160780095BDA6 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -392,12 +393,19 @@
 				482995FC2EFC63D0003AB633 /* MagicMountTests */,
 				482996062EFC63D0003AB633 /* MagicMountUITests */,
 				487A91D82F006F260095BDA6 /* MagicMountBackground */,
-				487A92102F0160780095BDA6 /* MagicMountBackgroundTests */,
+				480BDBFF2F3DEBF600147963 /* MagicMountBackgroundTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		480BDBFE2F3DEBF600147963 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		482995EE2EFC63CF003AB633 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -427,16 +435,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		487A920F2F0160780095BDA6 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		480BDBFC2F3DEBF600147963 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
 		482995EC2EFC63CF003AB633 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -465,16 +473,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		487A920D2F0160780095BDA6 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		480BDC052F3DEBF600147963 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
+			targetProxy = 480BDC042F3DEBF600147963 /* PBXContainerItemProxy */;
+		};
 		482995FF2EFC63D0003AB633 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 482995EF2EFC63CF003AB633 /* MagicMount */;
@@ -495,11 +501,6 @@
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
 			targetProxy = 487A91F22F0075980095BDA6 /* PBXContainerItemProxy */;
 		};
-		487A92162F0160780095BDA6 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
-			targetProxy = 487A92152F0160780095BDA6 /* PBXContainerItemProxy */;
-		};
 		48D81D102F0551410046103D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 487A91D82F006F260095BDA6 /* MagicMountBackground */;
@@ -508,6 +509,46 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		480BDC072F3DEBF600147963 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N2Z455V6H8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMountBackgroundTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicMountBackground.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicMountBackground";
+			};
+			name = Debug;
+		};
+		480BDC082F3DEBF600147963 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = N2Z455V6H8;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMountBackgroundTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MagicMountBackground.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MagicMountBackground";
+			};
+			name = Release;
+		};
 		4829960F2EFC63D0003AB633 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -842,45 +883,18 @@
 			};
 			name = Release;
 		};
-		487A92182F0160780095BDA6 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount.MagicMountBackgroundTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		487A92192F0160780095BDA6 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.MagicMount.MagicMountBackgroundTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		480BDC062F3DEBF600147963 /* Build configuration list for PBXNativeTarget "MagicMountBackgroundTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				480BDC072F3DEBF600147963 /* Debug */,
+				480BDC082F3DEBF600147963 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		482995EB2EFC63CF003AB633 /* Build configuration list for PBXProject "MagicMount" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -922,15 +936,6 @@
 			buildConfigurations = (
 				487A91E12F006F270095BDA6 /* Debug */,
 				487A91E22F006F270095BDA6 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		487A92172F0160780095BDA6 /* Build configuration list for PBXNativeTarget "MagicMountBackgroundTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				487A92182F0160780095BDA6 /* Debug */,
-				487A92192F0160780095BDA6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
