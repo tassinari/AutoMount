@@ -4,7 +4,9 @@
       "Bash(ls:*)",
       "Bash(xcodebuild:*)",
       "Bash(git -C /Users/tassinari/Developer/MagicMount log --oneline -20)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(open https://github.com/tassinari/MagicMount)",
+      "Bash(git -C /Users/tassinari/Developer/MagicMount checkout -b feature/settings-window)"
     ]
   }
 }

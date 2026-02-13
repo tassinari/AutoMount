@@ -11,6 +11,7 @@ import SwiftUI
 struct MountCommandMenu: Commands {
     var model : ShareDataModel
     @Environment(\.openWindow) var openWindow
+    @Environment(\.openSettings) var openSettings
    var body: some Commands {
        CommandMenu("Mount") {
            Button {
@@ -19,9 +20,8 @@ struct MountCommandMenu: Commands {
                Text("Mount drive")
            }
            .keyboardShortcut("k",modifiers: [.command])
-          
 
        }
-       
+
   }
 }

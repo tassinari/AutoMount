@@ -18,5 +18,8 @@ struct MagicMountApp: App {
             ShareListView(model: model)
         }
         .commands{ MountCommandMenu(model: model) }
+        Settings {
+            SettingsView()
+        }
     }
 }
