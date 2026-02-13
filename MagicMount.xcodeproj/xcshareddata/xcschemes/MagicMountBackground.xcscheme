@@ -39,7 +39,7 @@
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "487A92102F0160780095BDA6"
+                     BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
                      BuildableName = "MagicMountBackgroundTests.xctest"
                      BlueprintName = "MagicMountBackgroundTests"
                      ReferencedContainer = "container:MagicMount.xcodeproj">
@@ -58,7 +58,7 @@
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "487A92102F0160780095BDA6"
+                     BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
                      BuildableName = "MagicMountBackgroundTests.xctest"
                      BlueprintName = "MagicMountBackgroundTests"
                      ReferencedContainer = "container:MagicMount.xcodeproj">
@@ -73,7 +73,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "487A92102F0160780095BDA6"
+               BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
                BuildableName = "MagicMountBackgroundTests.xctest"
                BlueprintName = "MagicMountBackgroundTests"
                ReferencedContainer = "container:MagicMount.xcodeproj">
