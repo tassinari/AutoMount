@@ -11,18 +11,17 @@ import os
 
 
 internal func debug( _ msg : String){
-    MounterLog.shared.debug(msg)
+    MounterLog().debug(msg)
 }
 internal func notice( _ msg : String){
-    MounterLog.shared.notice(msg)
+    MounterLog().notice(msg)
 }
 internal func error( _ msg : String){
-    MounterLog.shared.error(msg)
+    MounterLog().error(msg)
 }
 
-internal class MounterLog : @unchecked Sendable{
+internal struct MounterLog : Sendable{
     
-    static let shared = MounterLog()
     private let logger = Logger(
             subsystem: Bundle.main.bundleIdentifier!,
             category: "Mounter"
