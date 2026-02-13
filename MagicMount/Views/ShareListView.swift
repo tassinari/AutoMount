@@ -23,7 +23,8 @@ struct ShareListView: View {
             let term = searchText.lowercased()
             let nameMatch = share.name?.lowercased().contains(term) ?? false
             let urlMatch = share.url.absoluteString.lowercased().contains(term)
-            return nameMatch || urlMatch
+            let mountMatch = share.mountPoint?.lowercased().contains(term) ?? false
+            return nameMatch || urlMatch || mountMatch
         }
     }
 
