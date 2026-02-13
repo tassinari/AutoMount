@@ -13,6 +13,9 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Toggle("Show in menu bar", isOn: $showMenuInBar)
+            Button("Clear previous servers") {
+                AddEditModel.clearPreviousServers()
+            }
         }
         .formStyle(.grouped)
         .frame(width: 300)
