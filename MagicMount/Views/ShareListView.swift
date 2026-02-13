@@ -15,40 +15,47 @@ import libMounter
 struct ShareListView: View {
     @State var model: ShareDataModel
     @State private var errorMessage: String?
+    @State private var searchText: String = ""
+
+    private var filteredShares: [Share] {
+        guard !searchText.isEmpty else { return model.shares }
+        return model.shares.filter { share in
+            let term = searchText.lowercased()
+            let nameMatch = share.name?.lowercased().contains(term) ?? false
+            let urlMatch = share.url.absoluteString.lowercased().contains(term)
+            return nameMatch || urlMatch
+        }
+    }
 
     var body: some View {
-        //@Bindable var bindableModel = model
-        VStack(spacing: 0) {
-            header
-
-            Table($model.shares){
-                TableColumn("Managed") { $share in
+        NavigationStack {
+            Table(filteredShares) {
+                TableColumn("Managed") { share in
                     ManagedToggleCell(
-                        share: $share,
+                        share: share,
                         model: model
                     )
-
                 }
-
                 .width(90)
-                TableColumn("Name") { $share in
-                    HStack{
+
+                TableColumn("Name") { share in
+                    HStack {
                         Text(share.name ?? "--")
                         Spacer()
                         MountButtonCell(
-                            share: $share,
+                            share: share,
                             model: model
                         )
                     }
                 }
                 .width(min: 150, ideal: 200)
 
-                TableColumn("Type") { $share in
+                TableColumn("Type") { share in
                     Text(share.type.uppercased())
                 }
                 .width(60)
 
-                TableColumn("Mount Point") { $share in
+                TableColumn("Mount Point") { share in
                     if share.canOpen {
                         Button {
                             share.open()
@@ -57,24 +64,36 @@ struct ShareListView: View {
                                 .lineLimit(1)
                         }
                         .buttonStyle(.link)
-
-                    }else{
+                    } else {
                         Text(share.mountPoint ?? "")
                             .lineLimit(1)
                     }
-                   
                 }
 
-                
-
-                TableColumn("Status") { $share in
+                TableColumn("Status") { share in
                     StatusCell(share: share)
                 }
                 .width(90)
-
-                
             }
             .tableStyle(.inset)
+            .navigationTitle("Network Shares")
+            .searchable(text: $searchText, prompt: "Filter shares")
+            .toolbar {
+                ToolbarItem {
+                    Button {
+                        Task { await model.load() }
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                }
+                ToolbarItem {
+                    Button {
+                        model.showAddShare = true
+                    } label: {
+                        Label("Add Share", systemImage: "plus")
+                    }
+                }
+            }
         }
         .frame(minWidth: 750, minHeight: 400)
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
@@ -88,32 +107,13 @@ struct ShareListView: View {
             AddEditMount(model: AddEditModel(store: model))
         })
     }
-
-    // MARK: Header
-
-    private var header: some View {
-        HStack {
-            Text("Network Shares")
-                .font(.title2.bold())
-
-            Spacer()
-
-            Button {
-                Task { await model.load() }
-            } label: {
-                Label("Refresh", systemImage: "arrow.clockwise")
-            }
-        }
-        .padding()
-        .background(.ultraThinMaterial)
-    }
 }
 
 // MARK: - Managed Toggle Cell
 
 struct ManagedToggleCell: View {
 
-    @Binding var share: Share
+    let share: Share
     let model: ShareDataModel
 
     @State private var isWorking = false
@@ -202,7 +202,7 @@ struct StatusCell: View {
 
 struct MountButtonCell: View {
 
-    @Binding var share: Share
+    let share: Share
     let model: ShareDataModel
 
     @State private var isWorking = false
