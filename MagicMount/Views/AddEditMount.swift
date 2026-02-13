@@ -27,8 +27,13 @@ struct AddEditMount: View {
             }
             Form {
                 Section {
-                    ServerComboBox(text: $model.urlString, items: model.previousServers)
-                        .padding()
+                    ServerComboBox(text: $model.urlString, items: model.previousServers) {
+                        guard !model.urlString.isEmpty else { return }
+                        if let onSubmit { onSubmit(model.urlString) }
+                        Task { try? await model.saveAll() }
+                        dismiss()
+                    }
+                    .padding()
 
                     Toggle("Mount to custom location", isOn: $useCustomLocation)
 

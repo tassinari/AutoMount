@@ -4,6 +4,7 @@ import AppKit
 struct ServerComboBox: NSViewRepresentable {
     @Binding var text: String
     var items: [String]
+    var onSubmit: (() -> Void)? = nil
 
     func makeNSView(context: Context) -> NSComboBox {
         let comboBox = NSComboBox()
@@ -47,6 +48,15 @@ struct ServerComboBox: NSViewRepresentable {
                     self.parent.text = comboBox.itemObjectValue(at: comboBox.indexOfSelectedItem) as? String ?? ""
                 }
             }
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                parent.text = control.stringValue
+                parent.onSubmit?()
+                return true
+            }
+            return false
         }
     }
 }
