@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(git -C /Users/tassinari/Developer/MagicMount log --oneline -20)",
+      "Bash(git config:*)"
+    ]
+  }
+}
