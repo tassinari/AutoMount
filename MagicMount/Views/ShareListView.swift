@@ -97,7 +97,10 @@ struct ShareListView: View {
             }
         }
         .frame(minWidth: 750, minHeight: 400)
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
+        .alert("Error", isPresented: Binding<Bool>(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
             Button("OK") {
                 errorMessage = nil
             }
@@ -105,7 +108,7 @@ struct ShareListView: View {
             Text(errorMessage ?? "")
         }
         .sheet(isPresented: $model.showAddShare, content: {
-            AddEditMount(model: AddEditModel(store: model))
+            AddEditMount(model: AddEditModel(store: model), errorMessage: $errorMessage)
         })
     }
 }

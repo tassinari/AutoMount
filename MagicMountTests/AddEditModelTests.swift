@@ -46,7 +46,7 @@ final class AddEditModelTests: XCTestCase {
         
     }
     @MainActor func testSaveAllCallsMount() async throws{
-        let mockStore = MockStorage()
+        let mockStore = MockStorage(mountResponse: .success("/some/path"))
         store = ShareDataModel(storage: mockStore)
         let urlStr = "smb://localhost:445/test"
         let model = AddEditModel(urlString: urlStr, store: store)
@@ -89,8 +89,10 @@ final class AddEditModelTests: XCTestCase {
             try await model.saveAll()
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
-            XCTAssertEqual(err, AddEditModelError.badURL)
-
+            guard case .badURL = err else {
+                XCTFail("Expected badURL, got \(err)")
+                return
+            }
         }catch{
             XCTFail("Wrong error")
         }
@@ -145,6 +147,69 @@ final class AddEditModelTests: XCTestCase {
         model.manage = false
         try await model.saveAll()
         XCTAssertEqual(model.previousServers, [urlStr])
+    }
+
+    // MARK: - Mount Failure Error Propagation
+
+    @MainActor func testSaveAllThrowsMountFailedOnAuthenticationError() async throws {
+        let mockStore = MockStorage(mountResponse: .authenticationError)
+        store = ShareDataModel(storage: mockStore)
+        let model = AddEditModel(urlString: "smb://localhost:445/test", store: store)
+        do {
+            try await model.saveAll()
+            XCTFail("Should have thrown")
+        } catch let err as AddEditModelError {
+            guard case .mountFailed(.authenticationError) = err else {
+                XCTFail("Expected mountFailed(.authenticationError), got \(err)")
+                return
+            }
+        }
+    }
+
+    @MainActor func testSaveAllThrowsMountFailedOnCannotFindHost() async throws {
+        let mockStore = MockStorage(mountResponse: .cannotFindHost)
+        store = ShareDataModel(storage: mockStore)
+        let model = AddEditModel(urlString: "smb://localhost:445/test", store: store)
+        do {
+            try await model.saveAll()
+            XCTFail("Should have thrown")
+        } catch let err as AddEditModelError {
+            guard case .mountFailed(.cannotFindHost) = err else {
+                XCTFail("Expected mountFailed(.cannotFindHost), got \(err)")
+                return
+            }
+        }
+    }
+
+    @MainActor func testSaveAllDoesNotAddToHistoryOnFailure() async throws {
+        let defaults = makeTestDefaults()
+        let mockStore = MockStorage(mountResponse: .timeout)
+        store = ShareDataModel(storage: mockStore)
+        let model = AddEditModel(urlString: "smb://localhost:445/test", store: store, defaults: defaults)
+        do {
+            try await model.saveAll()
+            XCTFail("Should have thrown")
+        } catch {
+            // expected
+        }
+        XCTAssertEqual(model.previousServers, [], "Server should not be added to history on mount failure")
+    }
+
+    @MainActor func testLocalizedErrorDescriptions() async throws {
+        let authError = AddEditModelError.mountFailed(.authenticationError)
+        XCTAssertEqual(authError.localizedDescription, "Authentication failed. Please check your credentials.")
+
+        let hostError = AddEditModelError.mountFailed(.cannotFindHost)
+        XCTAssertEqual(hostError.localizedDescription, "Cannot find the server. Please check the address.")
+
+        let timeoutError = AddEditModelError.mountFailed(.timeout)
+        XCTAssertEqual(timeoutError.localizedDescription, "The connection timed out.")
+
+        let badURL = AddEditModelError.badURL
+        XCTAssertEqual(badURL.localizedDescription, "The URL is invalid.")
+
+        let missingValues = AddEditModelError.missingValues
+        XCTAssertEqual(missingValues.localizedDescription, "Missing required values.")
     }
 
 }
