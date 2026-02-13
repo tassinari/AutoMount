@@ -27,9 +27,7 @@ struct AddEditMount: View {
             }
             Form {
                 Section {
-                    TextField("URL", text: $model.urlString, prompt: Text("smb://host:port/share"))
-                        // .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
+                    ServerComboBox(text: $model.urlString, items: model.previousServers)
                         .padding()
 
                     Toggle("Mount to custom location", isOn: $useCustomLocation)

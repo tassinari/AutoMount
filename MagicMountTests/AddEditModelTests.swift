@@ -90,12 +90,62 @@ final class AddEditModelTests: XCTestCase {
             XCTFail("Should have thrown")
         }catch let err as AddEditModelError{
             XCTAssertEqual(err, AddEditModelError.badURL)
-            
+
         }catch{
             XCTFail("Wrong error")
         }
     }
-    
+
+    // MARK: - Previous Servers
+
+    private func makeTestDefaults() -> UserDefaults {
+        let suiteName = "test.addEditModel.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return defaults
+    }
+
+    @MainActor func testPreviousServersEmptyByDefault() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(store: store, defaults: defaults)
+        XCTAssertEqual(model.previousServers, [])
+    }
+
+    @MainActor func testAddServerToHistory() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(urlString: "smb://server/share", store: store, defaults: defaults)
+        model.addServerToHistory()
+        XCTAssertEqual(model.previousServers, ["smb://server/share"])
+    }
+
+    @MainActor func testAddServerToHistoryNoDuplicates() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(urlString: "smb://server/share", store: store, defaults: defaults)
+        model.addServerToHistory()
+        model.addServerToHistory()
+        XCTAssertEqual(model.previousServers, ["smb://server/share"])
+    }
+
+    @MainActor func testClearPreviousServers() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(urlString: "smb://server/share", store: store, defaults: defaults)
+        model.addServerToHistory()
+        XCTAssertFalse(model.previousServers.isEmpty)
+        AddEditModel.clearPreviousServers(defaults: defaults)
+        XCTAssertEqual(model.previousServers, [])
+    }
+
+    @MainActor func testSaveAllAddsToHistory() async throws {
+        let defaults = makeTestDefaults()
+        let share = Share(url: URL(string: "smb://localhost:445/test")!, name: "test", mountPoint: nil, managed: false, connected: .unmounted)
+        let mockStore = MockStorage(list: [share], mountResponse: .success("/some/path"))
+        store = ShareDataModel(storage: mockStore)
+        let urlStr = "smb://localhost:445/test"
+        let model = AddEditModel(urlString: urlStr, store: store, defaults: defaults)
+        model.manage = false
+        try await model.saveAll()
+        XCTAssertEqual(model.previousServers, [urlStr])
+    }
 
 }
-    
+
