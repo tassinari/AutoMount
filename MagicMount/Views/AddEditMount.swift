@@ -33,10 +33,10 @@ struct AddEditMount: View {
                         Task {
                             do {
                                 try await model.saveAll()
-                                dismiss()
                             } catch {
                                 errorMessage = error.localizedDescription
                             }
+                            dismiss()
                         }
                     }
                     .padding()
@@ -57,10 +57,10 @@ struct AddEditMount: View {
                             Task {
                                 do {
                                     try await model.saveAll()
-                                    dismiss()
                                 } catch {
                                     errorMessage = error.localizedDescription
                                 }
+                                dismiss()
                             }
                         }
                         .buttonStyle(.borderedProminent)
