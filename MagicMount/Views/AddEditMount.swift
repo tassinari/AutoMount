@@ -9,13 +9,13 @@ import SwiftUI
 
 struct AddEditMount: View {
     @State var model : AddEditModel
+    @Binding var errorMessage: String?
 
     // Optional callbacks so a parent can handle actions
     var onSubmit: ((String) -> Void)? = nil
     var onCancel: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
-    @State private var useCustomLocation: Bool = false
 
     var body: some View {
        
@@ -30,20 +30,18 @@ struct AddEditMount: View {
                     ServerComboBox(text: $model.urlString, items: model.previousServers) {
                         guard !model.urlString.isEmpty else { return }
                         if let onSubmit { onSubmit(model.urlString) }
-                        Task { try? await model.saveAll() }
-                        dismiss()
+                        Task {
+                            do {
+                                try await model.saveAll()
+                            } catch {
+                                errorMessage = error.localizedDescription
+                            }
+                            dismiss()
+                        }
                     }
                     .padding()
 
-                    Toggle("Mount to custom location", isOn: $useCustomLocation)
-
-                    if useCustomLocation {
-                        TextField("Location", text: $model.location, prompt: Text("/Volumes/share"))
-                            // .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .padding()
-                       
-                    }
+                    
                 }
                 Section {
                     HStack {
@@ -56,10 +54,14 @@ struct AddEditMount: View {
                         
                         Button("Submit") {
                             if let onSubmit { onSubmit(model.urlString) }
-                            Task{
-                                try? await model.saveAll()
+                            Task {
+                                do {
+                                    try await model.saveAll()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
+                                dismiss()
                             }
-                            dismiss()
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(model.urlString.isEmpty)
@@ -74,7 +76,7 @@ struct AddEditMount: View {
 
 #Preview {
     NavigationStack{
-        AddEditMount(model: AddEditModel(store: MockStore.store))
+        AddEditMount(model: AddEditModel(store: MockStore.store), errorMessage: .constant(nil))
     }
     .frame(width: 500, height: 400)
     

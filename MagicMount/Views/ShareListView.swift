@@ -23,7 +23,8 @@ struct ShareListView: View {
             let term = searchText.lowercased()
             let nameMatch = share.name?.lowercased().contains(term) ?? false
             let urlMatch = share.url.absoluteString.lowercased().contains(term)
-            return nameMatch || urlMatch
+            let mountMatch = share.mountPoint?.lowercased().contains(term) ?? false
+            return nameMatch || urlMatch || mountMatch
         }
     }
 
@@ -96,7 +97,10 @@ struct ShareListView: View {
             }
         }
         .frame(minWidth: 750, minHeight: 400)
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
+        .alert("Error", isPresented: Binding<Bool>(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
             Button("OK") {
                 errorMessage = nil
             }
@@ -104,7 +108,7 @@ struct ShareListView: View {
             Text(errorMessage ?? "")
         }
         .sheet(isPresented: $model.showAddShare, content: {
-            AddEditMount(model: AddEditModel(store: model))
+            AddEditMount(model: AddEditModel(store: model), errorMessage: $errorMessage)
         })
     }
 }

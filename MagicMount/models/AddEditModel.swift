@@ -7,7 +7,37 @@ enum CreateMountState{
 }
 
 enum AddEditModelError : Swift.Error {
-    case missingValues, badURL
+    case missingValues, badURL, mountFailed(MountResponse)
+}
+
+extension AddEditModelError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .missingValues:
+            return "Missing required values."
+        case .badURL:
+            return "The URL is invalid."
+        case .mountFailed(let response):
+            switch response {
+            case .authenticationError:
+                return "Authentication failed. Please check your credentials."
+            case .cannotFindHost:
+                return "Cannot find the server. Please check the address."
+            case .timeout:
+                return "The connection timed out."
+            case .noSuchFileOrDirectory:
+                return "The share was not found on the server."
+            case .connectionRefused:
+                return "The connection was refused by the server."
+            case .alreadyMounted:
+                return "This share is already mounted."
+            case .genericError(let error):
+                return "Mount failed: \(error.localizedDescription)"
+            case .success:
+                return nil
+            }
+        }
+    }
 }
 @MainActor @Observable final class AddEditModel {
 
@@ -64,7 +94,7 @@ enum AddEditModelError : Swift.Error {
             }
 
         default:
-            print("got \(resp)")
+            throw AddEditModelError.mountFailed(resp)
         }
 //        try await Task {
 //            //try await store.manage(mount)

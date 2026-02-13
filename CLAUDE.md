@@ -55,3 +55,8 @@ Both apps share data via application group `group.org.tassinari.magicmount` (Use
 - `MockStorage` implements `Storage` protocol for all tests — never use real system operations in tests
 - `MockSMService` mocks `SMAppService` for login-item tests
 - Preview content uses `MockStorage` for SwiftUI previews
+
+# Workflow Rules
+- **Branching**: Always create a new branch for new tasks or file changes.
+- **Naming Convention**: Use the format `feature/task-description` or `fix/task-description`.
+- **Process**: Switch to a new branch, perform all work, commit, and push.
