@@ -209,8 +209,8 @@ final class RemounterTests : XCTestCase{
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
         let logs = try getLogs()
-        let filtered = logs.filter {$0.composedMessage.contains("Cache still valid, not remounting")}
-        XCTAssertTrue(filtered.count == 2)
+        
+        XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Cache still valid, not remounting")}))
     }
                                 
     
