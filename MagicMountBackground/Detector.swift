@@ -29,13 +29,15 @@ protocol DetectorDelegate: AnyObject{
 }
 
 class Detector : Detectable{
-    
+
     private var unmountNote : NSObjectProtocol?
     private var mountNote : NSObjectProtocol?
-    
+
     let monitor = NWPathMonitor()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
     var delegate : DetectorDelegate?
+    var networkDebounceInterval: TimeInterval = 20
+    private var networkDebounceWork: DispatchWorkItem?
     init(){
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
             if let info = note.userInfo{
@@ -49,6 +51,7 @@ class Detector : Detectable{
         }
     }
     deinit {
+        networkDebounceWork?.cancel()
         monitor.cancel()
         if let unmountNote = unmountNote {
             NSWorkspace.shared.notificationCenter.removeObserver(unmountNote)
@@ -61,7 +64,7 @@ class Detector : Detectable{
         self.delegate = delegate
         monitor.pathUpdateHandler = { [weak self]path in
             if path.status == .satisfied {
-                self?.delegate?.didDetectEvent(.network)
+                self?.scheduleNetworkEvent()
             } else {
                 debug("Network unavailable")
             }
@@ -77,6 +80,13 @@ class Detector : Detectable{
 
         monitor.start(queue: queue)
     }
-    
-    
+
+    func scheduleNetworkEvent() {
+        networkDebounceWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.delegate?.didDetectEvent(.network)
+        }
+        networkDebounceWork = work
+        queue.asyncAfter(deadline: .now() + networkDebounceInterval, execute: work)
+    }
 }
