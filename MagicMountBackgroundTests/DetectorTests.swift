@@ -14,17 +14,18 @@ import AppKit
 private final class TestDelegate: DetectorDelegate {
     var events: [DetectorEvent] = []
     var expectation: XCTestExpectation?
+    var networkExpectation: XCTestExpectation?
 
     func didDetectEvent(_ event: DetectorEvent) {
+        events.append(event)
         switch event {
-            
-        case .network, .sleep:
+        case .network:
+            networkExpectation?.fulfill()
+        case .sleep:
             break
-        case .volume(_ ):
-            events.append(event)
+        case .volume:
             expectation?.fulfill()
         }
-        
     }
 }
 
@@ -95,6 +96,65 @@ final class DetectorTests: XCTestCase {
         case .unmounted: break
         case .mounted: XCTFail("Expected unmounted event, got mounted")
         }
+    }
+
+    // MARK: - Network Debounce
+
+    func testNetworkDebounceDefaultValue() {
+        let detector = Detector()
+        XCTAssertEqual(detector.networkDebounceInterval, 20)
+    }
+
+    // Verifies that the network event fires after the debounce interval
+    func testNetworkEvent_firesAfterDebounceInterval() {
+        let detector = Detector()
+        let delegate = TestDelegate()
+        detector.networkDebounceInterval = 0.2
+
+        let exp = expectation(description: "Network event after debounce")
+        delegate.networkExpectation = exp
+        detector.listen(delegate)
+
+        detector.queue.async {
+            detector.scheduleNetworkEvent()
+        }
+
+        // Should NOT have fired immediately
+        let networkEvents = delegate.events.filter { if case .network = $0 { return true }; return false }
+        XCTAssertTrue(networkEvents.isEmpty, "Network event should not fire immediately")
+
+        wait(for: [exp], timeout: 2.0)
+        let finalNetworkEvents = delegate.events.filter { if case .network = $0 { return true }; return false }
+        XCTAssertEqual(finalNetworkEvents.count, 1)
+    }
+
+    // Verifies that rapid network events are coalesced into a single delegate call
+    func testNetworkEvent_debounceResetsOnSubsequentEvents() {
+        let detector = Detector()
+        let delegate = TestDelegate()
+        detector.networkDebounceInterval = 0.3
+
+        let exp = expectation(description: "Single network event after debounce")
+        delegate.networkExpectation = exp
+        detector.listen(delegate)
+
+        // Fire three rapid network events on the detector's queue
+        for _ in 0..<3 {
+            detector.queue.async {
+                detector.scheduleNetworkEvent()
+            }
+        }
+
+        wait(for: [exp], timeout: 2.0)
+
+        // Wait a bit more to ensure no extra events arrive
+        let noMore = expectation(description: "No extra events")
+        noMore.isInverted = true
+        delegate.networkExpectation = noMore
+        wait(for: [noMore], timeout: 0.5)
+
+        let networkEvents = delegate.events.filter { if case .network = $0 { return true }; return false }
+        XCTAssertEqual(networkEvents.count, 1, "Multiple rapid network events should coalesce into one")
     }
 
     // Ensures deinit runs (cancels monitor and removes observers). We assert deallocation and that
