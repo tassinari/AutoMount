@@ -2,21 +2,36 @@
 import Foundation
 import NetFS
 
+/// Errors thrown during mount URL construction or data preparation.
+///
+/// - ``badURL``: The URL could not be constructed from the share's components.
+/// - ``noMountData``: The share's URL could not be decomposed into valid mount data.
 public enum MountError: Error{
     case badURL, noMountData
 }
-/// Errors:
-///  os errors are defined in <sys/errno.h>
+
+/// The result of a NetFS mount operation.
+///
+/// OS-level error codes are defined in `<sys/errno.h>` and mapped to
+/// descriptive cases for common failure modes.
 public enum MountResponse : Sendable{
+    /// An error not covered by the specific cases, wrapping the underlying `Error`.
     case genericError(Error)
+    /// The mount succeeded. The associated value is the local mount path, if available.
     case success(String?)
+    /// Authentication failed (e.g. invalid credentials).
     case authenticationError
+    /// The remote host could not be reached.
     case cannotFindHost
+    /// The connection timed out before the mount could complete.
     case timeout
+    /// The remote share path does not exist on the server.
     case noSuchFileOrDirectory
+    /// The server actively refused the connection.
     case connectionRefused
+    /// The volume is already mounted at a local path.
     case alreadyMounted
-   
+
 }
 internal struct MountedVolumesData: Equatable{
     let name : String

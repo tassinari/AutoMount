@@ -173,6 +173,16 @@ public actor StorageManager{
 }
 
 public extension StorageManager {
+    /// Mounts a network share using NetFS.
+    ///
+    /// If the share is already mounted, returns ``MountResponse/alreadyMounted`` immediately
+    /// without performing any I/O.
+    ///
+    /// - Parameters:
+    ///   - share: The share to mount.
+    ///   - ui: If `true`, allows the system to present authentication UI to the user. Defaults to `false`.
+    /// - Returns: A ``MountResponse`` indicating the outcome of the mount operation.
+    /// - Throws: ``MountError/noMountData`` if the share's URL cannot be decomposed into valid mount data.
     func mount(_ share : Share, ui : Bool = false) async throws -> MountResponse {
         if share.connected == .mounted{
             return .alreadyMounted
@@ -183,6 +193,13 @@ public extension StorageManager {
         }
         throw MountError.noMountData
     }
+    /// Unmounts a currently mounted share.
+    ///
+    /// If the share is not currently mounted, this method returns immediately without error.
+    /// If the share has no known mount point, this method also returns without action.
+    ///
+    /// - Parameter share: The share to unmount.
+    /// - Throws: A `CocoaError` if the mount point does not exist, or a system error if unmounting fails.
     func unmount(_ share: Share) async throws{
         //TODO: throw instead of return?
         if share.connected != .mounted{

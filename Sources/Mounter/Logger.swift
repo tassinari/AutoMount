@@ -20,6 +20,8 @@ internal func error( _ msg : String){
     MounterLog().error(msg)
 }
 
+/// Thin wrapper around `os.Logger` providing debug, notice, and error logging
+/// for the Mounter subsystem (category: `"Mounter"`).
 internal struct MounterLog : Sendable{
     
     private let logger = Logger(
