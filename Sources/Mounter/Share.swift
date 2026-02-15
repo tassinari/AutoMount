@@ -35,8 +35,8 @@ public struct Share: Codable,Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         url = try container.decode(URL.self, forKey: .url)
-        name = try container.decode(String.self, forKey: .name)
-        mountPoint = try container.decode(String.self, forKey: .mountPoint)
+        name = try container.decodeIfPresent(String.self, forKey: .name)
+        mountPoint = try container.decodeIfPresent(String.self, forKey: .mountPoint)
         managed = try container.decode(Bool.self, forKey: .managed)
         connected = try container.decode(ConnectionState.self, forKey: .connected)
       
