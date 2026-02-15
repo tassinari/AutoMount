@@ -274,7 +274,7 @@ final class ShareTests: BaseTest {
         XCTAssertTrue(share.mountingCopy.connected == .mounting)
     }
     func testUnMountingCopyWorks() async throws{
-       
+
         let share = Share(
             url: URL(string: "smb://samba@ecample.com:1445/smbTestShare")!,
             name: "smbTestShare",
@@ -283,6 +283,25 @@ final class ShareTests: BaseTest {
             connected: .mounted
         )
         XCTAssertTrue(share.unmountingCopy.connected == .unmounting)
+    }
+
+    func testEncodeDecodeWithNilNameAndMountPoint() throws {
+        let share = Share(
+            url: URL(string: "smb://server/share")!,
+            name: nil,
+            mountPoint: nil,
+            managed: true,
+            connected: .unmounted
+        )
+
+        let data = try JSONEncoder().encode(share)
+        let decoded = try JSONDecoder().decode(Share.self, from: data)
+
+        XCTAssertEqual(decoded.url, share.url)
+        XCTAssertNil(decoded.name)
+        XCTAssertNil(decoded.mountPoint)
+        XCTAssertEqual(decoded.managed, true)
+        XCTAssertEqual(decoded.connected, .unmounted)
     }
 
 }
