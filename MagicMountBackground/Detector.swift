@@ -36,7 +36,7 @@ class Detector : Detectable{
     let monitor = NWPathMonitor()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
     var delegate : DetectorDelegate?
-    var networkDebounceInterval: TimeInterval = 20
+    var networkDebounceInterval: TimeInterval = 10
     private var networkDebounceWork: DispatchWorkItem?
     init(){
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
@@ -63,7 +63,7 @@ class Detector : Detectable{
     public func listen(_ delegate: DetectorDelegate){
         self.delegate = delegate
         monitor.pathUpdateHandler = { [weak self]path in
-            if path.status == .satisfied {
+            if path.status == .satisfied && path.supportsDNS{
                 self?.scheduleNetworkEvent()
             } else {
                 debug("Network unavailable")
