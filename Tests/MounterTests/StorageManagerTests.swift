@@ -11,6 +11,28 @@ import OSLog
 
 final class StorageManagerTests: BaseTest {
     let defaultsSuiteName = "group.org.tassinari.magicmount.test"
+    let hostName = "localhost"
+    let port = 1445
+    let password = "secret123"
+    let userName = "samba"
+    let shareName = "smbTestShare"
+
+    override class func setUp() {
+        Self.runPreTestScript(script: "Scripts/dockerMount.sh")
+        let delay = 2.0
+        super.setUp()
+        print("Letting smb server spin up for \(delay) seconds...")
+        let deadline = Date().addingTimeInterval(delay)
+        while Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+    }
+
+    override class func tearDown() {
+        super.tearDown()
+        Self.runPreTestScript(script: "Scripts/dockerUnmount.sh")
+    }
+
     override func setUpWithError() throws {
         try super.setUpWithError()
         UserDefaults(suiteName: Self.defaultsSuiteName)?.removeObject(forKey: StorageManager.storeKey)
