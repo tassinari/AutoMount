@@ -14,17 +14,12 @@ enum ShellError: Error {
 
 class BaseTest : XCTestCase{
     static let defaultsSuiteName = "group.org.tassinari.magicmount.test"
-    let hostName = "localhost"
-    let port = 1445
-    let password = "secret123"
-    let userName = "samba"
-    let shareName = "smbTestShare"
     let storage = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
-    
+
     static func runPreTestScript(script: String) {
         do {
             let tmpLocation = FileManager.default.temporaryDirectory.appending(path: "mount", directoryHint: .isDirectory)
-            
+
             try FileManager.default.createDirectory(at: tmpLocation, withIntermediateDirectories: true)
             XCTAssert( FileManager.default.fileExists(atPath: tmpLocation.path()))
             let testFileURL = URL(fileURLWithPath: #filePath)
@@ -32,83 +27,73 @@ class BaseTest : XCTestCase{
                 .deletingLastPathComponent() // MounterTests
                 .deletingLastPathComponent() // Tests
                 .deletingLastPathComponent() // package root
-            
+
             let scriptURL = packageRoot
                 .appendingPathComponent(script)
-            
+
             XCTAssertTrue(
                 FileManager.default.isExecutableFile(atPath: scriptURL.path),
-                "dockerMount.sh is missing or not executable"
+                "\(script) is missing or not executable"
             )
-            
+
             let stdoutPipe = Pipe()
             let stderrPipe = Pipe()
-            
+
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/bin/bash")
             process.arguments = [scriptURL.path, tmpLocation.path()]
             process.standardOutput = stdoutPipe
             process.standardError = stderrPipe
-            
-            
+
+
             try process.run()
             process.waitUntilExit()
-            
-            
-//            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-//            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-//            
-//            if let stdout = String(data: stdoutData, encoding: .utf8), !stdout.isEmpty {
-//                print("📤 pretest.sh stdout:\n\(stdout)")
-//            }
-//
-//            if let stderr = String(data: stderrData, encoding: .utf8), !stderr.isEmpty {
-//                print("📥 pretest.sh stderr:\n\(stderr)")
-//            }
-            
+
             XCTAssertEqual(
                 process.terminationStatus,
                 0,
-                "dockerMount.sh exited with code \(process.terminationStatus)"
+                "\(script) exited with code \(process.terminationStatus)"
             )
         } catch {
             XCTFail("Failed to run script: \(error)")
             return
         }
     }
-    override class func tearDown() {
-        super.tearDown()
-        Self.runPreTestScript(script: "Scripts/dockerUnmount.sh")
-    }
-    
-    override class func setUp() {
-        
-        Self.runPreTestScript(script: "Scripts/dockerMount.sh")
-        
-        let delay = 2.0
-        super.setUp()
-        print("Letting smb server spin up for \(delay) seconds...")
-        let deadline = Date().addingTimeInterval(delay)
-        while Date() < deadline {
-            
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-        }
-    }
     override func setUp() async throws {
         for m in  await storage.mounts() ?? []{
             try await storage.unmount(m)
         }
-        
+
     }
-    
+
 }
 
 
 
 final class MountDataTests: BaseTest {
 
+    let hostName = "localhost"
+    let port = 1445
+    let password = "secret123"
+    let userName = "samba"
+    let shareName = "smbTestShare"
 
-    
+    override class func setUp() {
+        Self.runPreTestScript(script: "Scripts/dockerMount.sh")
+        let delay = 2.0
+        super.setUp()
+        print("Letting smb server spin up for \(delay) seconds...")
+        let deadline = Date().addingTimeInterval(delay)
+        while Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+    }
+
+    override class func tearDown() {
+        super.tearDown()
+        Self.runPreTestScript(script: "Scripts/dockerUnmount.sh")
+    }
+
     override func setUp() async throws {
         try await super.setUp()
         do{
