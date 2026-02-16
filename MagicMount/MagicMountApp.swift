@@ -21,5 +21,6 @@ struct MagicMountApp: App {
         Settings {
             SettingsView()
         }
+        .windowResizability(.contentSize)
     }
 }
