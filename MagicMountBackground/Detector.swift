@@ -36,7 +36,7 @@ class Detector : Detectable{
     let monitor = NWPathMonitor()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
     var delegate : DetectorDelegate?
-    var networkDebounceInterval: TimeInterval = 10
+    var networkDebounceInterval: TimeInterval = 20
     private var networkDebounceWork: DispatchWorkItem?
     init(){
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in
