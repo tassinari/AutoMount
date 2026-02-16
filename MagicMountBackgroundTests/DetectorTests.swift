@@ -157,6 +157,35 @@ final class DetectorTests: XCTestCase {
         XCTAssertEqual(networkEvents.count, 1, "Multiple rapid network events should coalesce into one")
     }
 
+    // Sends 10 rapid network events and verifies only a single delegate call fires
+    func testNetworkEvent_tenRapidEvents_coalesceIntoOne() {
+        let detector = Detector()
+        let delegate = TestDelegate()
+        detector.networkDebounceInterval = 0.3
+
+        let exp = expectation(description: "Single network event after 10 rapid calls")
+        delegate.networkExpectation = exp
+        detector.listen(delegate)
+
+        // Fire 10 rapid network events on the detector's queue
+        for _ in 0..<10 {
+            detector.queue.async {
+                detector.scheduleNetworkEvent()
+            }
+        }
+
+        wait(for: [exp], timeout: 2.0)
+
+        // Wait extra time to confirm no additional events arrive
+        let noMore = expectation(description: "No extra events")
+        noMore.isInverted = true
+        delegate.networkExpectation = noMore
+        wait(for: [noMore], timeout: 0.5)
+
+        let networkEvents = delegate.events.filter { if case .network = $0 { return true }; return false }
+        XCTAssertEqual(networkEvents.count, 1, "10 rapid network events should coalesce into exactly one delegate call")
+    }
+
     // Ensures deinit runs (cancels monitor and removes observers). We assert deallocation and that
     // further notifications do not deliver events to the (previous) delegate.
     func testDeinit_removesObservers_andCancelsMonitor() throws {
