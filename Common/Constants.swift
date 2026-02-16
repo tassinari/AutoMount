@@ -15,4 +15,9 @@ enum Constant{
     static let shareIconTextUnMounted = "arrowshape.up.circle"
     static let shareIconTextMounting = "trash.square"
     static let shareIconTextUnMounting = "arrowshape.down.circle"
+
+    static let networkDebounceKey = "networkDebounceInterval"
+    static let periodicRemountKey = "periodicRemountInterval"
+    static let networkDebounceDefault: Double = 20   // seconds
+    static let periodicRemountDefault: Double = 10   // minutes
 }

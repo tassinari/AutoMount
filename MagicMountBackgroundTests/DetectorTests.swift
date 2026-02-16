@@ -186,6 +186,12 @@ final class DetectorTests: XCTestCase {
         XCTAssertEqual(networkEvents.count, 1, "10 rapid network events should coalesce into exactly one delegate call")
     }
 
+    func testNetworkDebounceInterval_canBeUpdatedAfterInit() {
+        let detector = Detector()
+        detector.networkDebounceInterval = 77
+        XCTAssertEqual(detector.networkDebounceInterval, 77)
+    }
+
     // Ensures deinit runs (cancels monitor and removes observers). We assert deallocation and that
     // further notifications do not deliver events to the (previous) delegate.
     func testDeinit_removesObservers_andCancelsMonitor() throws {
