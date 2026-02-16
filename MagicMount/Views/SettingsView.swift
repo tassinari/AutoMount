@@ -17,28 +17,40 @@ struct SettingsView: View {
     private var periodicRemount: Double = Constant.periodicRemountDefault
 
     var body: some View {
-        Form {
-            Toggle("Show in menu bar", isOn: $showMenuInBar)
-            Button("Clear previous servers") {
-                AddEditModel.clearPreviousServers()
-            }
+        TabView {
+            Form {
+                Toggle("Show in menu bar", isOn: $showMenuInBar)
+                Button("Clear previous servers") {
+                    AddEditModel.clearPreviousServers()
+                }
 
-            Section("Timing") {
-                Stepper(
-                    "Network debounce: \(Int(networkDebounce))s",
-                    value: $networkDebounce,
-                    in: 5...120,
-                    step: 5
-                )
-                Stepper(
-                    "Periodic remount: \(Int(periodicRemount)) min",
-                    value: $periodicRemount,
-                    in: 1...60,
-                    step: 1
-                )
+                Section("Timing") {
+                    Stepper(
+                        "Network debounce: \(Int(networkDebounce))s",
+                        value: $networkDebounce,
+                        in: 5...120,
+                        step: 5
+                    )
+                    Stepper(
+                        "Periodic remount: \(Int(periodicRemount)) min",
+                        value: $periodicRemount,
+                        in: 1...60,
+                        step: 1
+                    )
+                }
             }
+            .formStyle(.grouped)
+            .tabItem { Label("Settings", systemImage: "gear") }
+
+            VStack {
+                Text("Magic Mount")
+                    .font(.title)
+                Text("by Mark Tassinari")
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .formStyle(.grouped)
-        .frame(width: 300)
+        .frame(width: 300, height: 200)
     }
 }
