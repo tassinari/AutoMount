@@ -18,6 +18,10 @@ actor Remounter{
     private var callDate: Date
     private let storage : Storage
     
+    func setDebounce(_ seconds: TimeInterval) {
+        debounceSeconds = seconds
+    }
+
     func checkAndRemount() async{
         if Date.now.timeIntervalSince(callDate) < debounceSeconds{
             debug("Cache still valid, not remounting")

@@ -216,6 +216,26 @@ final class RemounterTests : XCTestCase{
     
     
     
+    @MainActor func testSetDebounceAllowsRemountAfterChange() async throws {
+        let exp = expectation(description: "mount called after debounce lowered")
+        let share = Share(url: URL(string: "smb://localHost")!, name: "localHost", mountPoint: "/volume/test", managed: true, connected: .unmounted)
+        let storage = MockStorage(list: [share], mountHandler: { _ in
+            exp.fulfill()
+            return .success(nil)
+        })
+
+        // Start with a large debounce that blocks the first call
+        let rm = Remounter(debounceSeconds: 9999, storage: storage)
+        await rm.checkAndRemount()
+        XCTAssertFalse(storage.mountCalled, "Should be blocked by debounce")
+
+        // Lower debounce to 0 and try again
+        await rm.setDebounce(0)
+        await rm.checkAndRemount()
+
+        await fulfillment(of: [exp], timeout: 1)
+    }
+
     func getLogs() throws -> [OSLogEntryLog]{
         let store = try OSLogStore(scope: .currentProcessIdentifier)
         let position = store.position(date: .now.addingTimeInterval(-5))
