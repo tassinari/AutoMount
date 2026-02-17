@@ -101,7 +101,6 @@ public struct Share: Codable,Sendable {
         Share( url: url, name: name, mountPoint: mountPoint, managed: managed, connected: .unmounting)
     }
 }
-//FIXME: put mount unmount into an actor to preserve state access
 extension Share {
     
     internal var mountData : MountData?{
