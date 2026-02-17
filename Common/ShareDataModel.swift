@@ -9,16 +9,22 @@ import Foundation
 import libMounter
 import AppKit
 import SwiftUI
+import ServiceManagement
 
 /// An obserable wrapper arounf the Storage class.  Publishes observable `shares` for the UI, wraps all the operations around storage and calls refresh after each operation
 
 @MainActor @Observable final class ShareDataModel {
-    
-    
+
+
     var shares: [Share] = []
     private var storage: Storage
+    private let appService: AppServiceInterface
     var showAddShare : Bool = false
-    
+
+    var isLoginItemEnabled: Bool {
+        appService.status == .enabled
+    }
+
     private var unmountNote : NSObjectProtocol?
     private var mountNote : NSObjectProtocol?
    
@@ -32,8 +38,9 @@ import SwiftUI
         }
     }
     
-    init(storage : Storage){
+    init(storage : Storage, appService: AppServiceInterface = DefaultServiceInterface()){
         self.storage = storage
+        self.appService = appService
         Task{
             await load()
         }

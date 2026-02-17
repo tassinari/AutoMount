@@ -8,6 +8,7 @@
 import XCTest
 import Foundation
 import libMounter
+import ServiceManagement
 @testable import MagicMount
 
 @MainActor
@@ -287,6 +288,20 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssertNil(model.shareMatching(url: failtestHttp) )
     }
     
+    func testLoginItemEnabledReturnsTrue() async throws {
+        let storage = MockStorage(list: [])
+        let model = ShareDataModel(storage: storage, appService: MockSMService(mockStatus: .enabled))
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertTrue(model.isLoginItemEnabled)
+    }
+
+    func testLoginItemNotRegisteredReturnsFalse() async throws {
+        let storage = MockStorage(list: [])
+        let model = ShareDataModel(storage: storage, appService: MockSMService(mockStatus: .notRegistered))
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertFalse(model.isLoginItemEnabled)
+    }
+
     enum TestError : Error{
         case someError
     }
