@@ -21,12 +21,11 @@ import ServiceManagement
     private let appService: AppServiceInterface
     var showAddShare : Bool = false
 
-    var isLoginItemEnabled: Bool {
-        appService.status == .enabled
-    }
+    var isLoginItemEnabled: Bool = true
 
     private var unmountNote : NSObjectProtocol?
     private var mountNote : NSObjectProtocol?
+    private var activateNote : NSObjectProtocol?
    
     
     @MainActor deinit {
@@ -36,13 +35,22 @@ import ServiceManagement
         if let mountNote = mountNote {
             NSWorkspace.shared.notificationCenter.removeObserver(mountNote)
         }
+        if let activateNote = activateNote {
+            NotificationCenter.default.removeObserver(activateNote)
+        }
     }
     
     init(storage : Storage, appService: AppServiceInterface = DefaultServiceInterface()){
         self.storage = storage
         self.appService = appService
+        self.isLoginItemEnabled = appService.status == .enabled
         Task{
             await load()
+        }
+        activateNote = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshLoginItemStatus()
+            }
         }
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) {  note in
             if let info = note.userInfo {
@@ -61,6 +69,10 @@ import ServiceManagement
             }
         }
     }
+    func refreshLoginItemStatus() {
+        isLoginItemEnabled = appService.status == .enabled
+    }
+
     /// updates Share from a user info dictionary passed by the mount/unmount notification
     private func updateConnection(mounted: Bool, devicePath: String?){
         Task{
