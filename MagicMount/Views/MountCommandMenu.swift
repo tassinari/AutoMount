@@ -22,6 +22,11 @@ struct MountCommandMenu: Commands {
            .keyboardShortcut("k",modifiers: [.command])
 
        }
-
+       CommandGroup(replacing: .help) {
+           Button("MagicMount Help") {
+               openWindow(id: "help")
+           }
+           .keyboardShortcut("?", modifiers: [.command])
+       }
   }
 }
