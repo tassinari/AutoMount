@@ -99,8 +99,11 @@ extension Model: DetectorDelegate{
                 await remounter.checkAndRemount()
             }
 
-        case .sleep:
-            debug("Sleep event")
+        case .wake:
+            debug("Wake event")
+            Task{
+                await remounter.checkAndRemount()
+            }
         case .volume:
             Task{
                 await store.load()
