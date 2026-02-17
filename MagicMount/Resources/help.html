@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MagicMount Help</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1d1d1f;
+    --secondary: #6e6e73;
+    --border: #d2d2d7;
+    --code-bg: #f5f5f7;
+    --link: #0066cc;
+    --section-bg: #f5f5f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1d1d1f;
+      --text: #f5f5f7;
+      --secondary: #a1a1a6;
+      --border: #424245;
+      --code-bg: #2c2c2e;
+      --link: #2997ff;
+      --section-bg: #2c2c2e;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    padding: 24px 32px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--secondary);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 28px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+  p { margin-bottom: 10px; }
+  ul, ol {
+    margin-bottom: 10px;
+    padding-left: 22px;
+  }
+  li { margin-bottom: 4px; }
+  code {
+    font-family: "SF Mono", Menlo, monospace;
+    font-size: 12px;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  kbd {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-weight: 500;
+  }
+  .note {
+    background: var(--section-bg);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  .note strong { display: block; margin-bottom: 4px; }
+  .status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .green { background: #34c759; }
+  .gray { background: #8e8e93; }
+  .orange { background: #ff9500; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-weight: 600;
+    color: var(--secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>MagicMount Help</h1>
+<p class="subtitle">Network share manager for macOS</p>
+
+<h2>Getting Started</h2>
+<p>MagicMount makes it easy to manage and automatically reconnect network shares on your Mac. The app consists of two parts:</p>
+<ul>
+  <li><strong>MagicMount</strong> — The main app where you add, edit, and manage your network shares.</li>
+  <li><strong>MagicMount Background</strong> — A lightweight menu bar service that monitors your network and automatically remounts shares when connectivity is restored.</li>
+</ul>
+<p>Add your network shares once, and MagicMount keeps them connected whenever your Mac is on the network.</p>
+
+<h2>Adding a Share</h2>
+<p>To add a new network share:</p>
+<ol>
+  <li>Click the <strong>+</strong> button in the toolbar, or press <kbd>&#8984;K</kbd>.</li>
+  <li>Enter the server address (e.g., <code>myserver.local</code>) or select a previously used server.</li>
+  <li>Enter the share path (the name of the shared folder on the server).</li>
+  <li>Choose the protocol and configure options as needed.</li>
+  <li>Click <strong>Save</strong> to add the share.</li>
+</ol>
+
+<h3>Supported Protocols</h3>
+<table>
+  <tr><th>Protocol</th><th>URL Format</th><th>Notes</th></tr>
+  <tr><td>SMB</td><td><code>smb://server/share</code></td><td>Most common for macOS and Windows file sharing</td></tr>
+  <tr><td>AFP</td><td><code>afp://server/share</code></td><td>Apple Filing Protocol (legacy Mac file sharing)</td></tr>
+  <tr><td>NFS</td><td><code>nfs://server/share</code></td><td>Network File System (common on Linux/Unix)</td></tr>
+</table>
+
+<h2>Mounting &amp; Unmounting</h2>
+<p>Each share in the list displays a status indicator:</p>
+<ul>
+  <li><span class="status-dot green"></span> <strong>Green</strong> — The share is currently mounted and accessible.</li>
+  <li><span class="status-dot gray"></span> <strong>Gray</strong> — The share is not mounted.</li>
+  <li><span class="status-dot orange"></span> <strong>Orange</strong> — The share is in a transitional state (mounting or an error occurred).</li>
+</ul>
+<p>To mount a share, select it and click <strong>Mount</strong>. To unmount, click the eject button or select <strong>Unmount</strong>.</p>
+
+<h2>Managed vs Unmanaged Shares</h2>
+<p>Shares can be either <strong>managed</strong> or <strong>unmanaged</strong>:</p>
+<ul>
+  <li><strong>Managed</strong> — MagicMount will automatically remount these shares when your network connection is restored. The background service monitors for network changes and reconnects managed shares.</li>
+  <li><strong>Unmanaged</strong> — These shares appear in the list for easy manual mounting but are not automatically reconnected.</li>
+</ul>
+<p>Toggle the managed state by editing the share and changing its managed setting.</p>
+
+<h2>Auto-Remount &amp; Background Service</h2>
+<p>The MagicMount Background service runs in your menu bar and provides automatic share management:</p>
+<ul>
+  <li><strong>Network monitoring</strong> — Detects when your Mac connects to or disconnects from a network.</li>
+  <li><strong>Automatic remount</strong> — When a network change is detected, the service waits for the network to stabilize (debounce period), then attempts to remount all managed shares.</li>
+  <li><strong>Periodic remount</strong> — Periodically checks and remounts any managed shares that have become disconnected.</li>
+  <li><strong>Volume tracking</strong> — Monitors macOS volume mount and unmount events to keep share status up to date.</li>
+</ul>
+<div class="note">
+  <strong>Tip</strong>
+  Enable "Show in menu bar" in Settings to see the MagicMount icon in your menu bar for quick access to your shares.
+</div>
+
+<h2>Settings</h2>
+<p>Open Settings from the app menu (<kbd>&#8984;,</kbd>) to configure:</p>
+<ul>
+  <li><strong>Show in menu bar</strong> — Toggle the menu bar icon for the background service.</li>
+  <li><strong>Network debounce</strong> — How long (in seconds) to wait after a network change before attempting to remount shares. A longer delay helps avoid repeated mount attempts on unstable connections. Default: a few seconds.</li>
+  <li><strong>Periodic remount interval</strong> — How often (in minutes) the background service checks and remounts disconnected managed shares.</li>
+  <li><strong>Clear previous servers</strong> — Removes the saved list of previously used server addresses from the auto-complete suggestions.</li>
+</ul>
+
+<h2>FAQ</h2>
+
+<h3>Why isn't my share reconnecting automatically?</h3>
+<p>Make sure the share is set to <strong>managed</strong>. Only managed shares are automatically remounted by the background service. Also verify that the MagicMount Background service is running (check for its icon in the menu bar).</p>
+
+<h3>How do I remove a share?</h3>
+<p>Select the share in the list and press <kbd>&#9003;</kbd> (Delete), or right-click and choose <strong>Delete</strong>. The share will be unmounted if currently connected and removed from your list.</p>
+
+<h3>What protocols are supported?</h3>
+<p>MagicMount supports <strong>SMB</strong>, <strong>AFP</strong>, and <strong>NFS</strong> protocols. SMB is recommended for most use cases as it offers the best cross-platform compatibility.</p>
+
+<h3>Can I use MagicMount with VPN connections?</h3>
+<p>Yes. When a VPN connects, MagicMount detects the network change and will attempt to remount your managed shares. You may want to increase the network debounce setting to allow time for the VPN to fully establish.</p>
+
+<h3>Where are my share configurations stored?</h3>
+<p>Share configurations are stored in the app group container shared between MagicMount and the background service. They persist across app restarts and updates.</p>
+
+<h2>Troubleshooting</h2>
+<p>If you encounter errors when mounting shares, here are common causes and solutions:</p>
+<table>
+  <tr><th>Error</th><th>Cause</th><th>Solution</th></tr>
+  <tr>
+    <td><strong>Authentication failed</strong></td>
+    <td>Invalid username or password</td>
+    <td>Verify your credentials. You may need to update saved passwords in Keychain Access.</td>
+  </tr>
+  <tr>
+    <td><strong>Host not found</strong></td>
+    <td>The server address cannot be resolved</td>
+    <td>Check the server address for typos. Ensure you are connected to the correct network and the server is online.</td>
+  </tr>
+  <tr>
+    <td><strong>Connection timed out</strong></td>
+    <td>The server is unreachable</td>
+    <td>Verify network connectivity. The server may be offline, or a firewall may be blocking the connection.</td>
+  </tr>
+  <tr>
+    <td><strong>Share not found</strong></td>
+    <td>The share name does not exist on the server</td>
+    <td>Double-check the share path. The share may have been renamed or removed on the server.</td>
+  </tr>
+  <tr>
+    <td><strong>Connection refused</strong></td>
+    <td>The server is not accepting connections on the expected port</td>
+    <td>Ensure the file sharing service is enabled on the server and the correct protocol is selected.</td>
+  </tr>
+  <tr>
+    <td><strong>Already mounted</strong></td>
+    <td>The share is already connected</td>
+    <td>The share is accessible. Check Finder for the mounted volume.</td>
+  </tr>
+</table>
+
+<hr>
+<p style="color: var(--secondary); font-size: 12px; text-align: center; margin-top: 16px;">MagicMount by Mark Tassinari</p>
+
+</body>
+</html>
