@@ -10,7 +10,7 @@ import libMounter
 import ServiceManagement
 
 enum MockStore{
-    static let store = ShareDataModel(storage: MockStorage(list: PreviewData.mockShares))
+    static let store = ShareDataModel(storage: MockStorage(list: PreviewData.mockShares), appService: MockSMService(mockStatus: .enabled))
     
 }
 

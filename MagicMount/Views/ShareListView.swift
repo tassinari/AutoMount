@@ -16,6 +16,7 @@ struct ShareListView: View {
     @State var model: ShareDataModel
     @State private var errorMessage: String?
     @State private var searchText: String = ""
+    @Environment(\.openWindow) var openWindow
 
     private var filteredShares: [Share] {
         guard !searchText.isEmpty else { return model.shares }
@@ -30,6 +31,25 @@ struct ShareListView: View {
 
     var body: some View {
         NavigationStack {
+            if !model.isLoginItemEnabled {
+                Button {
+                    openWindow(id: "help")
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing. ")
+                        + Text("Click here to learn more.")
+                            .bold()
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal)
+            }
             Table(filteredShares) {
                 TableColumn("Managed") { share in
                     ManagedToggleCell(
