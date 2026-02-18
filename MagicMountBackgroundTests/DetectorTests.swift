@@ -61,11 +61,13 @@ final class DetectorTests: XCTestCase {
 
         wait(for: [exp], timeout: 2.0)
 
-        guard case let .volume(event) = delegate.events.last else {
+        guard let volumeEvent = delegate.events.lazy.compactMap({
+            if case let .volume(e) = $0 { return e }; return nil
+        }).first else {
             return XCTFail("Expected a volume event")
         }
-        XCTAssertEqual(event.path, path)
-        switch event.type {
+        XCTAssertEqual(volumeEvent.path, path)
+        switch volumeEvent.type {
         case .mounted: break
         case .unmounted: XCTFail("Expected mounted event, got unmounted")
         }
@@ -89,11 +91,13 @@ final class DetectorTests: XCTestCase {
 
         wait(for: [exp], timeout: 2.0)
 
-        guard case let .volume(event) = delegate.events.last else {
+        guard let volumeEvent = delegate.events.lazy.compactMap({
+            if case let .volume(e) = $0 { return e }; return nil
+        }).first else {
             return XCTFail("Expected a volume event")
         }
-        XCTAssertEqual(event.path, path)
-        switch event.type {
+        XCTAssertEqual(volumeEvent.path, path)
+        switch volumeEvent.type {
         case .unmounted: break
         case .mounted: XCTFail("Expected unmounted event, got mounted")
         }
@@ -116,11 +120,44 @@ final class DetectorTests: XCTestCase {
 
         wait(for: [exp], timeout: 2.0)
 
-        guard case .wake = delegate.events.last else {
+        guard delegate.events.contains(where: { if case .wake = $0 { return true }; return false }) else {
             return XCTFail("Expected a wake event")
         }
     }
 
-   
-   
+    // MARK: - Network
+
+    func testNetworkEvent_firesOnListen() {
+        let detector = Detector()
+        let delegate = TestDelegate()
+        let exp = expectation(description: "Receive network event on listen")
+        delegate.networkExpectation = exp
+
+        detector.listen(delegate)
+
+        wait(for: [exp], timeout: 2.0)
+
+        XCTAssertTrue(delegate.events.contains(where: { if case .network = $0 { return true }; return false }),
+                       "Expected a .network event after listen")
+    }
+
+    // MARK: - Deinit
+
+    func testDeinit_removesObservers_andCancelsMonitor() {
+        var detector: Detector? = Detector()
+        let delegate = TestDelegate()
+        detector?.listen(delegate)
+
+        weak var weakDetector = detector
+        detector = nil
+
+        XCTAssertNil(weakDetector, "Detector should deallocate when all references are released")
+
+        // Post a notification after deallocation — should not crash
+        NSWorkspace.shared.notificationCenter.post(
+            name: NSWorkspace.didMountNotification,
+            object: nil,
+            userInfo: ["NSDevicePath": "/Volumes/Gone"]
+        )
+    }
 }
