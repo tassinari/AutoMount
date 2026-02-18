@@ -15,14 +15,15 @@ private final class TestDelegate: DetectorDelegate {
     var events: [DetectorEvent] = []
     var expectation: XCTestExpectation?
     var networkExpectation: XCTestExpectation?
+    var wakeExpectation: XCTestExpectation?
 
     func didDetectEvent(_ event: DetectorEvent) {
         events.append(event)
         switch event {
         case .network:
             networkExpectation?.fulfill()
-        case .sleep:
-            break
+        case .wake:
+            wakeExpectation?.fulfill()
         case .volume:
             expectation?.fulfill()
         }
@@ -95,6 +96,28 @@ final class DetectorTests: XCTestCase {
         switch event.type {
         case .unmounted: break
         case .mounted: XCTFail("Expected unmounted event, got mounted")
+        }
+    }
+
+    // MARK: - Wake
+
+    func testWake_postsNotification_triggersDelegate() {
+        let detector = Detector()
+        let delegate = TestDelegate()
+        let exp = expectation(description: "Receive wake event")
+        delegate.wakeExpectation = exp
+
+        detector.listen(delegate)
+
+        NSWorkspace.shared.notificationCenter.post(
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+
+        wait(for: [exp], timeout: 2.0)
+
+        guard case .wake = delegate.events.last else {
+            return XCTFail("Expected a wake event")
         }
     }
 
