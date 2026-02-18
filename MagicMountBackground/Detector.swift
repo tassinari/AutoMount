@@ -20,7 +20,7 @@ struct MountEvent{
 }
 enum DetectorEvent{
     case network
-    case sleep
+    case wake
     case volume(MountEvent)
 }
 
@@ -32,6 +32,7 @@ class Detector : Detectable{
 
     private var unmountNote : NSObjectProtocol?
     private var mountNote : NSObjectProtocol?
+    private var wakeNote : NSObjectProtocol?
 
     let monitor = NWPathMonitor()
     let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
@@ -49,6 +50,9 @@ class Detector : Detectable{
                 self?.delegate?.didDetectEvent(.volume(MountEvent(type: .unmounted, path: info["NSDevicePath"] as? String)))
             }
         }
+        wakeNote = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.delegate?.didDetectEvent(.wake)
+        }
     }
     deinit {
         networkDebounceWork?.cancel()
@@ -58,6 +62,9 @@ class Detector : Detectable{
         }
         if let mountNote = mountNote {
             NSWorkspace.shared.notificationCenter.removeObserver(mountNote)
+        }
+        if let wakeNote = wakeNote {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeNote)
         }
     }
     public func listen(_ delegate: DetectorDelegate){
