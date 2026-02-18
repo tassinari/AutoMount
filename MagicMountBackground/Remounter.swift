@@ -11,24 +11,32 @@ import libMounter
 actor Remounter{
     init(debounceSeconds : TimeInterval = 20, storage: Storage = StorageManager()){
         self.debounceSeconds = debounceSeconds
-        callDate = .now
         self.storage = storage
     }
     private var debounceSeconds: TimeInterval
-    private var callDate: Date
     private let storage : Storage
-    
+    private var pendingTask: Task<Void, Never>?
+
     func setDebounce(_ seconds: TimeInterval) {
         debounceSeconds = seconds
     }
 
-    func checkAndRemount() async{
-        if Date.now.timeIntervalSince(callDate) < debounceSeconds{
-            debug("Cache still valid, not remounting")
-            return
+    func checkAndRemount() async {
+        if pendingTask != nil {
+            notice("Rescheduling debounced remount")
         }
-        callDate = .now
-        await reconnectAll()
+        pendingTask?.cancel()
+        let seconds = debounceSeconds
+        let task = Task {
+            do {
+                try await Task.sleep(for: .seconds(seconds))
+            } catch {
+                return
+            }
+            await reconnectAll()
+        }
+        pendingTask = task
+        await task.value
     }
     @MainActor private func reconnectAll() async{
         let shares = await storage.fullMountList()

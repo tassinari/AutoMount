@@ -43,8 +43,9 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         XCTAssertFalse(storage.mountCalled)
-       
+
     }
     @MainActor func testRemounterDoesntCallMountAndLogs() async throws {
         let name = "localhost."
@@ -55,6 +56,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("\(name) connected, not attempting remount")}))
        
@@ -71,6 +73,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount(\(name)) threw:  someError")}))
        
@@ -103,6 +106,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): already mounted")}))
     }
@@ -114,6 +118,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): connection refused")}))
     }
@@ -125,6 +130,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): no such file or directory")}))
     }
@@ -136,6 +142,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): timeout")}))
     }
@@ -147,6 +154,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): no host")}))
     }
@@ -158,6 +166,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): auth error")}))
     }
@@ -170,6 +179,7 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Success, \(name) is mounted on \(mp)")}))
     }
@@ -185,37 +195,86 @@ final class RemounterTests : XCTestCase{
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
         await rm.checkAndRemount()
+        
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Generic error in mount attempt: \(String(describing: ErrorTest.someError))")}))
-    }
-    @MainActor func testRemounterDebounceWorks() async throws {
-       
-        let share = Share(url: URL(string: "smb://localHost")!, name: "localHost", mountPoint: "/volume/test", managed: true, connected: .unmounted)
-        let storage = MockStorage(list:[share])
-       
-        let rm = Remounter(debounceSeconds: 10,storage:storage)
-        XCTAssertFalse(storage.mountCalled)
-        XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
-        XCTAssertFalse(storage.mountCalled)
-       
     }
     @MainActor func testRDebounceLogs() async throws {
         let share = Share(url: URL(string: "smb://localHost")!, name: "localHost", mountPoint: "/volume/test", managed: true, connected: .unmounted)
         let storage = MockStorage(list:[share])
-       
-        let rm = Remounter(debounceSeconds: 10,storage:storage)
-        XCTAssertFalse(storage.mountCalled)
-        XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+
+        let rm = Remounter(debounceSeconds: 0.2,storage:storage)
+        Task { await rm.checkAndRemount() } // launch concurrently
+        try await Task.sleep(for: .seconds(0.05))
+        await rm.checkAndRemount() // cancels first via reentrancy, logs rescheduling
         let logs = try getLogs()
-        
-        XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Cache still valid, not remounting")}))
+
+        XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Rescheduling debounced remount")}))
     }
                                 
     
     
     
+    @MainActor func testDebounceDelaysExecution() async throws {
+        let exp = expectation(description: "mount called after debounce")
+        exp.expectedFulfillmentCount = 1
+        exp.assertForOverFulfill = true
+        var mountTime: Date?
+
+        let share = Share(url: URL(string: "smb://localHost")!, name: "localHost",
+                          mountPoint: "/volume/test", managed: true, connected: .unmounted)
+        let storage = MockStorage(list: [share], mountHandler: { _ in
+            mountTime = Date.now
+            exp.fulfill()
+            return .success(nil)
+        })
+
+        let rm = Remounter(debounceSeconds: 0.5, storage: storage)
+        let callTime = Date.now
+        await rm.checkAndRemount()
+
+        await fulfillment(of: [exp], timeout: 2)
+
+        // Mount should not have fired before the debounce period
+        let elapsed = mountTime!.timeIntervalSince(callTime)
+        XCTAssertGreaterThanOrEqual(elapsed, 0.4,
+            "Mount should wait at least the debounce period, but fired after \(elapsed)s")
+    }
+
+    @MainActor func testDebounceCoalescesMultipleCalls() async throws {
+        let exp = expectation(description: "mount called once after debounce")
+        exp.expectedFulfillmentCount = 1
+        exp.assertForOverFulfill = true
+        var mountCount = 0
+        var mountTime: Date?
+
+        let share = Share(url: URL(string: "smb://localHost")!, name: "localHost",
+                          mountPoint: "/volume/test", managed: true, connected: .unmounted)
+        let storage = MockStorage(list: [share], mountHandler: { _ in
+            mountCount += 1
+            mountTime = Date.now
+            exp.fulfill()
+            return .success(nil)
+        })
+
+        let rm = Remounter(debounceSeconds: 1.0, storage: storage)
+
+        // Call 3 times with short gaps — each should cancel the previous
+        Task { await rm.checkAndRemount() }
+        try await Task.sleep(for: .seconds(0.2))
+        Task { await rm.checkAndRemount() }
+        try await Task.sleep(for: .seconds(0.2))
+        let lastCallTime = Date.now
+        await rm.checkAndRemount()
+
+        await fulfillment(of: [exp], timeout: 3)
+
+        XCTAssertEqual(mountCount, 1, "Mount should fire exactly once")
+        let elapsed = mountTime!.timeIntervalSince(lastCallTime)
+        XCTAssertGreaterThanOrEqual(elapsed, 0.9,
+            "Mount should wait at least the debounce period after the last call, but fired after \(elapsed)s")
+    }
+
     @MainActor func testSetDebounceAllowsRemountAfterChange() async throws {
         let exp = expectation(description: "mount called after debounce lowered")
         let share = Share(url: URL(string: "smb://localHost")!, name: "localHost", mountPoint: "/volume/test", managed: true, connected: .unmounted)
@@ -224,12 +283,13 @@ final class RemounterTests : XCTestCase{
             return .success(nil)
         })
 
-        // Start with a large debounce that blocks the first call
+        // Start with a large debounce so the first call won't fire
         let rm = Remounter(debounceSeconds: 9999, storage: storage)
-        await rm.checkAndRemount()
+        Task { await rm.checkAndRemount() } // launch concurrently
+        try await Task.sleep(for: .seconds(0.05))
         XCTAssertFalse(storage.mountCalled, "Should be blocked by debounce")
 
-        // Lower debounce to 0 and try again
+        // Lower debounce to 0 and try again — cancels the 9999s task
         await rm.setDebounce(0)
         await rm.checkAndRemount()
 
