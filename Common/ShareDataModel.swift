@@ -40,10 +40,10 @@ import ServiceManagement
         }
     }
     
-    init(storage : Storage, appService: AppServiceInterface = DefaultServiceInterface()){
+    init(storage : Storage, appService: AppServiceInterface? = nil){
         self.storage = storage
-        self.appService = appService
-        self.isLoginItemEnabled = appService.status == .enabled
+        self.appService = appService ?? DefaultServiceInterface()
+        self.isLoginItemEnabled = self.appService.status == .enabled
         Task{
             await load()
         }
