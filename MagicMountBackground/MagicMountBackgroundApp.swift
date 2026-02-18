@@ -45,7 +45,6 @@ class Model{
         let debounce = defaults.object(forKey: Constant.networkDebounceKey) as? Double ?? Constant.networkDebounceDefault
         self.remounter = remounter ?? Remounter(debounceSeconds: debounce, storage: resolvedStorage)
 
-        self.detector.networkDebounceInterval = debounce
         self.detector.listen(self)
 
         startPeriodicTimer()
@@ -68,7 +67,6 @@ class Model{
 
     private func defaultsDidChange() {
         let debounce = defaults.object(forKey: Constant.networkDebounceKey) as? Double ?? Constant.networkDebounceDefault
-        detector.networkDebounceInterval = debounce
         Task {
             await remounter.setDebounce(debounce)
         }

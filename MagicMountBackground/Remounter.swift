@@ -13,7 +13,7 @@ actor Remounter{
         self.debounceSeconds = debounceSeconds
         self.storage = storage
     }
-    private var debounceSeconds: TimeInterval
+    internal var debounceSeconds: TimeInterval
     private let storage : Storage
     private var pendingTask: Task<Void, Never>?
 

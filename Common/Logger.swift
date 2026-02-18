@@ -37,11 +37,11 @@ internal actor MagicMountLog {
     )
 
     func debug(_ msg: String) {
-        logger.debug("\(msg)")
+        logger.debug("\(msg, privacy: .public)")
     }
 
     func notice(_ msg: String) {
-        logger.notice("\(msg)")
+        logger.notice("\(msg, privacy: .public)")
     }
 
     func error(_ msg: String) {

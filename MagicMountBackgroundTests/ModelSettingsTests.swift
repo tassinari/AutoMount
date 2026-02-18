@@ -17,36 +17,6 @@ final class ModelSettingsTests: XCTestCase {
         return UserDefaults(suiteName: suite)!
     }
 
-    @MainActor func testNetworkDebounceReadFromDefaults() async throws {
-        let defaults = freshDefaults()
-        defaults.set(42.0, forKey: Constant.networkDebounceKey)
-
-        let model = Model(defaults: defaults, storage: MockStorage())
-
-        XCTAssertEqual(model.detector.networkDebounceInterval, 42.0)
-    }
-
-    @MainActor func testNetworkDebounceDefaultWhenKeyAbsent() async throws {
-        let defaults = freshDefaults()
-        // Do NOT set the key
-
-        let model = Model(defaults: defaults, storage: MockStorage())
-
-        XCTAssertEqual(model.detector.networkDebounceInterval, Constant.networkDebounceDefault)
-    }
-
-    @MainActor func testDefaultsChangeNotification_updatesDetectorDebounce() async throws {
-        let defaults = freshDefaults()
-        let model = Model(defaults: defaults, storage: MockStorage())
-        XCTAssertEqual(model.detector.networkDebounceInterval, Constant.networkDebounceDefault)
-
-        defaults.set(55.0, forKey: Constant.networkDebounceKey)
-
-        // The notification fires on the main run loop; give it a tick to process.
-        try await Task.sleep(for: .milliseconds(100))
-
-        XCTAssertEqual(model.detector.networkDebounceInterval, 55.0)
-    }
 
     @MainActor func testPeriodicTimer_callsCheckAndRemount() async throws {
         let defaults = freshDefaults()
