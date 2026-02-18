@@ -302,6 +302,46 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssertFalse(model.isLoginItemEnabled)
     }
 
+    // MARK: - didBecomeActive / refreshLoginItemStatus
+
+    func testDidBecomeActiveRefreshesLoginItemStatusToDisabled() async throws {
+        let mock = MockSMService(mockStatus: .enabled)
+        let storage = MockStorage(list: [])
+        let model = ShareDataModel(storage: storage, appService: mock)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertTrue(model.isLoginItemEnabled)
+
+        mock.mockStatus = .notRegistered
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertFalse(model.isLoginItemEnabled)
+    }
+
+    func testDidBecomeActiveRefreshesLoginItemStatusToEnabled() async throws {
+        let mock = MockSMService(mockStatus: .notRegistered)
+        let storage = MockStorage(list: [])
+        let model = ShareDataModel(storage: storage, appService: mock)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertFalse(model.isLoginItemEnabled)
+
+        mock.mockStatus = .enabled
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(model.isLoginItemEnabled)
+    }
+
+    func testDidBecomeActiveNoChangeKeepsStatus() async throws {
+        let mock = MockSMService(mockStatus: .enabled)
+        let storage = MockStorage(list: [])
+        let model = ShareDataModel(storage: storage, appService: mock)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertTrue(model.isLoginItemEnabled)
+
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+        try await Task.sleep(nanoseconds: 100_000_000)
+        XCTAssertTrue(model.isLoginItemEnabled)
+    }
+
     enum TestError : Error{
         case someError
     }
