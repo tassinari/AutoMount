@@ -27,6 +27,12 @@ struct AddEditMount: View {
                     .font(.title)
                 Spacer()
             }
+            HStack {
+                Text("Please save user/password in the macOS keychain in order for SMB shares to auto mount.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
             if isConnecting {
                 Spacer()
                 ProgressView()
