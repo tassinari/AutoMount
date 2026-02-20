@@ -35,5 +35,9 @@ struct MagicMountApp: App {
             HelpView()
         }
         .defaultSize(width: 600, height: 700)
+        Window("MagicMount Help", id: "help-background") {
+            HelpView(anchor: "background-service")
+        }
+        .defaultSize(width: 600, height: 700)
     }
 }
