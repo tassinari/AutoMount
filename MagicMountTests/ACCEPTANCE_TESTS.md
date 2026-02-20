@@ -150,6 +150,12 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user looks at the share row
 - **Then** a spinning progress indicator replaces the mount/unmount button
 
+### 3.7 Error message when a mount fails
+- **Given** A managed share in the share list is not mounted and not           
+  mountable (no network, bad pass etc, any no success situation)                                                                                                 
+- **When** User taps mount button and the service fails with any error                                                                                                       
+- **Then** The user is presented with the error in a dialog that has a dismiss button                                                                 
+
 ---
 
 ## 4. Managed Toggle
