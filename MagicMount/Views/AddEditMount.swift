@@ -90,7 +90,18 @@ struct AddEditMount: View {
                 // cancelled — already dismissed by cancel button
             } catch {
                 isConnecting = false
-                errorMessage = error.localizedDescription
+                if error is AlreadyMountedError {
+                    // Dismiss the sheet first, then surface the error after the
+                    // dismissal animation (~350 ms) so the parent alert can appear.
+                    let msg = error.localizedDescription
+                    dismiss()
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(350))
+                        errorMessage = msg
+                    }
+                } else {
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }

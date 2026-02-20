@@ -10,6 +10,10 @@ enum AddEditModelError : Swift.Error {
     case missingValues, badURL, mountFailed(MountResponse)
 }
 
+struct AlreadyMountedError: LocalizedError {
+    var errorDescription: String? { "This share is already mounted." }
+}
+
 extension AddEditModelError: LocalizedError {
     var errorDescription: String? {
         switch self {
@@ -92,7 +96,8 @@ extension AddEditModelError: LocalizedError {
             if manage, let mountedShare = store.shareMatching(url: url){
                 try await store.manage(mountedShare)
             }
-
+        case .alreadyMounted:
+            throw AlreadyMountedError()
         default:
             throw AddEditModelError.mountFailed(resp)
         }
