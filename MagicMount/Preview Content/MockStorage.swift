@@ -28,8 +28,11 @@ class MockStorage: Storage{
         return mountResponse
     }
     
-    func unmount(_: libMounter.Share) async throws {
+    func unmount(_ share: libMounter.Share) async throws {
         unmountCalled = true
+        if let unmountHandler {
+            try await unmountHandler(share)
+        }
         if let err = throwError {
             throw err
         }
@@ -37,6 +40,7 @@ class MockStorage: Storage{
     let mountResponse : MountResponse
     let addHandler : (Share) throws -> Void
     @MainActor let mountHandler : ((Share) async throws -> MountResponse)?
+    @MainActor let unmountHandler : ((Share) async throws -> Void)?
     let deleteHandler : (Share) throws -> Void
     var mockMountList: [Share]
     var mountCalled : Bool = false
@@ -49,13 +53,15 @@ class MockStorage: Storage{
          addHandler: @escaping (Share) throws -> Void = {_ in },
          throwError: Error? = nil,
          deleteHandler : @escaping (Share) throws -> Void = { _ in },
-         mountHandler :  ((Share) async throws -> MountResponse)? = nil) {
+         mountHandler :  ((Share) async throws -> MountResponse)? = nil,
+         unmountHandler : ((Share) async throws -> Void)? = nil) {
         self.mockMountList = list
         self.addHandler = addHandler
         self.deleteHandler = deleteHandler
         self.mountResponse = mountResponse
         self.throwError = throwError
         self.mountHandler = mountHandler
+        self.unmountHandler = unmountHandler
     }
     
     func fullMountList() async -> [Share]{

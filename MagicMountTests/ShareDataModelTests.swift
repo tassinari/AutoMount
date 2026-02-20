@@ -302,6 +302,47 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssertFalse(model.isLoginItemEnabled)
     }
 
+    func testUnmountShowsProgressIndicator() async throws {
+        let share = Share(url: URL(string: "localhost1")!, name: "test", mountPoint: "/some/path", managed: true, connected: .mounted)
+        let shares = [
+            share,
+            Share(url: URL(string: "localhost2")!, name: "test2", mountPoint: "/some/path1", managed: true, connected: .mounted),
+            Share(url: URL(string: "localhost3")!, name: "test3", mountPoint: "/some/path2", managed: true, connected: .mounted)
+        ]
+
+        typealias UnmountContinuation = CheckedContinuation<Void, Never>
+        var unmountContinuation: UnmountContinuation?
+
+        let storage = MockStorage(list: shares, unmountHandler: { _ in
+            await withCheckedContinuation { (continuation: UnmountContinuation) in
+                unmountContinuation = continuation
+            }
+        })
+        let model = ShareDataModel(storage: storage)
+        try await Task.sleep(nanoseconds: 1000)
+
+        // Start unmount in a separate task
+        let unmountTask = Task { @MainActor in
+            try await model.unmount(share)
+        }
+
+        // Wait for the unmount handler to be called and suspend
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+        // While unmount is in progress, the share should be in .unmounting state
+        XCTAssertEqual(model.shares[0].connected, .unmounting)
+        XCTAssertTrue(model.shares[0].showProgressView)
+
+        // Resume the continuation to let unmount complete
+        unmountContinuation?.resume()
+
+        // Wait for unmount to finish
+        try await unmountTask.value
+
+        // After unmount completes, share should no longer be unmounting
+        XCTAssertNotEqual(model.shares[0].connected, .unmounting)
+    }
+
     enum TestError : Error{
         case someError
     }
