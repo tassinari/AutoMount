@@ -85,13 +85,13 @@ struct AddEditMount: View {
         connectTask = Task {
             do {
                 try await model.saveAll()
-                dismiss()
             } catch is CancellationError {
                 // cancelled — already dismissed by cancel button
             } catch {
                 isConnecting = false
                 errorMessage = error.localizedDescription
             }
+            dismiss()
         }
     }
 }

@@ -32,7 +32,9 @@
       "Bash(xcrun xcresulttool:*)",
       "Bash(python3:*)",
       "Bash(log show:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(gh issue view:*)",
+      "Bash(swift --version:*)"
     ]
   }
 }
