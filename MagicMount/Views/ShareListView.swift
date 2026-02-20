@@ -37,9 +37,18 @@ struct ShareListView: View {
                         .foregroundStyle(.orange)
                         .padding([.top], 4)
                     VStack(alignment: .leading){
-                        Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing.")
-                            .font(.headline)
-                            .fontWeight(.light)
+                        HStack(spacing: 2) {
+                            Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing.")
+                                .font(.headline)
+                                .fontWeight(.light)
+                            Button {
+                                openWindow(id: "help-background")
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .foregroundStyle(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
                         if model.canOpenURL {
                             Button {
                                 model.openSettings()

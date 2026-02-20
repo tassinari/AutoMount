@@ -139,6 +139,25 @@
 </ul>
 <p>Add your network shares once, and MagicMount keeps them connected whenever your Mac is on the network.</p>
 
+<h2 id="background-service">Background Service &amp; Login Item</h2>
+<p>MagicMount relies on a background login item called <strong>MagicMount Background</strong> to monitor your network and automatically remount shares. This service must be enabled for the app to function properly.</p>
+<p>The background service:</p>
+<ul>
+  <li>Runs silently and checks the status of your configured shares.</li>
+  <li>Detects network changes and automatically remounts managed shares when connectivity is restored.</li>
+  <li>Periodically verifies that your managed shares remain connected.</li>
+</ul>
+<h3>Enabling the Login Item</h3>
+<p>The background service is configured as a <strong>Login Item</strong> in macOS. To enable it:</p>
+<ol>
+  <li>Open <strong>System Settings</strong> → <strong>General</strong> → <strong>Login Items &amp; Extensions</strong>.</li>
+  <li>Find <strong>MagicMount</strong> in the list and toggle it <strong>on</strong>.</li>
+</ol>
+<div class="note">
+  <strong>Important</strong>
+  If the login item is disabled, MagicMount cannot monitor your network or automatically remount shares. You will see a warning in the main app window when this is the case.
+</div>
+
 <h2>Adding a Share</h2>
 <p>To add a new network share:</p>
 <ol>

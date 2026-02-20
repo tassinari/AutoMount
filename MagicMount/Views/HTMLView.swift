@@ -9,10 +9,15 @@ import WebKit
 
 struct HTMLView: NSViewRepresentable {
     let url: URL
+    var anchor: String? = nil
 
     func makeNSView(context: Context) -> WKWebView {
         let webView = WKWebView()
-        webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        var loadURL = url
+        if let anchor, let urlWithAnchor = URL(string: url.absoluteString + "#\(anchor)") {
+            loadURL = urlWithAnchor
+        }
+        webView.loadFileURL(loadURL, allowingReadAccessTo: url.deletingLastPathComponent())
         return webView
     }
 
