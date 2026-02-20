@@ -32,23 +32,36 @@ struct ShareListView: View {
     var body: some View {
         NavigationStack {
             if !model.isLoginItemEnabled {
-                Button {
-                    openWindow(id: "help")
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing. ")
-                        + Text("Click here to learn more.")
-                            .bold()
+                HStack(alignment: .top){
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .padding([.top], 4)
+                    VStack(alignment: .leading){
+                        Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing.")
+                            .font(.headline)
+                            .fontWeight(.light)
+                        if model.canOpenURL {
+                            Button {
+                                model.openSettings()
+                            } label: {
+                                Text("Open System Settings to enable")
+                            }
+                            .buttonStyle(.link)
+                        }else{
+                            Text(model.aleternatOpenString)
+                                .font(.callout)
+                                .padding(4)
+                            
+                        }
+
                     }
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.orange.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                        
+                        
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal)
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.15))
+               
             }
             Table(filteredShares) {
                 TableColumn("Managed") { share in
@@ -97,16 +110,9 @@ struct ShareListView: View {
                 .width(90)
             }
             .tableStyle(.inset)
-            .navigationTitle("Network Shares")
-            .searchable(text: $searchText, prompt: "Filter shares")
+            .searchable(text: $searchText)
             .toolbar {
-                ToolbarItem {
-                    Button {
-                        Task { await model.load() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                }
+               
                 ToolbarItem {
                     Button {
                         model.showAddShare = true

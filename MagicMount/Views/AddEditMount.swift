@@ -28,9 +28,10 @@ struct AddEditMount: View {
                 Spacer()
             }
             HStack {
-                Text("Please save user/password in the macOS keychain in order for SMB shares to auto mount.")
+                Text("You must save your credentials in the macOS keychain in order for SMB shares to auto mount.")
                     .font(.body)
                     .foregroundStyle(.secondary)
+                    .padding([.top, .bottom], 8)
                 Spacer()
             }
             if isConnecting {

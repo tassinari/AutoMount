@@ -15,7 +15,7 @@ struct MagicMountApp: App {
     @Environment(\.openWindow) var openWindow
     private let model = ShareDataModel(storage: StorageManager())
     var body: some Scene {
-        Window("Main Window", id: "main")  {
+       WindowGroup  {
             ShareListView(model: model)
         }
         .commands{

@@ -82,7 +82,7 @@ enum ButtonActionType{
 
 extension Share{
     var textColor : Color{
-        connected == .mounted || connected == .unmounting  ? .black : .gray.opacity(0.5)
+        connected == .mounted || connected == .unmounting  ? .primary : .secondary
     }
     var buttonDisabled : Bool{
         connected == .mounting || connected == .unmounting
