@@ -67,11 +67,11 @@ internal struct MountInfo{
                 .volumeURLForRemountingKey,
                 .pathKey
             ])
+            let local = values?.volumeIsLocal ?? true
             let name = values?.volumeName ?? url.lastPathComponent
             let mount = values?.path ?? "/"
             let remote = values?.volumeURLForRemounting ?? url
-            //DOnt include main hd
-            if mount == "/"{
+            if local{
                 continue
             }
             result.append(MountedVolumesData(name: name, remountURL: remote, path: mount))

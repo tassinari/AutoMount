@@ -256,6 +256,11 @@ Acceptance test plan for the libMounter Swift package covering all public API su
 - **When** `fullMountList()` is called
 - **Then** the returned array is sorted alphabetically by share name
 
+### 7.6 Only netwok volumes are listed
+- **Given** Multiple mounted drives are available
+- **When** `fullMountList()` is called
+- **Then** only non local drives are listed, USB, DMG, local drives are excluded
+
 ---
 
 ## 8. Error Types
