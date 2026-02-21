@@ -17,17 +17,25 @@ struct ShareListView: View {
     @State var model: ShareDataModel
     @State private var errorMessage: String?
     @State private var searchText: String = ""
+    @State private var sortOrder: [KeyPathComparator<Share>] = [
+        KeyPathComparator(\.sortableName, order: .forward)
+    ]
     @Environment(\.openWindow) var openWindow
 
     private var filteredShares: [Share] {
-        guard !searchText.isEmpty else { return model.shares }
-        return model.shares.filter { share in
+        let base: [Share]
+        if searchText.isEmpty {
+            base = model.shares
+        } else {
             let term = searchText.lowercased()
-            let nameMatch = share.name?.lowercased().contains(term) ?? false
-            let urlMatch = share.url.absoluteString.lowercased().contains(term)
-            let mountMatch = share.mountPoint?.lowercased().contains(term) ?? false
-            return nameMatch || urlMatch || mountMatch
+            base = model.shares.filter { share in
+                let nameMatch = share.name?.lowercased().contains(term) ?? false
+                let urlMatch = share.url.absoluteString.lowercased().contains(term)
+                let mountMatch = share.mountPoint?.lowercased().contains(term) ?? false
+                return nameMatch || urlMatch || mountMatch
+            }
         }
+        return base.sorted(using: sortOrder)
     }
 
     var body: some View {
@@ -73,8 +81,8 @@ struct ShareListView: View {
                 .background(Color.orange.opacity(0.15))
                
             }
-            Table(filteredShares) {
-                TableColumn("Managed") { share in
+            Table(filteredShares, sortOrder: $sortOrder) {
+                TableColumn("Managed", sortUsing: KeyPathComparator(\.sortableManaged)) { share in
                     ManagedToggleCell(
                         share: share,
                         model: model
@@ -82,7 +90,7 @@ struct ShareListView: View {
                 }
                 .width(90)
 
-                TableColumn("Name") { share in
+                TableColumn("Name", sortUsing: KeyPathComparator(\.sortableName)) { share in
                     HStack {
                         Text(share.name ?? "--")
                         Spacer()
@@ -95,12 +103,12 @@ struct ShareListView: View {
                 }
                 .width(min: 150, ideal: 200)
 
-                TableColumn("Type") { share in
+                TableColumn("Type", sortUsing: KeyPathComparator(\.type)) { share in
                     Text(share.type.uppercased())
                 }
                 .width(60)
 
-                TableColumn("Mount Point") { share in
+                TableColumn("Mount Point", sortUsing: KeyPathComparator(\.sortableMountPoint)) { share in
                     if share.canOpen {
                         Button {
                             share.open()
@@ -115,7 +123,7 @@ struct ShareListView: View {
                     }
                 }
 
-                TableColumn("Status") { share in
+                TableColumn("Status", sortUsing: KeyPathComparator(\.sortableStatus)) { share in
                     StatusCell(share: share)
                 }
                 .width(90)

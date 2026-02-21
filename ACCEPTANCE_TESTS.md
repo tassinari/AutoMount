@@ -37,6 +37,26 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user clears the search field
 - **Then** all shares are displayed again
 
+### 1.7 Default sort is by Name ascending
+- **Given** multiple shares exist with different names
+- **When** the app launches
+- **Then** the share list is sorted by Name in ascending (A–Z) order
+
+### 1.8 Clicking a column header sorts by that column
+- **Given** multiple shares are displayed
+- **When** the user clicks the "Mount Point" column header
+- **Then** the share list is sorted by mount point
+
+### 1.9 Clicking the same column header toggles sort direction
+- **Given** the share list is sorted by Name ascending
+- **When** the user clicks the "Name" column header again
+- **Then** the sort order reverses to descending (Z–A)
+
+### 1.10 All columns are sortable
+- **Given** multiple shares are displayed with varied values
+- **When** the user clicks each column header (Managed, Name, Type, Mount Point, Status) in turn
+- **Then** the list re-sorts by that column's values each time
+
 ---
 
 ## 2. Adding a Share
