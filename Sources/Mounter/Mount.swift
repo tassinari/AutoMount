@@ -63,6 +63,7 @@ internal struct MountInfo{
         var result: [MountedVolumesData] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: [
+                .volumeIsLocalKey,
                 .volumeNameKey,
                 .volumeURLForRemountingKey,
                 .pathKey

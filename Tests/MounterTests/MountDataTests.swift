@@ -45,10 +45,20 @@ class BaseTest : XCTestCase{
             process.standardOutput = stdoutPipe
             process.standardError = stderrPipe
 
-
+            
             try process.run()
             process.waitUntilExit()
 
+//            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+//            if let output = String(data: stdoutData, encoding: .utf8) {
+//                print(output)
+//            }
+//
+//            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+//            if let errorOutput = String(data: stderrData, encoding: .utf8) {
+//                print(errorOutput)
+//            }
+            
             XCTAssertEqual(
                 process.terminationStatus,
                 0,
@@ -239,7 +249,41 @@ final class MountDataTests: BaseTest {
         }
 
 
-        
+
+    }
+
+    func testMountedVolumesExcludesLocalVolumes(){
+        let volumes = MountInfo.mountedVolumes()
+        for vol in volumes {
+            XCTAssertNotEqual(vol.path, "/", "Root volume should be excluded as a local volume")
+            XCTAssertFalse(vol.path.hasPrefix("/System/Volumes/"), "\(vol.path) appears to be a local system volume")
+        }
+    }
+
+    @MainActor func testMountedVolumesIncludesRemoteButNotLocal() async throws {
+        let mountData = MountData(scheme: "smb", host: hostName, port: port, path: shareName)
+        _ = try await mountData.mount()
+        try await Task.sleep(nanoseconds: 10000)
+
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssertTrue(volumes.contains(where: { $0.name == shareName }), "Remote SMB share should appear in mountedVolumes")
+        XCTAssertFalse(volumes.contains(where: { $0.path == "/" }), "Root volume should not appear in mountedVolumes")
+    }
+
+    func testMountedVolumesDataSharePropertyIsUnmanaged(){
+        let data = MountedVolumesData(name: "test", remountURL: URL(string: "smb://server/share")!, path: "/Volumes/test")
+        let share = data.share
+        XCTAssertFalse(share.managed)
+        XCTAssertEqual(share.connected, .mounted)
+    }
+    func testMountedVolumesExcludesDMG() async throws{
+        let path = "/Volumes/TestVolume"
+        Self.runPreTestScript(script: "Scripts/testDMG.sh")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssertFalse(volumes.map{$0.name}.contains("TestVolume"))
+        Self.runPreTestScript(script: "Scripts/ejectTest.sh")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: path))
     }
 
 }
