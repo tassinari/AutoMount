@@ -40,6 +40,20 @@ extension Share {
             false
         }
     }
+    // MARK: - Sort helpers
+
+    var sortableName: String { name ?? "" }
+    var sortableMountPoint: String { mountPoint ?? "" }
+    var sortableManaged: Int { managed ? 1 : 0 }
+    var sortableStatus: Int {
+        switch connected {
+        case .mounted: return 0
+        case .mounting: return 1
+        case .unmounting: return 2
+        case .unmounted: return 3
+        }
+    }
+
     public func open(){
         //TODO: throw instead?
         guard let path = self.mountPoint else {return}
