@@ -5,6 +5,7 @@
 //  Created by Mark Tassinari on 2/3/26.
 //
 
+//FIXME: Remove Files DVDs and DMGs
 
 
 import SwiftUI
@@ -87,7 +88,8 @@ struct ShareListView: View {
                         Spacer()
                         MountButtonCell(
                             share: share,
-                            model: model
+                            model: model,
+                            errorMessage: $errorMessage
                         )
                     }
                 }
@@ -243,7 +245,8 @@ struct MountButtonCell: View {
 
     let share: Share
     let model: ShareDataModel
-
+    
+    @Binding var errorMessage:  String?
     @State private var isWorking = false
 
     var body: some View {
@@ -275,13 +278,21 @@ struct MountButtonCell: View {
                     try await model.unmount(share)
 
                 case .unmounted:
-                    _ = try await model.mount(share)
+                    let resp = try await model.mount(share)
+                    switch resp{
+                    case .success:
+                        break
+                    default:
+                        let err = AddEditModelError.mountFailed(resp)
+                        errorMessage = err.localizedDescription
+                    }
 
                 default:
                     break
                 }
             } catch {
-                NSLog("Mount error: \(error)")
+                errorMessage = error.localizedDescription
+                MagicMount.error("Mount button pressed error: \(String(describing: error))")
             }
 
             await MainActor.run {
