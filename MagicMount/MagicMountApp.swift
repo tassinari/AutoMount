@@ -19,6 +19,7 @@ struct MagicMountApp: App {
             ShareListView(model: model)
         }
         .commands{
+            CommandGroup(replacing: .newItem) { }
             MountCommandMenu(model: model)
             CommandGroup(replacing: .help) {
                 Button("MagicMount Help") {
