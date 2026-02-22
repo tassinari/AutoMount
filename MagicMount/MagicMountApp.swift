@@ -18,9 +18,10 @@ struct MagicMountApp: App {
             ShareListView(model: model)
         }
         .commands{ MountCommandMenu(model: model) }
-        Settings {
+        Window("Settings", id: "settings") {
             SettingsView()
         }
         .windowResizability(.contentMinSize)
+        .defaultSize(width: 400, height: 300)
     }
 }
