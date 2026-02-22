@@ -40,7 +40,7 @@ struct SettingsView: View {
                     AddEditModel.clearPreviousServers()
                 }
 
-                Section("settings.section.timing") {
+                Section {
                     Picker(String(localized: "settings.picker.network_debounce"), selection: $networkDebounce) {
                         ForEach(Constant.networkDebounceOptions, id: \.self) { value in
                             Text(debounceLabel(value)).tag(value)
@@ -48,12 +48,26 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.menu)
 
+                    Text("settings.description.network_debounce")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("settings.section.network_debounce")
+                }
+
+                Section {
                     Picker(String(localized: "settings.picker.periodic_remount"), selection: $periodicRemount) {
                         ForEach(Constant.periodicRemountOptions, id: \.self) { value in
                             Text(periodicLabel(value)).tag(value)
                         }
                     }
                     .pickerStyle(.menu)
+
+                    Text("settings.description.periodic_remount")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("settings.section.periodic_remount")
                 }
             }
             .formStyle(.grouped)
