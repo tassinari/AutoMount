@@ -37,6 +37,22 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user clears the search field
 - **Then** all shares are displayed again
 
+### 1.7 New Window Behavior
+- **Given** A window is already open
+- **When** The user presses cmd-N
+- **Then** No new window shows
+
+### 1.8 New Window Menu Behavior
+- **Given** A window is already open
+- **When** THe user opens the file menu
+- **Then** No new window option is greted out
+
+### 1.8 Tab Behavior
+- **Given** The main window is open
+- **When** The user goes to the view menu
+- **Then** No tab bar options should be present
+
+
 ---
 
 ## 2. Adding a Share

@@ -82,7 +82,7 @@ struct ShareListView: View {
                
             }
             Table(filteredShares, sortOrder: $sortOrder) {
-                TableColumn("Managed", sortUsing: KeyPathComparator(\.sortableManaged)) { share in
+                TableColumn("Auto Mount", sortUsing: KeyPathComparator(\.sortableManaged)) { share in
                     ManagedToggleCell(
                         share: share,
                         model: model
