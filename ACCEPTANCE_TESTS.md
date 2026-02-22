@@ -227,20 +227,20 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user clicks "Clear previous servers"
 - **Then** the autocomplete history in the add dialog is empty
 
-### 6.5 Network debounce picker shows preset values
+### 6.5 Network debounce picker shows preset values with description
 - **Given** the Settings window is open
-- **When** the user opens the "Network debounce" picker
-- **Then** the options are 5 seconds, 15 seconds, 30 seconds, 60 seconds; default is 15 seconds
+- **When** the user views the "Network Debounce" section
+- **Then** a picker shows 5s, 15s, 30s, 60s (default 15s) and a description label explains its purpose
 
 ### 6.6 Selecting a debounce value persists
 - **Given** the Settings window is open
 - **When** the user selects a network debounce value (e.g. 30 seconds)
 - **Then** the value persists and is used by the background service
 
-### 6.7 Periodic remount picker shows preset values
+### 6.7 Periodic remount picker shows preset values with description
 - **Given** the Settings window is open
-- **When** the user opens the "Periodic remount" picker
-- **Then** the options are Off, 1 minute, 5 minutes, 15 minutes, 1 hour; default is 5 minutes
+- **When** the user views the "Periodic Remount" section
+- **Then** a picker shows Off, 1 min, 5 min, 15 min, 1 hour (default 5 min) and a description label explains its purpose
 
 ### 6.8 Selecting "Off" disables periodic remount
 - **Given** the Settings window is open
