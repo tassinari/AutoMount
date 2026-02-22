@@ -227,27 +227,32 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user clicks "Clear previous servers"
 - **Then** the autocomplete history in the add dialog is empty
 
-### 6.5 Adjust network debounce
+### 6.5 Network debounce picker shows preset values
 - **Given** the Settings window is open
-- **When** the user changes "Network debounce" to 30s (range: 5–120s, step 5)
-- **Then** the value persists and the background service uses 30s debounce for network events
+- **When** the user opens the "Network debounce" picker
+- **Then** the options are 5 seconds, 15 seconds, 30 seconds, 60 seconds; default is 15 seconds
 
-### 6.6 Network debounce respects bounds
+### 6.6 Selecting a debounce value persists
 - **Given** the Settings window is open
-- **When** the user tries to set debounce below 5s or above 120s
-- **Then** the stepper stops at the boundary value
+- **When** the user selects a network debounce value (e.g. 30 seconds)
+- **Then** the value persists and is used by the background service
 
-### 6.7 Adjust periodic remount interval
+### 6.7 Periodic remount picker shows preset values
 - **Given** the Settings window is open
-- **When** the user changes "Periodic remount" to 5 min (range: 1–60 min, step 1)
-- **Then** the value persists and the background service uses 5-minute remount interval
+- **When** the user opens the "Periodic remount" picker
+- **Then** the options are Off, 1 minute, 5 minutes, 15 minutes, 1 hour; default is 5 minutes
 
-### 6.8 Periodic remount respects bounds
+### 6.8 Selecting "Off" disables periodic remount
 - **Given** the Settings window is open
-- **When** the user tries to set remount below 1 min or above 60 min
-- **Then** the stepper stops at the boundary value
+- **When** the user selects "Off" for periodic remount
+- **Then** the periodic remount timer is disabled and no automatic remounts occur on a schedule
 
-### 6.9 About tab displays app info
+### 6.9 Selecting a periodic remount value persists
+- **Given** the Settings window is open
+- **When** the user selects a periodic remount value (e.g. 15 minutes)
+- **Then** the value persists and is used by the background service
+
+### 6.10 About tab displays app info
 - **Given** the Settings window is open
 - **When** the user clicks the About tab
 - **Then** "Magic Mount" title and "by Mark Tassinari" are displayed

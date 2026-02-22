@@ -16,6 +16,22 @@ struct SettingsView: View {
     @AppStorage(Constant.periodicRemountKey, store: UserDefaults(suiteName: "group.org.tassinari.magicmount"))
     private var periodicRemount: Double = Constant.periodicRemountDefault
 
+    private func debounceLabel(_ seconds: Double) -> String {
+        String(localized: "settings.picker.seconds \(Int(seconds))")
+    }
+
+    private func periodicLabel(_ minutes: Double) -> String {
+        if minutes == 0 {
+            return String(localized: "settings.picker.off")
+        } else if minutes == 1 {
+            return String(localized: "settings.picker.minute")
+        } else if minutes == 60 {
+            return String(localized: "settings.picker.hour")
+        } else {
+            return String(localized: "settings.picker.minutes \(Int(minutes))")
+        }
+    }
+
     var body: some View {
         TabView {
             Form {
@@ -25,18 +41,19 @@ struct SettingsView: View {
                 }
 
                 Section("settings.section.timing") {
-                    Stepper(
-                        String(localized: "settings.stepper.network_debounce \(Int(networkDebounce))"),
-                        value: $networkDebounce,
-                        in: 5...120,
-                        step: 5
-                    )
-                    Stepper(
-                        String(localized: "settings.stepper.periodic_remount \(Int(periodicRemount))"),
-                        value: $periodicRemount,
-                        in: 1...60,
-                        step: 1
-                    )
+                    Picker(String(localized: "settings.picker.network_debounce"), selection: $networkDebounce) {
+                        ForEach(Constant.networkDebounceOptions, id: \.self) { value in
+                            Text(debounceLabel(value)).tag(value)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Picker(String(localized: "settings.picker.periodic_remount"), selection: $periodicRemount) {
+                        ForEach(Constant.periodicRemountOptions, id: \.self) { value in
+                            Text(periodicLabel(value)).tag(value)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
             }
             .formStyle(.grouped)
