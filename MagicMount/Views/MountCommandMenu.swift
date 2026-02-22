@@ -11,7 +11,6 @@ import SwiftUI
 struct MountCommandMenu: Commands {
     var model : ShareDataModel
     @Environment(\.openWindow) var openWindow
-    @Environment(\.openSettings) var openSettings
    var body: some Commands {
        CommandGroup(replacing: .newItem) {
            Button {
@@ -20,6 +19,12 @@ struct MountCommandMenu: Commands {
                Text("New Window")
            }
            .keyboardShortcut("n", modifiers: [.shift, .command])
+       }
+       CommandGroup(after: .appSettings) {
+           Button("Settings…") {
+               openWindow(id: "settings")
+           }
+           .keyboardShortcut(",", modifiers: [.command])
        }
        CommandMenu("Mount") {
            Button {

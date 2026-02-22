@@ -51,6 +51,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 300, height: 200)
+        .formStyle(.grouped)
+        .frame(minWidth: 300, minHeight: 200)
     }
 }

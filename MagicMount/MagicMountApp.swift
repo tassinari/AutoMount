@@ -21,18 +21,20 @@ struct MagicMountApp: App {
         .commands{
             MountCommandMenu(model: model)
         }
-        Settings {
-            SettingsView()
-        }
-        .windowResizability(.contentSize)
-        Window("MagicMount Help", id: "help") {
-            HelpView()
-        }
-        .defaultSize(width: 600, height: 700)
+
         Window("MagicMount Help", id: "help-background") {
             HelpView(anchor: "background-service")
         }
         .defaultSize(width: 600, height: 700)
+        Window("MagicMount Help", id: "help") {
+            HelpView()
+        }
+        .defaultSize(width: 600, height: 700)
+        Window("Settings", id: "settings") {
+            SettingsView()
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 400, height: 300)
     }
 }
 struct MainWindow : Hashable, Identifiable, Codable{
