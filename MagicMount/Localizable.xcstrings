@@ -301,13 +301,35 @@
         }
       }
     },
+    "settings.description.clear_servers_note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clears the names of servers entered in the drop down box of the ‘add mount’ screen."
+          }
+        }
+      }
+    },
+    "settings.description.menubar_note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show or hide the icon in the menu bar.  Even if it is hidden, the background app will keep your drives mounted."
+          }
+        }
+      }
+    },
     "settings.description.network_debounce" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "How long to wait after a network change before attempting to remount shares. A longer delay avoids repeated mount attempts during unstable connections."
+            "value" : "How long to wait after a wake or network change before attempting to remount shares. A longer delay avoids repeated mount attempts during unstable connections."
           }
         }
       }
@@ -362,7 +384,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Network debounce"
+            "value" : "Wait time"
           }
         }
       }
@@ -384,7 +406,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Periodic remount"
+            "value" : "Check periodically every"
           }
         }
       }
@@ -406,7 +428,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Network Debounce"
+            "value" : "Mount Delay"
           }
         }
       }
@@ -417,7 +439,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Periodic Remount"
+            "value" : "Periodic Checks"
           }
         }
       }

@@ -35,10 +35,25 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Form {
-                Toggle("settings.toggle.show_menu_bar", isOn: $showMenuInBar)
-                Button(String(localized: "settings.button.clear_servers")) {
-                    AddEditModel.clearPreviousServers()
+                VStack(alignment: .leading) {
+                    Toggle("settings.toggle.show_menu_bar", isOn: $showMenuInBar)
+                    Text("settings.description.menubar_note")
+                        .font(.callout)
+                        .padding([.top, .bottom],3)
+                        .foregroundStyle(.secondary)
+                    
                 }
+                VStack(alignment: .leading) {
+                    Button(String(localized: "settings.button.clear_servers")) {
+                        AddEditModel.clearPreviousServers()
+                        
+                    }
+                    Text("settings.description.clear_servers_note")
+                        .font(.callout)
+                        .padding([.top, .bottom],3)
+                        .foregroundStyle(.secondary)
+                }
+                
 
                 Section {
                     Picker(String(localized: "settings.picker.network_debounce"), selection: $networkDebounce) {
@@ -49,7 +64,7 @@ struct SettingsView: View {
                     .pickerStyle(.menu)
 
                     Text("settings.description.network_debounce")
-                        .font(.caption)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 } header: {
                     Text("settings.section.network_debounce")
@@ -64,7 +79,7 @@ struct SettingsView: View {
                     .pickerStyle(.menu)
 
                     Text("settings.description.periodic_remount")
-                        .font(.caption)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 } header: {
                     Text("settings.section.periodic_remount")
@@ -86,3 +101,15 @@ struct SettingsView: View {
         .frame(minWidth: 300, minHeight: 200)
     }
 }
+// MARK: - Preview (Mock)
+
+#if DEBUG
+
+struct Settings_Previews: PreviewProvider {
+
+    static var previews: some View {
+        SettingsView()
+    }
+}
+
+#endif
