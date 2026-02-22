@@ -301,28 +301,6 @@
         }
       }
     },
-    "settings.section.network_debounce" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network Debounce"
-          }
-        }
-      }
-    },
-    "settings.section.periodic_remount" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Periodic Remount"
-          }
-        }
-      }
-    },
     "settings.description.network_debounce" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -345,35 +323,13 @@
         }
       }
     },
-    "settings.picker.network_debounce" : {
+    "settings.picker.hour" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Network debounce"
-          }
-        }
-      }
-    },
-    "settings.picker.periodic_remount" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Periodic remount"
-          }
-        }
-      }
-    },
-    "settings.picker.seconds %lld" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld seconds"
+            "value" : "1 hour"
           }
         }
       }
@@ -400,13 +356,13 @@
         }
       }
     },
-    "settings.picker.hour" : {
+    "settings.picker.network_debounce" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 hour"
+            "value" : "Network debounce"
           }
         }
       }
@@ -418,6 +374,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Off"
+          }
+        }
+      }
+    },
+    "settings.picker.periodic_remount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periodic remount"
+          }
+        }
+      }
+    },
+    "settings.picker.seconds %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld seconds"
+          }
+        }
+      }
+    },
+    "settings.section.network_debounce" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network Debounce"
+          }
+        }
+      }
+    },
+    "settings.section.periodic_remount" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Periodic Remount"
           }
         }
       }
@@ -539,6 +539,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Type"
+          }
+        }
+      }
+    },
+    "share_list.search_prompt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter"
           }
         }
       }

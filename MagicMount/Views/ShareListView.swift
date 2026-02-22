@@ -129,7 +129,7 @@ struct ShareListView: View {
                 .width(90)
             }
             .tableStyle(.inset)
-            .searchable(text: $searchText)
+            .searchable(text: $searchText, prompt: Text(String(localized: "share_list.search_prompt")))
             .toolbar {
                
                 ToolbarItem {
