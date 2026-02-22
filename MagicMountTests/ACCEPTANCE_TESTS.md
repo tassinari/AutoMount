@@ -253,6 +253,11 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **Given** the Settings window is open
 - **When** the user clicks the About tab
 - **Then** "Magic Mount" title and "by Mark Tassinari" are displayed
+ 
+### 6.10 Window Sizing
+- **Given** the Settings window is open
+- **When** The user moves the cursor to the bottom right corner
+- **Then** The window should be resizable
 
 ---
 
@@ -325,7 +330,7 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user tries to resize it smaller than 750×400px
 - **Then** the window stops at the minimum size
 
-### 10.2 Settings window is fixed size
+### 10.2 Settings window is dynamic size
 - **Given** the Settings window is open
 - **When** the user tries to resize it
-- **Then** the window remains at 300×200px (non-resizable)
+- **Then** the window should resize
