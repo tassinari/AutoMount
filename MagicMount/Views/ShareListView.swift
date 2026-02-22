@@ -47,7 +47,7 @@ struct ShareListView: View {
                         .padding([.top], 4)
                     VStack(alignment: .leading){
                         HStack(spacing: 2) {
-                            Text("MagicMount does not have permission to run in the background. The main functionality of the app will be missing.")
+                            Text("share_list.warning.no_background_permission")
                                 .font(.headline)
                                 .fontWeight(.light)
                             Button {
@@ -62,7 +62,7 @@ struct ShareListView: View {
                             Button {
                                 model.openSettings()
                             } label: {
-                                Text("Open System Settings to enable")
+                                Text("share_list.button.open_settings")
                             }
                             .buttonStyle(.link)
                         }else{
@@ -82,7 +82,7 @@ struct ShareListView: View {
                
             }
             Table(filteredShares, sortOrder: $sortOrder) {
-                TableColumn("Auto Mount", sortUsing: KeyPathComparator(\.sortableManaged)) { share in
+                TableColumn(String(localized: "share_list.column.auto_mount"), sortUsing: KeyPathComparator(\.sortableManaged)) { share in
                     ManagedToggleCell(
                         share: share,
                         model: model
@@ -90,7 +90,7 @@ struct ShareListView: View {
                 }
                 .width(90)
 
-                TableColumn("Name", sortUsing: KeyPathComparator(\.sortableName)) { share in
+                TableColumn(String(localized: "share_list.column.name"), sortUsing: KeyPathComparator(\.sortableName)) { share in
                     HStack {
                         Text(share.name ?? "--")
                         Spacer()
@@ -103,12 +103,12 @@ struct ShareListView: View {
                 }
                 .width(min: 150, ideal: 200)
 
-                TableColumn("Type", sortUsing: KeyPathComparator(\.type)) { share in
+                TableColumn(String(localized: "share_list.column.type"), sortUsing: KeyPathComparator(\.type)) { share in
                     Text(share.type.uppercased())
                 }
                 .width(60)
 
-                TableColumn("Mount Point", sortUsing: KeyPathComparator(\.sortableMountPoint)) { share in
+                TableColumn(String(localized: "share_list.column.mount_point"), sortUsing: KeyPathComparator(\.sortableMountPoint)) { share in
                     if share.canOpen {
                         Button {
                             share.open()
@@ -123,7 +123,7 @@ struct ShareListView: View {
                     }
                 }
 
-                TableColumn("Status", sortUsing: KeyPathComparator(\.sortableStatus)) { share in
+                TableColumn(String(localized: "share_list.column.status"), sortUsing: KeyPathComparator(\.sortableStatus)) { share in
                     StatusCell(share: share)
                 }
                 .width(90)
@@ -136,17 +136,17 @@ struct ShareListView: View {
                     Button {
                         model.showAddShare = true
                     } label: {
-                        Label("Add Share", systemImage: "plus")
+                        Label(String(localized: "share_list.button.add_share"), systemImage: "plus")
                     }
                 }
             }
         }
         .frame(minWidth: 750, minHeight: 400)
-        .alert("Error", isPresented: Binding<Bool>(
+        .alert(String(localized: "common.alert.error_title"), isPresented: Binding<Bool>(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )) {
-            Button("OK") {
+            Button(String(localized: "common.button.ok")) {
                 errorMessage = nil
             }
         } message: {
@@ -223,13 +223,13 @@ struct StatusCell: View {
     private var statusText: String {
         switch share.connected {
         case .mounted:
-            return "Mounted"
+            return String(localized: "share_list.status.mounted")
         case .unmounted:
-            return "Unmounted"
+            return String(localized: "share_list.status.unmounted")
         case .mounting:
-            return "Connecting"
+            return String(localized: "share_list.status.connecting")
         case .unmounting:
-            return "Ejecting"
+            return String(localized: "share_list.status.ejecting")
         }
     }
 

@@ -15,7 +15,7 @@ struct MagicMountBackgroundApp: App {
     @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "group.org.tassinari.magicmount")) private var showMenuBar = true
 
     var body: some Scene {
-        MenuBarExtra("Magic Mount", systemImage: "externaldrive", isInserted: $showMenuBar) {
+        MenuBarExtra(String(localized: "common.app_name"), systemImage: "externaldrive", isInserted: $showMenuBar) {
             ContentView(model: model.store)
         }
         .menuBarExtraStyle(.window)

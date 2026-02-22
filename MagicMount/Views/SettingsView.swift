@@ -19,20 +19,20 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Form {
-                Toggle("Show in menu bar", isOn: $showMenuInBar)
-                Button("Clear previous servers") {
+                Toggle("settings.toggle.show_menu_bar", isOn: $showMenuInBar)
+                Button(String(localized: "settings.button.clear_servers")) {
                     AddEditModel.clearPreviousServers()
                 }
 
-                Section("Timing") {
+                Section("settings.section.timing") {
                     Stepper(
-                        "Network debounce: \(Int(networkDebounce))s",
+                        String(localized: "settings.stepper.network_debounce \(Int(networkDebounce))"),
                         value: $networkDebounce,
                         in: 5...120,
                         step: 5
                     )
                     Stepper(
-                        "Periodic remount: \(Int(periodicRemount)) min",
+                        String(localized: "settings.stepper.periodic_remount \(Int(periodicRemount))"),
                         value: $periodicRemount,
                         in: 1...60,
                         step: 1
@@ -40,16 +40,16 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            .tabItem { Label("Settings", systemImage: "gear") }
+            .tabItem { Label("settings.tab.settings", systemImage: "gear") }
 
             VStack {
-                Text("Magic Mount")
+                Text("common.app_name")
                     .font(.title)
-                Text("by Mark Tassinari")
+                Text("settings.about.attribution")
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .tabItem { Label("About", systemImage: "info.circle") }
+            .tabItem { Label("settings.tab.about", systemImage: "info.circle") }
         }
         .formStyle(.grouped)
         .frame(minWidth: 300, minHeight: 200)

@@ -16,26 +16,26 @@ struct MountCommandMenu: Commands {
            Button {
                openWindow(value: MainWindow())
            } label: {
-               Text("New Window")
+               Text("menu.new_window")
            }
            .keyboardShortcut("n", modifiers: [.shift, .command])
        }
        CommandGroup(after: .appSettings) {
-           Button("Settings…") {
+           Button(String(localized: "menu.settings")) {
                openWindow(id: "settings")
            }
            .keyboardShortcut(",", modifiers: [.command])
        }
-       CommandMenu("Mount") {
+       CommandMenu(String(localized: "menu.mount")) {
            Button {
                model.showAddShare = true
            } label: {
-               Text("Mount drive")
+               Text("menu.mount_drive")
            }
            .keyboardShortcut("k",modifiers: [.command])
        }
        CommandGroup(replacing: .help) {
-           Button("MagicMount Help") {
+           Button(String(localized: "menu.help")) {
                openWindow(id: "help")
            }
            .keyboardShortcut("/", modifiers: [ .command])

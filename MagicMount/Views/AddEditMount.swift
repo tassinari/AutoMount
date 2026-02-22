@@ -23,12 +23,12 @@ struct AddEditMount: View {
 
         VStack{
             HStack{
-                Text("New Connection")
+                Text("add_edit.title")
                     .font(.title)
                 Spacer()
             }
             HStack {
-                Text("You must save your credentials in the macOS keychain in order for SMB shares to auto mount.")
+                Text("add_edit.keychain_info")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .padding([.top, .bottom], 8)
@@ -38,13 +38,13 @@ struct AddEditMount: View {
                 Spacer()
                 ProgressView()
                     .controlSize(.large)
-                Text("Connecting...")
+                Text("add_edit.status.connecting")
                     .foregroundStyle(.secondary)
                     .padding(.top, 8)
                 Spacer()
                 HStack {
                     Spacer()
-                    Button("Cancel") {
+                    Button(String(localized: "common.button.cancel")) {
                         connectTask?.cancel()
                         dismiss()
                     }
@@ -59,14 +59,14 @@ struct AddEditMount: View {
                     }
                     Section {
                         HStack {
-                            Toggle("Always keep mounted", isOn: $model.manage)
+                            Toggle("add_edit.toggle.always_mounted", isOn: $model.manage)
                             Spacer()
-                            Button("Cancel") {
+                            Button(String(localized: "common.button.cancel")) {
                                 if let onCancel { onCancel() }
                                 dismiss()
                             }
 
-                            Button("Submit") {
+                            Button(String(localized: "add_edit.button.submit")) {
                                 submitAction()
                             }
                             .buttonStyle(.borderedProminent)

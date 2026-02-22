@@ -14,25 +14,25 @@ extension AddEditModelError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingValues:
-            return "Missing required values."
+            return String(localized: "error.missing_values")
         case .badURL:
-            return "The URL is invalid."
+            return String(localized: "error.bad_url")
         case .mountFailed(let response):
             switch response {
             case .authenticationError:
-                return "Authentication failed. Please check your credentials."
+                return String(localized: "error.auth_failed")
             case .cannotFindHost:
-                return "Cannot find the server. Please check the address."
+                return String(localized: "error.host_not_found")
             case .timeout:
-                return "The connection timed out."
+                return String(localized: "error.timeout")
             case .noSuchFileOrDirectory:
-                return "The share was not found on the server."
+                return String(localized: "error.share_not_found")
             case .connectionRefused:
-                return "The connection was refused by the server."
+                return String(localized: "error.connection_refused")
             case .alreadyMounted:
-                return "This share is already mounted."
+                return String(localized: "error.already_mounted")
             case .genericError(let error):
-                return "Mount failed: \(error.localizedDescription)"
+                return String(localized: "error.mount_generic \(error.localizedDescription)")
             case .success:
                 return nil
             }

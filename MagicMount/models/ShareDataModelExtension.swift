@@ -16,7 +16,7 @@ extension ShareDataModel {
         return URL(string: Self.settingsURL) != nil
     }
     var aleternatOpenString : String{
-        return "Go to  -> Settings -> General -> Login Items & Extensions -> App Background Activity"
+        return String(localized: "share_list.alternate_open_instructions")
     }
     
     func openSettings(){
