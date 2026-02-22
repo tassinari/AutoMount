@@ -77,6 +77,7 @@ class Model{
     private func startPeriodicTimer() {
         periodicTimer?.invalidate()
         let minutes = defaults.object(forKey: Constant.periodicRemountKey) as? Double ?? Constant.periodicRemountDefault
+        guard minutes > 0 else { return }
         let interval = minutes * 60
         periodicTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             guard let self else { return }

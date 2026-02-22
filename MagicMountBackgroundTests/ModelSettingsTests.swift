@@ -89,6 +89,22 @@ final class ModelSettingsTests: XCTestCase {
         withExtendedLifetime(model) {}
     }
 
+    // MARK: - Periodic timer disabled when interval is zero
+
+    @MainActor func testPeriodicTimerDisabled_whenIntervalIsZero() async throws {
+        let defaults = freshDefaults()
+        defaults.set(0.0, forKey: Constant.periodicRemountKey)
+
+        let share = Share(url: URL(string: "smb://localHost")!, name: "localHost", mountPoint: "/volume/test", managed: true, connected: .unmounted)
+        let storage = MockStorage(list: [share])
+        let remounter = Remounter(debounceSeconds: 9999, storage: storage)
+
+        _ = Model(defaults: defaults, remounter: remounter, storage: storage)
+
+        try await Task.sleep(for: .seconds(1))
+        XCTAssertFalse(storage.mountCalled, "Periodic timer should not fire when interval is 0")
+    }
+
     // MARK: - Settings change updates Remounter debounce
 
     @MainActor func testDefaultsChange_updatesRemounterDebounce() async throws {

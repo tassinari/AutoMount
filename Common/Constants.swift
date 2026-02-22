@@ -18,6 +18,8 @@ enum Constant{
 
     static let networkDebounceKey = "networkDebounceInterval"
     static let periodicRemountKey = "periodicRemountInterval"
-    static let networkDebounceDefault: Double = 20   // seconds
-    static let periodicRemountDefault: Double = 10   // minutes
+    static let networkDebounceDefault: Double = 15   // seconds
+    static let periodicRemountDefault: Double = 5    // minutes
+    static let networkDebounceOptions: [Double] = [5, 15, 30, 60]
+    static let periodicRemountOptions: [Double] = [0, 1, 5, 15, 60]  // 0 = Off
 }
