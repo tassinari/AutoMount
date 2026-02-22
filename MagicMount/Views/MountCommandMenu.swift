@@ -13,6 +13,14 @@ struct MountCommandMenu: Commands {
     @Environment(\.openWindow) var openWindow
     @Environment(\.openSettings) var openSettings
    var body: some Commands {
+       CommandGroup(replacing: .newItem) {
+           Button {
+               openWindow(value: MainWindow())
+           } label: {
+               Text("New Window")
+           }
+           .keyboardShortcut("n", modifiers: [.shift, .command])
+       }
        CommandMenu("Mount") {
            Button {
                model.showAddShare = true
@@ -20,8 +28,14 @@ struct MountCommandMenu: Commands {
                Text("Mount drive")
            }
            .keyboardShortcut("k",modifiers: [.command])
-
        }
+       CommandGroup(replacing: .help) {
+           Button("MagicMount Help") {
+               openWindow(id: "help")
+           }
+           .keyboardShortcut("/", modifiers: [ .command])
+       }
+       
 
   }
 }

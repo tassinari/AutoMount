@@ -15,18 +15,11 @@ struct MagicMountApp: App {
     @Environment(\.openWindow) var openWindow
     private let model = ShareDataModel(storage: StorageManager())
     var body: some Scene {
-       WindowGroup  {
+        WindowGroup(for: MainWindow.self)  { _ in
             ShareListView(model: model)
         }
         .commands{
-            CommandGroup(replacing: .newItem) { }
             MountCommandMenu(model: model)
-            CommandGroup(replacing: .help) {
-                Button("MagicMount Help") {
-                    openWindow(id: "help")
-                }
-                .keyboardShortcut("?", modifiers: [.command])
-            }
         }
         Settings {
             SettingsView()
@@ -40,5 +33,10 @@ struct MagicMountApp: App {
             HelpView(anchor: "background-service")
         }
         .defaultSize(width: 600, height: 700)
+    }
+}
+struct MainWindow : Hashable, Identifiable, Codable{
+    var id: String {
+        return "mainWindow"
     }
 }
