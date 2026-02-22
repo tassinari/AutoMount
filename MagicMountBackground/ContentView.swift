@@ -15,14 +15,14 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Text("Magic Mount")
+                Text("common.app_name")
                     .font(.body)
                     .fontWeight(.semibold)
                 Spacer()
                 Button {
                     model.openApp()
                 } label: {
-                    Text("Settings")
+                    Text("background.button.settings")
                         .font(.caption2)
                         .foregroundStyle(.blue)
                 }
@@ -65,7 +65,7 @@ struct ContentView: View {
                     }
 
                 }else{
-                    Text("No shares")
+                    Text("background.empty_state")
                 }
             }
             .listStyle(.plain)

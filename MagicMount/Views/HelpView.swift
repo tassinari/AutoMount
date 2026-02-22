@@ -13,7 +13,7 @@ struct HelpView: View {
             if let url = Bundle.main.url(forResource: "help", withExtension: "html") {
                 HTMLView(url: url, anchor: anchor)
             } else {
-                Text("Help content is unavailable.")
+                Text("help.content_unavailable")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }

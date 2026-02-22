@@ -22,15 +22,15 @@ struct MagicMountApp: App {
             MountCommandMenu(model: model)
         }
 
-        Window("MagicMount Help", id: "help-background") {
+        Window(String(localized: "menu.help"), id: "help-background") {
             HelpView(anchor: "background-service")
         }
         .defaultSize(width: 600, height: 700)
-        Window("MagicMount Help", id: "help") {
+        Window(String(localized: "menu.help"), id: "help") {
             HelpView()
         }
         .defaultSize(width: 600, height: 700)
-        Window("Settings", id: "settings") {
+        Window(String(localized: "menu.settings_window"), id: "settings") {
             SettingsView()
         }
         .windowResizability(.contentMinSize)
