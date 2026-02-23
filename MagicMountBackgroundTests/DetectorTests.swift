@@ -20,6 +20,8 @@ private final class TestDelegate: DetectorDelegate {
     func didDetectEvent(_ event: DetectorEvent) {
         events.append(event)
         switch event {
+        case .timer:
+            break
         case .network:
             networkExpectation?.fulfill()
         case .wake:

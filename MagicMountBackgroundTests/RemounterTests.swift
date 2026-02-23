@@ -30,7 +30,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
        
         await fulfillment(of: [exp], timeout: 1)
     }
@@ -42,7 +42,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         XCTAssertFalse(storage.mountCalled)
 
@@ -55,7 +55,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("\(name) connected, not attempting remount")}))
@@ -72,7 +72,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount(\(name)) threw:  someError")}))
@@ -93,7 +93,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
        
         await fulfillment(of: [exp], timeout: 2)
     }
@@ -105,7 +105,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): already mounted")}))
@@ -117,7 +117,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): connection refused")}))
@@ -129,7 +129,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): no such file or directory")}))
@@ -141,7 +141,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): timeout")}))
@@ -153,7 +153,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): no host")}))
@@ -165,7 +165,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Mount failure for \(name): auth error")}))
@@ -178,7 +178,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Success, \(name) is mounted on \(mp)")}))
@@ -194,7 +194,7 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 0,storage:storage)
         XCTAssertFalse(storage.mountCalled)
         XCTAssertNil(storage.shareCalled)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
         
         let logs = try getLogs()
         XCTAssertTrue( logs.contains(where: {$0.composedMessage.contains("Generic error in mount attempt: \(String(describing: ErrorTest.someError))")}))
@@ -204,9 +204,9 @@ final class RemounterTests : XCTestCase{
         let storage = MockStorage(list:[share])
 
         let rm = Remounter(debounceSeconds: 0.2,storage:storage)
-        Task { await rm.checkAndRemount() } // launch concurrently
+        Task { await rm.checkAndRemount(.network) } // launch concurrently
         try await Task.sleep(for: .seconds(0.05))
-        await rm.checkAndRemount() // cancels first via reentrancy, logs rescheduling
+        await rm.checkAndRemount(.network) // cancels first via reentrancy, logs rescheduling
         let logs = try getLogs()
 
         XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Rescheduling debounced remount")}))
@@ -231,7 +231,7 @@ final class RemounterTests : XCTestCase{
 
         let rm = Remounter(debounceSeconds: 0.5, storage: storage)
         let callTime = Date.now
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
 
         await fulfillment(of: [exp], timeout: 2)
 
@@ -260,12 +260,12 @@ final class RemounterTests : XCTestCase{
         let rm = Remounter(debounceSeconds: 1.0, storage: storage)
 
         // Call 3 times with short gaps — each should cancel the previous
-        Task { await rm.checkAndRemount() }
+        Task { await rm.checkAndRemount(.network) }
         try await Task.sleep(for: .seconds(0.2))
-        Task { await rm.checkAndRemount() }
+        Task { await rm.checkAndRemount(.network) }
         try await Task.sleep(for: .seconds(0.2))
         let lastCallTime = Date.now
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
 
         await fulfillment(of: [exp], timeout: 3)
 
@@ -285,13 +285,13 @@ final class RemounterTests : XCTestCase{
 
         // Start with a large debounce so the first call won't fire
         let rm = Remounter(debounceSeconds: 9999, storage: storage)
-        Task { await rm.checkAndRemount() } // launch concurrently
+        Task { await rm.checkAndRemount(.network) } // launch concurrently
         try await Task.sleep(for: .seconds(0.05))
         XCTAssertFalse(storage.mountCalled, "Should be blocked by debounce")
 
         // Lower debounce to 0 and try again — cancels the 9999s task
         await rm.setDebounce(0)
-        await rm.checkAndRemount()
+        await rm.checkAndRemount(.network)
 
         await fulfillment(of: [exp], timeout: 1)
     }
