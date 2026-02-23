@@ -70,6 +70,10 @@ extension AddEditModelError: LocalizedError {
         }
     }
 
+    static func hasPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) -> Bool {
+        !(defaults.stringArray(forKey: Constant.serversKey) ?? []).isEmpty
+    }
+
     static func clearPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
         defaults.set([String](), forKey: Constant.serversKey)
     }

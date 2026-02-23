@@ -149,6 +149,28 @@ final class AddEditModelTests: XCTestCase {
         XCTAssertEqual(model.previousServers, [urlStr])
     }
 
+    // MARK: - hasPreviousServers
+
+    @MainActor func testHasPreviousServersReturnsFalseWhenEmpty() async throws {
+        let defaults = makeTestDefaults()
+        XCTAssertFalse(AddEditModel.hasPreviousServers(defaults: defaults))
+    }
+
+    @MainActor func testHasPreviousServersReturnsTrueAfterAdd() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(urlString: "smb://server/share", store: store, defaults: defaults)
+        model.addServerToHistory()
+        XCTAssertTrue(AddEditModel.hasPreviousServers(defaults: defaults))
+    }
+
+    @MainActor func testHasPreviousServersReturnsFalseAfterClear() async throws {
+        let defaults = makeTestDefaults()
+        let model = AddEditModel(urlString: "smb://server/share", store: store, defaults: defaults)
+        model.addServerToHistory()
+        AddEditModel.clearPreviousServers(defaults: defaults)
+        XCTAssertFalse(AddEditModel.hasPreviousServers(defaults: defaults))
+    }
+
     // MARK: - Mount Failure Error Propagation
 
     @MainActor func testSaveAllThrowsMountFailedOnAuthenticationError() async throws {

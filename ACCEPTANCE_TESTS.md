@@ -252,7 +252,17 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **When** the user selects a periodic remount value (e.g. 15 minutes)
 - **Then** the value persists and is used by the background service
 
-### 6.10 About tab displays app info
+### 6.10 Clear servers button disabled when history empty
+- **Given** no server URLs have been saved to history
+- **When** the user opens Settings
+- **Then** the "Clear previous servers" button is disabled (grayed out)
+
+### 6.11 Clear servers button enabled when history has entries
+- **Given** the user has previously mounted a share successfully
+- **When** the user opens Settings
+- **Then** the "Clear previous servers" button is enabled
+
+### 6.12 About tab displays app info
 - **Given** the Settings window is open
 - **When** the user clicks the About tab
 - **Then** "Magic Mount" title and "by Mark Tassinari" are displayed
