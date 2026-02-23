@@ -21,9 +21,10 @@ actor Remounter{
         debounceSeconds = seconds
     }
 
-    func checkAndRemount() async {
+    func checkAndRemount(_ event: DetectorEvent) async {
+        notice("remount event: \(event)")
         if pendingTask != nil {
-            notice("Rescheduling debounced remount")
+            notice("Debounced: rescheduling")
         }
         pendingTask?.cancel()
         let seconds = debounceSeconds

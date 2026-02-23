@@ -82,7 +82,7 @@ class Model{
         periodicTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task {
-                await self.remounter.checkAndRemount()
+                await self.remounter.checkAndRemount(.timer)
             }
         }
     }
@@ -91,17 +91,18 @@ class Model{
 extension Model: DetectorDelegate{
     func didDetectEvent(_ event: DetectorEvent) {
         switch event{
-
+        case .timer:
+            break
         case .network:
             debug("Network event")
             Task{
-                await remounter.checkAndRemount()
+                await remounter.checkAndRemount(event)
             }
 
         case .wake:
             debug("Wake event")
             Task{
-                await remounter.checkAndRemount()
+                await remounter.checkAndRemount(event)
             }
         case .volume:
             Task{

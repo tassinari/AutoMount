@@ -19,6 +19,7 @@ struct MountEvent{
     let path : String?
 }
 enum DetectorEvent{
+    case timer
     case network
     case wake
     case volume(MountEvent)
