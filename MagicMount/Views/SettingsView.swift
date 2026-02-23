@@ -7,13 +7,14 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("showMenuInBar", store: UserDefaults(suiteName: "group.org.tassinari.magicmount"))
+    @AppStorage("showMenuInBar", store: UserDefaults(suiteName: Constant.appGroupIdentifier))
     private var showMenuInBar = true
 
-    @AppStorage(Constant.networkDebounceKey, store: UserDefaults(suiteName: "group.org.tassinari.magicmount"))
+    @AppStorage(Constant.networkDebounceKey, store: UserDefaults(suiteName: Constant.appGroupIdentifier))
     private var networkDebounce: Double = Constant.networkDebounceDefault
 
-    @AppStorage(Constant.periodicRemountKey, store: UserDefaults(suiteName: "group.org.tassinari.magicmount"))
+    @AppStorage(Constant.periodicRemountKey, store: UserDefaults(suiteName: Constant.appGroupIdentifier))
+    
     private var periodicRemount: Double = Constant.periodicRemountDefault
 
     private func debounceLabel(_ seconds: Double) -> String {
@@ -48,6 +49,7 @@ struct SettingsView: View {
                         AddEditModel.clearPreviousServers()
                         
                     }
+                    //.disabled(AddEditModel.shouldHideClear())
                     Text("settings.description.clear_servers_note")
                         .font(.callout)
                         .padding([.top, .bottom],3)

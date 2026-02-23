@@ -47,7 +47,7 @@ extension AddEditModelError: LocalizedError {
     var manage: Bool = true
     private let defaults: UserDefaults
 
-    private static let serversKey = "servers"
+   
 
     init(urlString: String = "", store: ShareDataModel, defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
         self.store = store
@@ -57,7 +57,7 @@ extension AddEditModelError: LocalizedError {
     }
 
     var previousServers: [String] {
-        defaults.stringArray(forKey: Self.serversKey) ?? []
+        defaults.stringArray(forKey: Constant.serversKey) ?? []
     }
 
     func addServerToHistory() {
@@ -66,12 +66,12 @@ extension AddEditModelError: LocalizedError {
         var servers = previousServers
         if !servers.contains(trimmed) {
             servers.append(trimmed)
-            defaults.set(servers, forKey: Self.serversKey)
+            defaults.set(servers, forKey: Constant.serversKey)
         }
     }
 
     static func clearPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
-        defaults.set([String](), forKey: serversKey)
+        defaults.set([String](), forKey: Constant.serversKey)
     }
 
     func clear() {

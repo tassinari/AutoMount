@@ -12,7 +12,7 @@ import libMounter
 @main
 struct MagicMountBackgroundApp: App {
     let model = Model()
-    @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: "group.org.tassinari.magicmount")) private var showMenuBar = true
+    @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: Constant.appGroupIdentifier)) private var showMenuBar = true
 
     var body: some Scene {
         MenuBarExtra(String(localized: "common.app_name"), systemImage: "externaldrive", isInserted: $showMenuBar) {
@@ -32,7 +32,7 @@ class Model{
     private var defaultsObserver: NSObjectProtocol?
 
     convenience init() {
-        let defaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard
+        let defaults = UserDefaults(suiteName: Constant.appGroupIdentifier) ?? .standard
         self.init(defaults: defaults)
     }
 
