@@ -17,6 +17,7 @@ enum Constant{
     static let shareIconTextMounting = "trash.square"
     static let shareIconTextUnMounting = "arrowshape.down.circle"
     static let serversKey = "servers"
+    static let serverEmptyKey = "serverEmptyKey"
     static let networkDebounceKey = "networkDebounceInterval"
     static let periodicRemountKey = "periodicRemountInterval"
     static let networkDebounceDefault: Double = 15   // seconds

@@ -67,11 +67,13 @@ extension AddEditModelError: LocalizedError {
         if !servers.contains(trimmed) {
             servers.append(trimmed)
             defaults.set(servers, forKey: Constant.serversKey)
+            defaults.set(servers.isEmpty, forKey: Constant.serverEmptyKey)
         }
     }
 
     static func clearPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
         defaults.set([String](), forKey: Constant.serversKey)
+        defaults.set(true, forKey: Constant.serverEmptyKey)
     }
 
     func clear() {

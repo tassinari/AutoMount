@@ -14,8 +14,9 @@ struct SettingsView: View {
     private var networkDebounce: Double = Constant.networkDebounceDefault
 
     @AppStorage(Constant.periodicRemountKey, store: UserDefaults(suiteName: Constant.appGroupIdentifier))
-    
     private var periodicRemount: Double = Constant.periodicRemountDefault
+    
+    @AppStorage(Constant.serverEmptyKey, store: UserDefaults(suiteName: Constant.appGroupIdentifier)) var serverEmpty: Bool = false
 
     private func debounceLabel(_ seconds: Double) -> String {
         String(localized: "settings.picker.seconds \(Int(seconds))")
@@ -49,7 +50,7 @@ struct SettingsView: View {
                         AddEditModel.clearPreviousServers()
                         
                     }
-                    //.disabled(AddEditModel.shouldHideClear())
+                    .disabled(serverEmpty)
                     Text("settings.description.clear_servers_note")
                         .font(.callout)
                         .padding([.top, .bottom],3)
