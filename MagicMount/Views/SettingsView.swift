@@ -7,6 +7,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @State private var serversCleared = false
+
     @AppStorage("showMenuInBar", store: UserDefaults(suiteName: Constant.appGroupIdentifier))
     private var showMenuInBar = true
 
@@ -47,9 +49,9 @@ struct SettingsView: View {
                 VStack(alignment: .leading) {
                     Button(String(localized: "settings.button.clear_servers")) {
                         AddEditModel.clearPreviousServers()
-                        
+                        serversCleared = true
                     }
-                    //.disabled(AddEditModel.shouldHideClear())
+                    .disabled(serversCleared || !AddEditModel.hasPreviousServers())
                     Text("settings.description.clear_servers_note")
                         .font(.callout)
                         .padding([.top, .bottom],3)
