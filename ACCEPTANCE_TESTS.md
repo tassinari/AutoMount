@@ -8,9 +8,14 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 ## 1. Share List View
 
 ### 1.1 App launches with empty state
-- **Given** no managed shares have been saved
+- **Given** no external shares are present
 - **When** the app launches
-- **Then** the share list table is empty and the search bar and "+" button are visible
+- **Then** a "No External Shares Found" message is displayed with an "Add a share" description and a tappable "+" icon; the share table is not shown
+
+### 1.1a Empty state plus button opens add dialog
+- **Given** the app is displaying the empty state view
+- **When** the user clicks the "+" icon in the empty state
+- **Then** the "New Connection" dialog appears
 
 ### 1.2 App launches with existing managed shares
 - **Given** managed shares were previously saved

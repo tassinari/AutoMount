@@ -81,57 +81,75 @@ struct ShareListView: View {
                 .background(Color.orange.opacity(0.15))
                
             }
-            Table(filteredShares, sortOrder: $sortOrder) {
-                TableColumn(String(localized: "share_list.column.auto_mount"), sortUsing: KeyPathComparator(\.sortableManaged)) { share in
-                    ManagedToggleCell(
-                        share: share,
-                        model: model
-                    )
+            Group {
+            if model.shares.isEmpty {
+                ContentUnavailableView {
+                    Label("No External Shares Found", systemImage: "externaldrive.badge.wifi")
+                } description: {
+                    Text("Add a share")
+                } actions: {
+                    Button {
+                        model.showAddShare = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .width(90)
-
-                TableColumn(String(localized: "share_list.column.name"), sortUsing: KeyPathComparator(\.sortableName)) { share in
-                    HStack {
-                        Text(share.name ?? "--")
-                        Spacer()
-                        MountButtonCell(
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Table(filteredShares, sortOrder: $sortOrder) {
+                    TableColumn(String(localized: "share_list.column.auto_mount"), sortUsing: KeyPathComparator(\.sortableManaged)) { share in
+                        ManagedToggleCell(
                             share: share,
-                            model: model,
-                            errorMessage: $errorMessage
+                            model: model
                         )
                     }
-                }
-                .width(min: 150, ideal: 200)
+                    .width(90)
 
-                TableColumn(String(localized: "share_list.column.type"), sortUsing: KeyPathComparator(\.type)) { share in
-                    Text(share.type.uppercased())
-                }
-                .width(60)
+                    TableColumn(String(localized: "share_list.column.name"), sortUsing: KeyPathComparator(\.sortableName)) { share in
+                        HStack {
+                            Text(share.name ?? "--")
+                            Spacer()
+                            MountButtonCell(
+                                share: share,
+                                model: model,
+                                errorMessage: $errorMessage
+                            )
+                        }
+                    }
+                    .width(min: 150, ideal: 200)
 
-                TableColumn(String(localized: "share_list.column.mount_point"), sortUsing: KeyPathComparator(\.sortableMountPoint)) { share in
-                    if share.canOpen {
-                        Button {
-                            share.open()
-                        } label: {
-                            Text(share.mountPoint ?? "--")
+                    TableColumn(String(localized: "share_list.column.type"), sortUsing: KeyPathComparator(\.type)) { share in
+                        Text(share.type.uppercased())
+                    }
+                    .width(60)
+
+                    TableColumn(String(localized: "share_list.column.mount_point"), sortUsing: KeyPathComparator(\.sortableMountPoint)) { share in
+                        if share.canOpen {
+                            Button {
+                                share.open()
+                            } label: {
+                                Text(share.mountPoint ?? "--")
+                                    .lineLimit(1)
+                            }
+                            .buttonStyle(.link)
+                        } else {
+                            Text(share.mountPoint ?? "")
                                 .lineLimit(1)
                         }
-                        .buttonStyle(.link)
-                    } else {
-                        Text(share.mountPoint ?? "")
-                            .lineLimit(1)
                     }
-                }
 
-                TableColumn(String(localized: "share_list.column.status"), sortUsing: KeyPathComparator(\.sortableStatus)) { share in
-                    StatusCell(share: share)
+                    TableColumn(String(localized: "share_list.column.status"), sortUsing: KeyPathComparator(\.sortableStatus)) { share in
+                        StatusCell(share: share)
+                    }
+                    .width(90)
                 }
-                .width(90)
+                .tableStyle(.inset)
+                .searchable(text: $searchText, prompt: Text(String(localized: "share_list.search_prompt")))
             }
-            .tableStyle(.inset)
-            .searchable(text: $searchText, prompt: Text(String(localized: "share_list.search_prompt")))
+            } // Group
             .toolbar {
-               
                 ToolbarItem {
                     Button {
                         model.showAddShare = true
