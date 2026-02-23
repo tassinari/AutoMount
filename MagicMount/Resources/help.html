@@ -172,7 +172,6 @@
 <table>
   <tr><th>Protocol</th><th>URL Format</th><th>Notes</th></tr>
   <tr><td>SMB</td><td><code>smb://server/share</code></td><td>Most common for macOS and Windows file sharing</td></tr>
-  <tr><td>AFP</td><td><code>afp://server/share</code></td><td>Apple Filing Protocol (legacy Mac file sharing)</td></tr>
   <tr><td>NFS</td><td><code>nfs://server/share</code></td><td>Network File System (common on Linux/Unix)</td></tr>
 </table>
 
@@ -224,7 +223,7 @@
 <p>Select the share in the list and press <kbd>&#9003;</kbd> (Delete), or right-click and choose <strong>Delete</strong>. The share will be unmounted if currently connected and removed from your list.</p>
 
 <h3>What protocols are supported?</h3>
-<p>MagicMount supports <strong>SMB</strong>, <strong>AFP</strong>, and <strong>NFS</strong> protocols. SMB is recommended for most use cases as it offers the best cross-platform compatibility.</p>
+<p>MagicMount supports <strong>SMB</strong> and <strong>NFS</strong> protocols. SMB is recommended for most use cases as it offers the best cross-platform compatibility.</p>
 
 <h3>Can I use MagicMount with VPN connections?</h3>
 <p>Yes. When a VPN connects, MagicMount detects the network change and will attempt to remount your managed shares. You may want to increase the network debounce setting to allow time for the VPN to fully establish.</p>
