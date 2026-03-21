@@ -165,6 +165,20 @@ swift test --filter MounterTests.ShareTests/testName # Run a single test method
 
 Integration tests automatically spin up a Docker Samba container (`dockurr/samba`) on `localhost:1445`.
 
+## Troubleshooting
+
+### Shares not mounting / mount hangs
+
+If shares fail to mount or the mount operation appears to hang indefinitely, the macOS `NetAuthAgent` or `NetAuthSysAgent` processes may have become unresponsive. This is a known macOS issue with network authentication agents.
+
+**Fix:** Kill the agents — macOS will restart them automatically:
+
+```bash
+sudo killall NetAuthAgent NetAuthSysAgent
+```
+
+After running this command, retry mounting your shares.
+
 ## License
 
 TBD

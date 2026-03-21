@@ -11,7 +11,8 @@
       "Bash(git -C /Users/tassinari/Developer/Mounter add:*)",
       "Bash(git -C /Users/tassinari/Developer/Mounter commit -m \"$\\(cat <<''EOF''\nAdd optional custom mount point path to mount API\n\nAllow callers to specify a custom directory for mounting network shares\ninstead of relying on the system default. Validates that the path exists,\nis a directory, and is empty before attempting the mount.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C /Users/tassinari/Developer/Mounter push -u origin feature/custom-mount-point)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(wait)"
     ]
   }
 }
