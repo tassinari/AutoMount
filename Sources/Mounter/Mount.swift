@@ -131,6 +131,7 @@ internal struct MountData{
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
                 let optD = NSMutableDictionary()
+                optD.setValue(true as CFBoolean, forKey: kNetFSSoftMountKey)
                 if !ui{
                     mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
                 }
