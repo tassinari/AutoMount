@@ -267,6 +267,19 @@
   </tr>
 </table>
 
+<h3 id="netauth-agents">Shares fail to mount or mount hangs indefinitely</h3>
+<p>If a share appears to hang while mounting, or mount operations never complete, the macOS network authentication agents (<code>NetAuthAgent</code> or <code>NetAuthSysAgent</code>) may have become unresponsive. This is a known macOS issue that can occur after sleep/wake cycles or network changes.</p>
+<div class="note">
+  <strong>Fix: Restart the network authentication agents</strong>
+  <p>macOS will automatically restart these agents after they are killed. To do this:</p>
+  <ol>
+    <li>Open <strong>Terminal</strong> (search for it in Spotlight with <kbd>&#8984;Space</kbd>, then type <em>Terminal</em>).</li>
+    <li>Paste and run the following command:</li>
+  </ol>
+  <p><code>sudo killall NetAuthAgent NetAuthSysAgent</code></p>
+  <p>You will be prompted to enter your Mac login password. The agents will restart automatically, and you can then try mounting your shares again.</p>
+</div>
+
 <hr>
 <p style="color: var(--secondary); font-size: 12px; text-align: center; margin-top: 16px;">MagicMount by Mark Tassinari</p>
 
