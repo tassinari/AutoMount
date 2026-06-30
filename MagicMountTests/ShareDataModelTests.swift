@@ -302,6 +302,46 @@ final class ShareDataModelTests: XCTestCase {
         XCTAssertFalse(model.isLoginItemEnabled)
     }
 
+    func testInitRegistersLoginItemWhenNotEnabled() async throws {
+        let storage = MockStorage(list: [])
+        let service = MockSMService(mockStatus: .notRegistered)
+        _ = ShareDataModel(storage: storage, appService: service)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertTrue(service.registerCalled)
+    }
+
+    func testInitDoesNotRegisterWhenAlreadyEnabled() async throws {
+        let storage = MockStorage(list: [])
+        let service = MockSMService(mockStatus: .enabled)
+        _ = ShareDataModel(storage: storage, appService: service)
+        try await Task.sleep(nanoseconds: 1000)
+        XCTAssertFalse(service.registerCalled)
+    }
+
+    func testEnableLoginItemSucceedsWhenStatusBecomesEnabled() async throws {
+        let storage = MockStorage(list: [])
+        // Start not-registered so init attempts registration; registration "succeeds"
+        // and the service now reports .enabled, so the model reflects that.
+        let service = MockSMService(mockStatus: .enabled)
+        service.mockStatus = .notRegistered
+        let model = ShareDataModel(storage: storage, appService: service)
+        service.mockStatus = .enabled
+        let enabled = model.enableLoginItem()
+        XCTAssertTrue(enabled)
+        XCTAssertTrue(model.isLoginItemEnabled)
+    }
+
+    func testEnableLoginItemHandlesRegistrationError() async throws {
+        let storage = MockStorage(list: [])
+        let service = MockSMService(mockStatus: .notRegistered, shouldThrow: TestError.someError)
+        let model = ShareDataModel(storage: storage, appService: service)
+        // A thrown register error must not crash and must leave the item disabled.
+        let enabled = model.enableLoginItem()
+        XCTAssertTrue(service.registerCalled)
+        XCTAssertFalse(enabled)
+        XCTAssertFalse(model.isLoginItemEnabled)
+    }
+
     enum TestError : Error{
         case someError
     }
