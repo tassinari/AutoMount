@@ -60,7 +60,12 @@ struct ShareListView: View {
                         }
                         if model.canOpenURL {
                             Button {
-                                model.openSettings()
+                                // Re-attempt registration in case it failed earlier,
+                                // then take the user to the Login Items pane to approve.
+                                model.enableLoginItem()
+                                if !model.isLoginItemEnabled {
+                                    model.openSettings()
+                                }
                             } label: {
                                 Text("share_list.button.open_settings")
                             }

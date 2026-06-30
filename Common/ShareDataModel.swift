@@ -47,6 +47,10 @@ import ServiceManagement
         Task{
             await load()
         }
+        // Register the background login item so the system knows about it.
+        // Without this the helper is never installed and the status stays
+        // .notRegistered, which surfaces as the "no background permission" warning.
+        enableLoginItem()
         activateNote = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.refreshLoginItemStatus()
@@ -71,6 +75,26 @@ import ServiceManagement
     }
     func refreshLoginItemStatus() {
         isLoginItemEnabled = appService.status == .enabled
+    }
+
+    /// Registers the background login item with the system. Safe to call repeatedly:
+    /// it no-ops once the item is already enabled. After a successful register the
+    /// item may be in `.requiresApproval` until the user approves it in
+    /// System Settings → Login Items, so the status is refreshed afterwards.
+    @discardableResult
+    func enableLoginItem() -> Bool {
+        guard appService.status != .enabled else {
+            isLoginItemEnabled = true
+            return true
+        }
+        do {
+            try appService.register()
+            notice("Registered background login item.")
+        } catch let registerError {
+            error("Failed to register background login item: \(registerError.localizedDescription)")
+        }
+        refreshLoginItemStatus()
+        return isLoginItemEnabled
     }
 
     /// updates Share from a user info dictionary passed by the mount/unmount notification
