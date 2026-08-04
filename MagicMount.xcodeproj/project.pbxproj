@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		487A91EF2F0075760095BDA6 /* MagicMountBackground.app in Resources */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; };
 		487A91FA2F0076030095BDA6 /* MagicMountBackground.app in Embed Login */ = {isa = PBXBuildFile; fileRef = 487A91D92F006F260095BDA6 /* MagicMountBackground.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		488F8C022F1EC111004E8664 /* libMounter in Frameworks */ = {isa = PBXBuildFile; productRef = 488F8C012F1EC111004E8664 /* libMounter */; };
 		488F8C042F1EC118004E8664 /* libMounter in Frameworks */ = {isa = PBXBuildFile; productRef = 488F8C032F1EC118004E8664 /* libMounter */; };
@@ -410,7 +409,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				487A91EF2F0075760095BDA6 /* MagicMountBackground.app in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
