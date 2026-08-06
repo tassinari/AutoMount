@@ -241,26 +241,30 @@ fi
 for bundle in "$APP" "$LOGIN_ITEM"; do
     name="$(basename "$bundle")"
 
+    # Capture once and assert against the copy. Calling `codesign -d` repeatedly
+    # in quick succession on the same bundle intermittently yields empty output,
+    # which reads as a missing flag and fails an otherwise valid build.
+    sig_info="$(codesign -d --verbose=2 "$bundle" 2>&1)" \
+        || die "could not read the signature of ${name}"
+    entitlements="$(codesign -d --entitlements - --xml "$bundle" 2>/dev/null || true)"
+
     # Hardened runtime is mandatory for notarization.
-    if ! codesign -d --verbose=2 "$bundle" 2>&1 | grep -q 'flags=.*runtime'; then
-        die "hardened runtime not enabled on ${name}"
-    fi
+    printf '%s' "$sig_info" | grep -q 'flags=.*runtime' \
+        || die "hardened runtime not enabled on ${name}"
 
     # The app group is the only IPC channel between the two apps, and losing it
     # fails silently at runtime (UserDefaults falls back to .standard), so it is
     # asserted rather than assumed.
-    if ! codesign -d --entitlements - --xml "$bundle" 2>/dev/null | grep -qF "$APP_GROUP"; then
-        die "app group '${APP_GROUP}' missing from ${name}.
+    printf '%s' "$entitlements" | grep -qF "$APP_GROUP" \
+        || die "app group '${APP_GROUP}' missing from ${name}.
     The two apps would launch normally but silently stop sharing state."
-    fi
 
     # The app group entitlement is profile-backed on macOS.
     [[ -f "${bundle}/Contents/embedded.provisionprofile" ]] \
         || die "no embedded provisioning profile in ${name}"
 
-    if ! codesign -dv "$bundle" 2>&1 | grep -qF "Developer ID Application"; then
-        die "${name} is not signed with a Developer ID Application certificate"
-    fi
+    printf '%s' "$sig_info" | grep -qF "Authority=Developer ID Application" \
+        || die "${name} is not signed with a Developer ID Application certificate"
 
     info "${name}: hardened runtime, app group, profile, Developer ID -- ok"
 done
