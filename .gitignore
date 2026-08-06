@@ -1,0 +1,21 @@
+# Xcode build output
+build/
+DerivedData/
+*.xcarchive
+*.xcuserstate
+xcuserdata/
+
+# Release artifacts
+dist/
+*.dmg
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+
+# Secrets -- never commit
+Scripts/.env
+*.p8

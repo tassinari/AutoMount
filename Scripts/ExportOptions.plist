@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Developer ID distribution: signed for direct download, not the Mac App Store. -->
+	<key>method</key>
+	<string>developer-id</string>
+
+	<key>teamID</key>
+	<string>N2Z455V6H8</string>
+
+	<!-- Automatic signing lets xcodebuild mint/refresh the Developer ID provisioning
+	     profiles required by the com.apple.security.application-groups entitlement.
+	     Requires -allowProvisioningUpdates on the export invocation. -->
+	<key>signingStyle</key>
+	<string>automatic</string>
+
+	<!-- Without this, automatic signing resolves to "Apple Development" even when
+	     method is developer-id, producing an app that cannot be notarized. -->
+	<key>signingCertificate</key>
+	<string>Developer ID Application</string>
+
+	<!-- Export to disk rather than uploading. We drive notarytool ourselves so we
+	     can staple the .app before it goes into the DMG. -->
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>
