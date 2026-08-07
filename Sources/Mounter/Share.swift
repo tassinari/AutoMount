@@ -1,6 +1,6 @@
 //
 //  Share.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 1/14/26.
 //
