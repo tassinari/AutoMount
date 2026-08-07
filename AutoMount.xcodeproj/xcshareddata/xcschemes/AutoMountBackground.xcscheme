@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme
+   LastUpgradeVersion = "2620"
+   version = "1.7">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES"
+      buildArchitectures = "Automatic">
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "487A91D82F006F260095BDA6"
+               BuildableName = "AutoMountBackground.app"
+               BlueprintName = "AutoMountBackground"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      shouldAutocreateTestPlan = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "builDir=$BUILT_PRODUCTS_DIR&#10;#echo &quot;Starting Docker: (dir) $builDir&quot;&gt;&gt;/Users/tassinari/testing.txt&#10;# Check if BUILT_PRODUCTS_DIR is set&#10;if [ -z &quot;$BUILT_PRODUCTS_DIR&quot; ]; then&#10;  #echo &quot;BUILT_PRODUCTS_DIR is not set&quot;&gt;&gt;/Users/tassinari/testing.txt&#10;  exit 1&#10;fi&#10;&#10;# Check if builDir exists and is a directory; if not, create it&#10;if [[ ! -d &quot;$builDir&quot; ]]; then&#10;    mkdir &quot;$builDir&quot;&#10;fi&#10;&#10;# Create the mount subdirectory&#10;mountDir=&quot;$builDir/mount&quot;&#10;if [[ ! -d &quot;$mountDir&quot; ]]; then&#10;    #echo &quot;making $mountDir&quot;&gt;&gt;/Users/tassinari/testing.txt&#10;    mkdir &quot;$mountDir&quot;&#10;fi&#10;&#10;# Create an empty file inside the mount directory&#10;touch &quot;$mountDir/empty_file.txt&quot;&#10;# Create an empty test.txt file&#10;&#10;docker run -d \&#10;--name smb-test \&#10;-p 1445:445 \&#10;-v &quot;$mountDir&quot;:/storage \&#10;-e USER=samba \&#10;-e PASS=secret123 \&#10;-e NAME=smbTestShare \&#10;--restart unless-stopped \&#10;dockurr/samba&#10;"
+               shellToInvoke = "/bin/bash">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
+                     BuildableName = "AutoMountBackgroundTests.xctest"
+                     BlueprintName = "AutoMountBackgroundTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
+      <PostActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "diskutil unmount /Volumes/smbTestShare&#10;docker rm -f smb-test&#10;builDir=$BUILT_PRODUCTS_DIR&#10;mountDir=&quot;$builDir/mount&quot;&#10;if [[ ! -d &quot;$mountDir&quot; ]]; then&#10;  exit 0&#10;fi&#10;rm -rf -- &quot;$mountDir&quot;&#10;&#10;"
+               shellToInvoke = "/bin/bash">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
+                     BuildableName = "AutoMountBackgroundTests.xctest"
+                     BlueprintName = "AutoMountBackgroundTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PostActions>
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
+               BuildableName = "AutoMountBackgroundTests.xctest"
+               BlueprintName = "AutoMountBackgroundTests"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
+   </TestAction>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "487A91D82F006F260095BDA6"
+            BuildableName = "AutoMountBackground.app"
+            BlueprintName = "AutoMountBackground"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+      <AdditionalOptions>
+         <AdditionalOption
+            key = "PrefersMallocStackLoggingLite"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+         <AdditionalOption
+            key = "MallocStackLogging"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
+      </AdditionalOptions>
+   </LaunchAction>
+   <ProfileAction
+      buildConfiguration = "Release"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "487A91D82F006F260095BDA6"
+            BuildableName = "AutoMountBackground.app"
+            BlueprintName = "AutoMountBackground"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
+</Scheme>

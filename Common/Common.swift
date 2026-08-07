@@ -1,6 +1,6 @@
 //
 //  Common.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 1/25/26.
 //
@@ -34,7 +34,7 @@ public protocol AppServiceInterface{
 class DefaultServiceInterface : AppServiceInterface{
     private var service : SMAppService
     init(){
-        service =  SMAppService.loginItem(identifier: "org.tassinari.MagicMount.MagicMountBackground")
+        service =  SMAppService.loginItem(identifier: "org.tassinari.AutoMount.AutoMountBackground")
     }
     func register() throws{
         try service.register()

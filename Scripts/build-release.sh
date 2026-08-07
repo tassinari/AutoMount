@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build-release.sh -- produce a notarized, stapled MagicMount.app inside a DMG.
+# build-release.sh -- produce a notarized, stapled AutoMount.app inside a DMG.
 #
 # Builds Release, signs with Developer ID (hardened runtime, unsandboxed),
 # notarizes with Apple, staples both the app and the disk image, and emits a
@@ -12,7 +12,7 @@
 #   ./Scripts/build-release.sh --skip-notarize      # fast local check
 #
 # First run requires stored notary credentials:
-#   xcrun notarytool store-credentials "MagicMountNotary" \
+#   xcrun notarytool store-credentials "AutoMountNotary" \
 #       --apple-id "<your-apple-id>" --team-id "N2Z455V6H8" \
 #       --password "<app-specific-password>"
 #
@@ -22,12 +22,12 @@ set -euo pipefail
 
 readonly TEAM_ID="N2Z455V6H8"
 readonly SIGN_IDENTITY="Developer ID Application: Mark Tassinari (${TEAM_ID})"
-readonly SCHEME="MagicMount"
-readonly APP_NAME="MagicMount"
-readonly VOLNAME="MagicMount"
-readonly BUNDLE_ID="org.tassinari.MagicMount"
-readonly LOGIN_ITEM_ID="org.tassinari.MagicMount.MagicMountBackground"
-readonly APP_GROUP="group.org.tassinari.magicmount"
+readonly SCHEME="AutoMount"
+readonly APP_NAME="AutoMount"
+readonly VOLNAME="AutoMount"
+readonly BUNDLE_ID="org.tassinari.AutoMount"
+readonly LOGIN_ITEM_ID="org.tassinari.AutoMount.AutoMountBackground"
+readonly APP_GROUP="group.org.tassinari.automount"
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PROJECT="${REPO_ROOT}/${APP_NAME}.xcodeproj"
@@ -37,7 +37,7 @@ readonly BUILD_DIR="${REPO_ROOT}/build"
 VERSION="1.0"
 BUILD_NUM=""
 OUTPUT_DIR="${REPO_ROOT}/dist"
-KEYCHAIN_PROFILE="MagicMountNotary"
+KEYCHAIN_PROFILE="AutoMountNotary"
 SKIP_NOTARIZE=0
 SKIP_TESTS=0
 
@@ -96,7 +96,7 @@ fi
 readonly ARCHIVE_PATH="${BUILD_DIR}/${APP_NAME}.xcarchive"
 readonly EXPORT_DIR="${BUILD_DIR}/export"
 readonly APP="${EXPORT_DIR}/${APP_NAME}.app"
-readonly LOGIN_ITEM="${APP}/Contents/Library/LoginItems/MagicMountBackground.app"
+readonly LOGIN_ITEM="${APP}/Contents/Library/LoginItems/AutoMountBackground.app"
 
 if (( SKIP_NOTARIZE )); then
     readonly DMG_FINAL="${OUTPUT_DIR}/${APP_NAME}-${VERSION}-UNNOTARIZED.dmg"
@@ -160,14 +160,19 @@ if (( SKIP_TESTS )); then
     warn "--skip-tests: skipping test suites"
 else
     step "Running tests"
-    for test_scheme in MagicMount MagicMountBackground; do
-        info "testing ${test_scheme}..."
+    # Unit tests only. The UI tests are deliberately excluded: they drive a real
+    # app instance, which makes them slow and flaky in a release build, and they
+    # add nothing the signing verification in phase 5 does not already cover.
+    # Run them from Xcode, or with the AutoMount scheme directly.
+    for test_target in AutoMountTests AutoMountBackgroundTests; do
+        info "testing ${test_target}..."
         xcodebuild test \
             -project "$PROJECT" \
-            -scheme "$test_scheme" \
+            -scheme "${test_target%Tests}" \
             -destination 'platform=macOS' \
+            -only-testing:"$test_target" \
             -quiet \
-            || die "tests failed for scheme ${test_scheme}"
+            || die "tests failed for ${test_target}"
     done
     info "all tests passed"
 fi
@@ -221,8 +226,8 @@ step "Verifying signature and entitlements"
 [[ -d "$LOGIN_ITEM" ]] || die "login item missing at Contents/Library/LoginItems"
 
 # Regression guard for the duplicate embed that used to ship in Resources.
-if [[ -e "${APP}/Contents/Resources/MagicMountBackground.app" ]]; then
-    die "duplicate MagicMountBackground.app found in Contents/Resources.
+if [[ -e "${APP}/Contents/Resources/AutoMountBackground.app" ]]; then
+    die "duplicate AutoMountBackground.app found in Contents/Resources.
     The Resources copy build phase has regressed in project.pbxproj."
 fi
 

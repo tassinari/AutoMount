@@ -8,14 +8,9 @@ Manual acceptance test plan for the AutoMount macOS main app covering all user-f
 ## 1. Share List View
 
 ### 1.1 App launches with empty state
-- **Given** no external shares are present
+- **Given** no managed shares have been saved
 - **When** the app launches
-- **Then** a "No External Shares Found" message is displayed with an "Add a share" description and a tappable "+" icon; the share table is not shown
-
-### 1.1a Empty state plus button opens add dialog
-- **Given** the app is displaying the empty state view
-- **When** the user clicks the "+" icon in the empty state
-- **Then** the "New Connection" dialog appears
+- **Then** the share list table is empty and the search bar and "+" button are visible
 
 ### 1.2 App launches with existing managed shares
 - **Given** managed shares were previously saved
@@ -42,25 +37,21 @@ Manual acceptance test plan for the AutoMount macOS main app covering all user-f
 - **When** the user clears the search field
 - **Then** all shares are displayed again
 
-### 1.7 Default sort is by Name ascending
-- **Given** multiple shares exist with different names
-- **When** the app launches
-- **Then** the share list is sorted by Name in ascending (A–Z) order
+### 1.7 New Window Behavior
+- **Given** A window is already open
+- **When** The user presses cmd-N
+- **Then** No new window shows
 
-### 1.8 Clicking a column header sorts by that column
-- **Given** multiple shares are displayed
-- **When** the user clicks the "Mount Point" column header
-- **Then** the share list is sorted by mount point
+### 1.8 New Window Menu Behavior
+- **Given** A window is already open
+- **When** THe user opens the file menu
+- **Then** No new window option is greted out
 
-### 1.9 Clicking the same column header toggles sort direction
-- **Given** the share list is sorted by Name ascending
-- **When** the user clicks the "Name" column header again
-- **Then** the sort order reverses to descending (Z–A)
+### 1.8 Tab Behavior
+- **Given** The main window is open
+- **When** The user goes to the view menu
+- **Then** No tab bar options should be present
 
-### 1.10 All columns are sortable
-- **Given** multiple shares are displayed with varied values
-- **When** the user clicks each column header (Managed, Name, Type, Mount Point, Status) in turn
-- **Then** the list re-sorts by that column's values each time
 
 ---
 
@@ -175,6 +166,12 @@ Manual acceptance test plan for the AutoMount macOS main app covering all user-f
 - **When** the user looks at the share row
 - **Then** a spinning progress indicator replaces the mount/unmount button
 
+### 3.7 Error message when a mount fails
+- **Given** A managed share in the share list is not mounted and not           
+  mountable (no network, bad pass etc, any no success situation)                                                                                                 
+- **When** User taps mount button and the service fails with any error                                                                                                       
+- **Then** The user is presented with the error in a dialog that has a dismiss button                                                                 
+
 ---
 
 ## 4. Managed Toggle
@@ -232,35 +229,45 @@ Manual acceptance test plan for the AutoMount macOS main app covering all user-f
 - **When** the user clicks "Clear previous servers"
 - **Then** the autocomplete history in the add dialog is empty
 
-### 6.5 Network debounce picker shows preset values with description
+### 6.5 Adjust network debounce
 - **Given** the Settings window is open
-- **When** the user views the "Network Debounce" section
-- **Then** a picker shows 5s, 15s, 30s, 60s (default 15s) and a description label explains its purpose
+- **When** the user changes "Network debounce" to 30s (range: 5–120s, step 5)
+- **Then** the value persists and the background service uses 30s debounce for network events
 
-### 6.6 Selecting a debounce value persists
+### 6.6 Network debounce respects bounds
 - **Given** the Settings window is open
-- **When** the user selects a network debounce value (e.g. 30 seconds)
-- **Then** the value persists and is used by the background service
+- **When** the user tries to set debounce below 5s or above 120s
+- **Then** the stepper stops at the boundary value
 
-### 6.7 Periodic remount picker shows preset values with description
+### 6.7 Adjust periodic remount interval
 - **Given** the Settings window is open
-- **When** the user views the "Periodic Remount" section
-- **Then** a picker shows Off, 1 min, 5 min, 15 min, 1 hour (default 5 min) and a description label explains its purpose
+- **When** the user changes "Periodic remount" to 5 min (range: 1–60 min, step 1)
+- **Then** the value persists and the background service uses 5-minute remount interval
 
-### 6.8 Selecting "Off" disables periodic remount
+### 6.8 Periodic remount respects bounds
 - **Given** the Settings window is open
-- **When** the user selects "Off" for periodic remount
-- **Then** the periodic remount timer is disabled and no automatic remounts occur on a schedule
+- **When** the user tries to set remount below 1 min or above 60 min
+- **Then** the stepper stops at the boundary value
 
-### 6.9 Selecting a periodic remount value persists
-- **Given** the Settings window is open
-- **When** the user selects a periodic remount value (e.g. 15 minutes)
-- **Then** the value persists and is used by the background service
-
-### 6.10 About tab displays app info
+### 6.9 About tab displays app info
 - **Given** the Settings window is open
 - **When** the user clicks the About tab
 - **Then** "AutoMount" title and "by Mark Tassinari" are displayed
+ 
+### 6.10 Clear servers button disabled when history empty
+- **Given** no server URLs have been saved to history
+- **When** the user opens Settings
+- **Then** the "Clear previous servers" button is disabled (grayed out)
+
+### 6.11 Clear servers button enabled when history has entries
+- **Given** the user has previously mounted a share successfully
+- **When** the user opens Settings
+- **Then** the "Clear previous servers" button is enabled
+
+### 6.12 About tab displays app info
+- **Given** the Settings window is open
+- **When** The user moves the cursor to the bottom right corner
+- **Then** The window should be resizable
 
 ---
 
@@ -333,7 +340,7 @@ Manual acceptance test plan for the AutoMount macOS main app covering all user-f
 - **When** the user tries to resize it smaller than 750×400px
 - **Then** the window stops at the minimum size
 
-### 10.2 Settings window is fixed size
+### 10.2 Settings window is dynamic size
 - **Given** the Settings window is open
 - **When** the user tries to resize it
-- **Then** the window remains at 300×200px (non-resizable)
+- **Then** the window should resize

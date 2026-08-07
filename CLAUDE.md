@@ -4,37 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MagicMount is a macOS desktop app (SwiftUI, Swift 5.0, macOS 14.6+) that manages network share mounts. It consists of a main app and a background login-item service that auto-remounts shares.
+AutoMount is a macOS desktop app (SwiftUI, Swift 5.0, macOS 14.6+) that manages network share mounts. It consists of a main app and a background login-item service that auto-remounts shares.
 
 ## Build & Test Commands
 
 ```bash
 # Build
-xcodebuild -scheme MagicMount -configuration Debug
-xcodebuild -scheme MagicMountBackground -configuration Debug
+xcodebuild -scheme AutoMount -configuration Debug
+xcodebuild -scheme AutoMountBackground -configuration Debug
 
 # Run all tests
-xcodebuild test -scheme MagicMountTests
-xcodebuild test -scheme MagicMountBackgroundTests
+xcodebuild test -scheme AutoMountTests
+xcodebuild test -scheme AutoMountBackgroundTests
 
 # Run a single test class
-xcodebuild test -scheme MagicMountTests -only-testing MagicMountTests/ShareDataModelTests
+xcodebuild test -scheme AutoMountTests -only-testing AutoMountTests/ShareDataModelTests
 
 # Run a single test method
-xcodebuild test -scheme MagicMountTests -only-testing MagicMountTests/ShareDataModelTests/testInitWithStorageLoadsShares
+xcodebuild test -scheme AutoMountTests -only-testing AutoMountTests/ShareDataModelTests/testInitWithStorageLoadsShares
 ```
 
-Available schemes: `MagicMount`, `MagicMountBackground`, `libMounter`
+Available schemes: `AutoMount`, `AutoMountBackground`, `libMounter`
 
 ## Architecture
 
 **Targets:**
-- **MagicMount** — Main SwiftUI app with share list UI, add/edit dialogs, menu commands
-- **MagicMountBackground** — Login-item background service with menu bar popup, network detection (`Detector`), and automatic remounting (`Remounter`)
+- **AutoMount** — Main SwiftUI app with share list UI, add/edit dialogs, menu commands
+- **AutoMountBackground** — Login-item background service with menu bar popup, network detection (`Detector`), and automatic remounting (`Remounter`)
 - **Common** — Shared code: `ShareDataModel` (main observable model), `Storage` protocol, logging, constants
 - **libMounter** — Local Swift package (at `../Mounter`) providing the `Share` struct, `Storage` protocol, and `StorageManager` for actual mount operations
 
-Both apps share data via application group `group.org.tassinari.magicmount` (UserDefaults suite).
+Both apps share data via application group `group.org.tassinari.automount` (UserDefaults suite).
 
 **Key types:**
 - `ShareDataModel` (@Observable, @MainActor) — Central app state; loads shares from storage, handles mount/unmount, listens to NSWorkspace volume notifications
@@ -46,7 +46,7 @@ Both apps share data via application group `group.org.tassinari.magicmount` (Use
 
 - Modern async/await throughout (no Combine)
 - `@MainActor` isolation on all UI-touching code and `ShareDataModel`
-- `Remounter` and `MagicMountLog` are actors for thread safety
+- `Remounter` and `AutoMountLog` are actors for thread safety
 - `Detector` uses a private DispatchQueue for NWPathMonitor
 
 ## Testing Patterns
