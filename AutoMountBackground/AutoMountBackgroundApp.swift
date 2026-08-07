@@ -74,6 +74,16 @@ class Model{
         startPeriodicTimer()
     }
 
+    /// Stops the periodic remount timer.
+    ///
+    /// `deinit` already does this, but a scheduled `Timer` is retained by the
+    /// run loop, so a `Model` that is otherwise unreferenced stays alive and
+    /// keeps firing. Tests use this to tear the timer down deterministically.
+    func stopPeriodicTimer() {
+        periodicTimer?.invalidate()
+        periodicTimer = nil
+    }
+
     private func startPeriodicTimer() {
         periodicTimer?.invalidate()
         let minutes = defaults.object(forKey: Constant.periodicRemountKey) as? Double ?? Constant.periodicRemountDefault

@@ -31,9 +31,16 @@ final class ModelSettingsTests: XCTestCase {
         })
         let remounter = Remounter(debounceSeconds: 0, storage: storage)
 
-        _ = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
 
         await fulfillment(of: [exp], timeout: 2)
+
+        // Stop the repeating timer before leaving. Timer.scheduledTimer keeps
+        // its closure on the run loop, so without this the 0.2s timer outlives
+        // the test and fulfills an expectation that no longer exists, which
+        // aborts the whole test process partway through the next test.
+        defaults.set(0.0, forKey: Constant.periodicRemountKey)
+        model.stopPeriodicTimer()
     }
 
     // MARK: - Network event triggers Remounter
@@ -99,10 +106,13 @@ final class ModelSettingsTests: XCTestCase {
         let storage = MockStorage(list: [share])
         let remounter = Remounter(debounceSeconds: 9999, storage: storage)
 
-        _ = Model(defaults: defaults, remounter: remounter, storage: storage)
+        // Held for the duration: a discarded Model may deinit immediately,
+        // which would make this assertion pass whether or not the guard works.
+        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
 
         try await Task.sleep(for: .seconds(1))
         XCTAssertFalse(storage.mountCalled, "Periodic timer should not fire when interval is 0")
+        model.stopPeriodicTimer()
     }
 
     // MARK: - Settings change updates Remounter debounce

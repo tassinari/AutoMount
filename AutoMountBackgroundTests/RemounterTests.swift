@@ -209,7 +209,7 @@ final class RemounterTests : XCTestCase{
         await rm.checkAndRemount(.network) // cancels first via reentrancy, logs rescheduling
         let logs = try getLogs()
 
-        XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Rescheduling debounced remount")}))
+        XCTAssertTrue(logs.contains(where: {$0.composedMessage.contains("Debounced: rescheduling")}))
     }
                                 
     
