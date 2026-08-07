@@ -1,6 +1,6 @@
 //
 //  Storage.swift
-//  MagicMountBackground
+//  AutoMountBackground
 //
 //  Created by Mark Tassinari on 12/28/25.
 //
@@ -44,7 +44,7 @@ public enum StorageManagerError : Error {
 /// This manager persists shares added or removed by the user in a designated `UserDefaults` suite.
 /// It provides a combined view of all mounted volumes and user-managed shares via `fullMountList`.
 /// This class is not inherently thread-safe; external synchronization is required if accessed concurrently.
-/// The storage suite key used is `"group.org.tassinari.magicmount"`.
+/// The storage suite key used is `"group.org.tassinari.automount"`.
 public actor StorageManager{
     /// The key used in UserDefaults to persist the encoded shares.
     public static let storeKey : String = "ShareStoreKey"
@@ -52,9 +52,9 @@ public actor StorageManager{
     /// Initializes the storage manager with a specific `UserDefaults` instance.
     ///
     /// - Parameter defaults: The `UserDefaults` instance to use for persistence.
-    ///   Defaults to the suite named `"group.org.tassinari.magicmount"`.
+    ///   Defaults to the suite named `"group.org.tassinari.automount"`.
     ///   Passing `nil` disables persistence and causes methods to throw `.noUserDefaults`.
-    public init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.magicmount")) {
+    public init(defaults: UserDefaults? = UserDefaults(suiteName: "group.org.tassinari.automount")) {
         self.userDefaults = defaults
     }
     let userDefaults: UserDefaults?

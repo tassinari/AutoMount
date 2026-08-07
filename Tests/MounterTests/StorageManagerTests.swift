@@ -10,7 +10,7 @@ import OSLog
 @testable import libMounter
 
 final class StorageManagerTests: BaseTest {
-    let defaultsSuiteName = "group.org.tassinari.magicmount.test"
+    let defaultsSuiteName = "group.org.tassinari.automount.test"
     let hostName = "localhost"
     let port = 1445
     let password = "secret123"

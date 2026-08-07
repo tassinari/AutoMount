@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Mounter is a Swift package (`libMounter`) for managing network share (SMB, AFP, NFS) mounting on macOS. It uses the NetFS framework for low-level mount operations and persists managed shares via UserDefaults (suite: `group.org.tassinari.magicmount`).
+Mounter is a Swift package (`libMounter`) for managing network share (SMB, AFP, NFS) mounting on macOS. It uses the NetFS framework for low-level mount operations and persists managed shares via UserDefaults (suite: `group.org.tassinari.automount`).
 
 ## Build & Test Commands
 
@@ -43,4 +43,4 @@ Four source files in `Sources/Mounter/`:
 
 ## Testing
 
-Tests are in `Tests/MounterTests/` with a `BaseTest` class that manages Docker container lifecycle. Test UserDefaults suite: `group.org.tassinari.magicmount.test`. Tests cover URL construction, mount/unmount operations, state transitions, JSON serialization, and storage aggregation.
+Tests are in `Tests/MounterTests/` with a `BaseTest` class that manages Docker container lifecycle. Test UserDefaults suite: `group.org.tassinari.automount.test`. Tests cover URL construction, mount/unmount operations, state transitions, JSON serialization, and storage aggregation.

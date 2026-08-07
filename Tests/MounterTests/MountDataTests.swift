@@ -1,6 +1,6 @@
 //
 //  MountDataTests.swift
-//  MagicMountTests
+//  AutoMountTests
 //
 //  Created by Mark Tassinari on 12/24/25.
 //
@@ -13,7 +13,7 @@ enum ShellError: Error {
 }
 
 class BaseTest : XCTestCase{
-    static let defaultsSuiteName = "group.org.tassinari.magicmount.test"
+    static let defaultsSuiteName = "group.org.tassinari.automount.test"
     let storage = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
 
     static func runPreTestScript(script: String) {
