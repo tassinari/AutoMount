@@ -49,7 +49,7 @@ extension AddEditModelError: LocalizedError {
 
    
 
-    init(urlString: String = "", store: ShareDataModel, defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
+    init(urlString: String = "", store: ShareDataModel, defaults: UserDefaults = UserDefaults(suiteName: Constant.appGroupIdentifier) ?? .standard) {
         self.store = store
         self.urlString = urlString
         self.location = ""
@@ -71,7 +71,7 @@ extension AddEditModelError: LocalizedError {
         }
     }
 
-    static func clearPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: "group.org.tassinari.magicmount") ?? .standard) {
+    static func clearPreviousServers(defaults: UserDefaults = UserDefaults(suiteName: Constant.appGroupIdentifier) ?? .standard) {
         defaults.set([String](), forKey: Constant.serversKey)
         defaults.set(true, forKey: Constant.serverEmptyKey)
     }

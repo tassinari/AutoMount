@@ -1,6 +1,6 @@
 //
 //  MountCommandMenu.swift
-//  MagicMount
+//  AutoMount
 //
 //
 

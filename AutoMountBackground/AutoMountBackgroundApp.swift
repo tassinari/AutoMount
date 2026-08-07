@@ -1,6 +1,6 @@
 //
-//  MagicMountBackgroundApp.swift
-//  MagicMountBackground
+//  AutoMountBackgroundApp.swift
+//  AutoMountBackground
 //
 //  Created by Mark Tassinari on 12/27/25.
 //
@@ -10,7 +10,7 @@ import Network
 import libMounter
 
 @main
-struct MagicMountBackgroundApp: App {
+struct AutoMountBackgroundApp: App {
     let model = Model()
     @AppStorage("showMenuInBar",  store: UserDefaults(suiteName: Constant.appGroupIdentifier)) private var showMenuBar = true
 
@@ -26,7 +26,7 @@ class Model{
     let store: ShareDataModel
     let remounter: Remounter
     let detector: Detector
-    let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
+    let queue = DispatchQueue(label: "AutoMount NetworkMonitor")
     private let defaults: UserDefaults
     private var periodicTimer: Timer?
     private var defaultsObserver: NSObjectProtocol?
@@ -119,7 +119,7 @@ extension ShareDataModel{
     func openApp(){
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.MagicMount"){
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "org.tassinari.AutoMount"){
             NSWorkspace.shared.openApplication(at: url, configuration: config)
         }
     }

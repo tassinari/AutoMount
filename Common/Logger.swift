@@ -1,6 +1,6 @@
 //
 //  Logger.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 12/28/25.
 //
@@ -11,29 +11,29 @@ import os
 
 internal nonisolated func debug(_ msg: String) {
     Task {
-        await MagicMountLog.shared.debug(msg)
+        await AutoMountLog.shared.debug(msg)
     }
 }
 
 internal nonisolated func notice(_ msg: String) {
     Task {
-        await MagicMountLog.shared.notice(msg)
+        await AutoMountLog.shared.notice(msg)
     }
 }
 
 internal nonisolated func error(_ msg: String) {
     Task {
-        await MagicMountLog.shared.error(msg)
+        await AutoMountLog.shared.error(msg)
     }
 }
 
-internal actor MagicMountLog {
+internal actor AutoMountLog {
 
-    static let shared = MagicMountLog()
+    static let shared = AutoMountLog()
 
     private let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier!,
-        category: "MagicMount"
+        category: "AutoMount"
     )
 
     func debug(_ msg: String) {

@@ -1,6 +1,6 @@
 //
 //  ShareExtensionTests.swift
-//  MagicMountTests
+//  AutoMountTests
 //
 //  Created by Mark Tassinari on 2/4/26.
 //
@@ -8,7 +8,7 @@
 import XCTest
 import Foundation
 import libMounter
-@testable import MagicMount
+@testable import AutoMount
 
 final class ShareExtensionTests: XCTestCase {
     

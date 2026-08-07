@@ -1,6 +1,6 @@
 //
 //  ShareDataModelTests.swift
-//  MagicMountTests
+//  AutoMountTests
 //
 //  Created by Mark Tassinari on 2/4/26.
 //
@@ -9,7 +9,7 @@ import XCTest
 import Foundation
 import libMounter
 import ServiceManagement
-@testable import MagicMount
+@testable import AutoMount
 
 @MainActor
 final class ShareDataModelTests: XCTestCase {

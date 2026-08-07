@@ -1,6 +1,6 @@
 //
 //  ShareListView.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 2/3/26.
 //
@@ -323,7 +323,7 @@ struct MountButtonCell: View {
                 }
             } catch {
                 errorMessage = error.localizedDescription
-                MagicMount.error("Mount button pressed error: \(String(describing: error))")
+                AutoMount.error("Mount button pressed error: \(String(describing: error))")
             }
 
             await MainActor.run {

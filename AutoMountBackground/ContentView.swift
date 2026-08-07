@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  MagicMountBackground
+//  AutoMountBackground
 //
 //  Created by Mark Tassinari on 12/27/25.
 //
@@ -56,7 +56,7 @@ struct ContentView: View {
                                         }
                                        
                                     }catch{
-                                        MagicMountBackground.error("mount/unmout error \(String(describing: error))")
+                                        AutoMountBackground.error("mount/unmout error \(String(describing: error))")
                                     }
                                 }
                                

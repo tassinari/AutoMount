@@ -1,6 +1,6 @@
 //
 //  Constants.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 2/1/26.
 //
@@ -9,7 +9,7 @@ import Foundation
 
 enum Constant{
     
-    static let appGroupIdentifier = "group.org.tassinari.magicmount"
+    static let appGroupIdentifier = "group.org.tassinari.automount"
     static let driveIconConnected = "externaldrive.badge.checkmark"
     static let driveIconDisConnected = "externaldrive.badge.xmark"
     static let shareIconTextMounted = "eject.fill"

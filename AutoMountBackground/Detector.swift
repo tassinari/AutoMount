@@ -1,6 +1,6 @@
 //
 //  Detector.swift
-//  MagicMountBackground
+//  AutoMountBackground
 //
 //  Created by Mark Tassinari on 12/28/25.
 //
@@ -36,7 +36,7 @@ class Detector : Detectable{
     private var wakeNote : NSObjectProtocol?
 
     let monitor = NWPathMonitor()
-    let queue = DispatchQueue(label: "MagicMount NetworkMonitor")
+    let queue = DispatchQueue(label: "AutoMount NetworkMonitor")
     var delegate : DetectorDelegate?
     init(){
         mountNote  = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didMountNotification, object: nil, queue: .main) { [weak self] note in

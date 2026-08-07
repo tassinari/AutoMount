@@ -1,13 +1,13 @@
 //
-//  MagicMountUITestsLaunchTests.swift
-//  MagicMountUITests
+//  AutoMountUITestsLaunchTests.swift
+//  AutoMountUITests
 //
 //  Created by Mark Tassinari on 12/24/25.
 //
 
 import XCTest
 
-final class MagicMountUITestsLaunchTests: XCTestCase {
+final class AutoMountUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

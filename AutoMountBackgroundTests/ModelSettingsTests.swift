@@ -1,6 +1,6 @@
 //
 //  ModelSettingsTests.swift
-//  MagicMountBackgroundTests
+//  AutoMountBackgroundTests
 //
 //  Created by Claude on 2/16/26.
 //
@@ -8,12 +8,12 @@
 import Foundation
 import XCTest
 import libMounter
-@testable import MagicMountBackground
+@testable import AutoMountBackground
 
 final class ModelSettingsTests: XCTestCase {
 
     private func freshDefaults() -> UserDefaults {
-        let suite = "org.tassinari.magicmount.test.\(UUID().uuidString)"
+        let suite = "org.tassinari.automount.test.\(UUID().uuidString)"
         return UserDefaults(suiteName: suite)!
     }
 

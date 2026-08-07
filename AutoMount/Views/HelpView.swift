@@ -1,6 +1,6 @@
 //
 //  HelpView.swift
-//  MagicMount
+//  AutoMount
 //
 //
 

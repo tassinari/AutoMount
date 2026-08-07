@@ -1,6 +1,6 @@
 //
 //  RemounterTests.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 2/11/26.
 //
@@ -8,7 +8,7 @@
 import Foundation
 import XCTest
 import libMounter
-@testable import MagicMountBackground
+@testable import AutoMountBackground
 import OSLog
 
 final class RemounterTests : XCTestCase{
@@ -301,7 +301,7 @@ final class RemounterTests : XCTestCase{
         let position = store.position(date: .now.addingTimeInterval(-5))
         let predicate = NSPredicate(format:
                                         "(subsystem == %@ && category == %@)",
-                                    Bundle.main.bundleIdentifier!, "MagicMount")
+                                    Bundle.main.bundleIdentifier!, "AutoMount")
         let entries = try OSLogStore.local().getEntries(at: position, matching: predicate)
         let it = entries.makeIterator()
         var msgs : [OSLogEntryLog] = []

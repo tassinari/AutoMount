@@ -1,6 +1,6 @@
 //
-//  MagicMountApp.swift
-//  MagicMount
+//  AutoMountApp.swift
+//  AutoMount
 //
 //  Created by Mark Tassinari on 12/24/25.
 //
@@ -10,7 +10,7 @@ import libMounter
 
 
 @main
-struct MagicMountApp: App {
+struct AutoMountApp: App {
 
     @Environment(\.openWindow) var openWindow
     private let model = ShareDataModel(storage: StorageManager())

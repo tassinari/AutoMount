@@ -1,6 +1,6 @@
 //
 //  Remounter.swift
-//  MagicMountBackground
+//  AutoMountBackground
 //
 //  Created by Mark Tassinari on 1/4/26.
 //
@@ -67,7 +67,7 @@ actor Remounter{
                             notice("Mount failure for \(name): already mounted")
                         }
                     }catch {
-                        MagicMountBackground.error("Mount(\(name)) threw:  \(String(describing: error))")
+                        AutoMountBackground.error("Mount(\(name)) threw:  \(String(describing: error))")
                     }
                 }else{
                      notice("\(name) connected, not attempting remount")

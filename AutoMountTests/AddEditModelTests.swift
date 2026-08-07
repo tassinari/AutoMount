@@ -1,6 +1,6 @@
 //
 //  NewMountModelTests.swift
-//  MagicMountTests
+//  AutoMountTests
 //
 //  Created by Mark Tassinari on 12/27/25.
 //
@@ -8,7 +8,7 @@
 import XCTest
 import Foundation
 import libMounter
-@testable import MagicMount
+@testable import AutoMount
 
 
 

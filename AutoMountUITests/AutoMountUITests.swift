@@ -1,13 +1,13 @@
 //
-//  MagicMountUITests.swift
-//  MagicMountUITests
+//  AutoMountUITests.swift
+//  AutoMountUITests
 //
 //  Created by Mark Tassinari on 12/24/25.
 //
 
 import XCTest
 
-final class MagicMountUITests: XCTestCase {
+final class AutoMountUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

@@ -1,14 +1,14 @@
 
 //
 //  TestDelegate.swift
-//  MagicMount
+//  AutoMount
 //
 //  Created by Mark Tassinari on 2/12/26.
 //
 
 
 import XCTest
-@testable import MagicMountBackground
+@testable import AutoMountBackground
 import AppKit
 
 private final class TestDelegate: DetectorDelegate {
