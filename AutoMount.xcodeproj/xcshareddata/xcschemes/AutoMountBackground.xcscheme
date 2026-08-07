@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "487A91D82F006F260095BDA6"
-               BuildableName = "MagicMountBackground.app"
-               BlueprintName = "MagicMountBackground"
-               ReferencedContainer = "container:MagicMount.xcodeproj">
+               BuildableName = "AutoMountBackground.app"
+               BlueprintName = "AutoMountBackground"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,9 +40,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
-                     BuildableName = "MagicMountBackgroundTests.xctest"
-                     BlueprintName = "MagicMountBackgroundTests"
-                     ReferencedContainer = "container:MagicMount.xcodeproj">
+                     BuildableName = "AutoMountBackgroundTests.xctest"
+                     BlueprintName = "AutoMountBackgroundTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -59,9 +59,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
-                     BuildableName = "MagicMountBackgroundTests.xctest"
-                     BlueprintName = "MagicMountBackgroundTests"
-                     ReferencedContainer = "container:MagicMount.xcodeproj">
+                     BuildableName = "AutoMountBackgroundTests.xctest"
+                     BlueprintName = "AutoMountBackgroundTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -74,9 +74,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "480BDBFF2F3DEBF600147963"
-               BuildableName = "MagicMountBackgroundTests.xctest"
-               BlueprintName = "MagicMountBackgroundTests"
-               ReferencedContainer = "container:MagicMount.xcodeproj">
+               BuildableName = "AutoMountBackgroundTests.xctest"
+               BlueprintName = "AutoMountBackgroundTests"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -96,9 +96,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "487A91D82F006F260095BDA6"
-            BuildableName = "MagicMountBackground.app"
-            BlueprintName = "MagicMountBackground"
-            ReferencedContainer = "container:MagicMount.xcodeproj">
+            BuildableName = "AutoMountBackground.app"
+            BlueprintName = "AutoMountBackground"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -125,9 +125,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "487A91D82F006F260095BDA6"
-            BuildableName = "MagicMountBackground.app"
-            BlueprintName = "MagicMountBackground"
-            ReferencedContainer = "container:MagicMount.xcodeproj">
+            BuildableName = "AutoMountBackground.app"
+            BlueprintName = "AutoMountBackground"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

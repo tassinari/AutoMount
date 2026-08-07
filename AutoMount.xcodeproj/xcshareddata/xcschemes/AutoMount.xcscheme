@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "482995EF2EFC63CF003AB633"
-               BuildableName = "MagicMount.app"
-               BlueprintName = "MagicMount"
-               ReferencedContainer = "container:MagicMount.xcodeproj">
+               BuildableName = "AutoMount.app"
+               BlueprintName = "AutoMount"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,9 +40,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "482995FC2EFC63D0003AB633"
-                     BuildableName = "MagicMountTests.xctest"
-                     BlueprintName = "MagicMountTests"
-                     ReferencedContainer = "container:MagicMount.xcodeproj">
+                     BuildableName = "AutoMountTests.xctest"
+                     BlueprintName = "AutoMountTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -59,9 +59,9 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "482995FC2EFC63D0003AB633"
-                     BuildableName = "MagicMountTests.xctest"
-                     BlueprintName = "MagicMountTests"
-                     ReferencedContainer = "container:MagicMount.xcodeproj">
+                     BuildableName = "AutoMountTests.xctest"
+                     BlueprintName = "AutoMountTests"
+                     ReferencedContainer = "container:AutoMount.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
             </ActionContent>
@@ -74,9 +74,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "482995FC2EFC63D0003AB633"
-               BuildableName = "MagicMountTests.xctest"
-               BlueprintName = "MagicMountTests"
-               ReferencedContainer = "container:MagicMount.xcodeproj">
+               BuildableName = "AutoMountTests.xctest"
+               BlueprintName = "AutoMountTests"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -85,9 +85,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "482996062EFC63D0003AB633"
-               BuildableName = "MagicMountUITests.xctest"
-               BlueprintName = "MagicMountUITests"
-               ReferencedContainer = "container:MagicMount.xcodeproj">
+               BuildableName = "AutoMountUITests.xctest"
+               BlueprintName = "AutoMountUITests"
+               ReferencedContainer = "container:AutoMount.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -107,9 +107,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "482995EF2EFC63CF003AB633"
-            BuildableName = "MagicMount.app"
-            BlueprintName = "MagicMount"
-            ReferencedContainer = "container:MagicMount.xcodeproj">
+            BuildableName = "AutoMount.app"
+            BlueprintName = "AutoMount"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -124,9 +124,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "482995EF2EFC63CF003AB633"
-            BuildableName = "MagicMount.app"
-            BlueprintName = "MagicMount"
-            ReferencedContainer = "container:MagicMount.xcodeproj">
+            BuildableName = "AutoMount.app"
+            BlueprintName = "AutoMount"
+            ReferencedContainer = "container:AutoMount.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
