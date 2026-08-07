@@ -1,7 +1,7 @@
-# MagicMount — Main App Acceptance Test Plan (GWT)
+# AutoMount — Main App Acceptance Test Plan (GWT)
 
 ## Context
-Manual acceptance test plan for the MagicMount macOS main app covering all user-facing features. Tests are written in Given-When-Then format for manual QA execution. Requires a reachable SMB/AFP/NFS server on the local network.
+Manual acceptance test plan for the AutoMount macOS main app covering all user-facing features. Tests are written in Given-When-Then format for manual QA execution. Requires a reachable SMB/AFP/NFS server on the local network.
 
 ---
 
@@ -220,12 +220,12 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 ### 6.2 Toggle "Show in menu bar"
 - **Given** the Settings window is open on the Settings tab
 - **When** the user toggles "Show in menu bar" OFF
-- **Then** the MagicMountBackground menu bar icon is hidden
+- **Then** the AutoMountBackground menu bar icon is hidden
 
 ### 6.3 Toggle "Show in menu bar" back on
 - **Given** "Show in menu bar" is OFF
 - **When** the user toggles it ON
-- **Then** the MagicMountBackground menu bar icon reappears
+- **Then** the AutoMountBackground menu bar icon reappears
 
 ### 6.4 Clear previous servers
 - **Given** server history contains previously used URLs
@@ -260,7 +260,7 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 ### 6.10 About tab displays app info
 - **Given** the Settings window is open
 - **When** the user clicks the About tab
-- **Then** "Magic Mount" title and "by Mark Tassinari" are displayed
+- **Then** "AutoMount" title and "by Mark Tassinari" are displayed
 
 ---
 
@@ -282,8 +282,8 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 - **Then** the Help window opens
 
 ### 7.4 Login item status refreshes on app activate
-- **Given** the user enables the login item in System Settings while MagicMount is in the background
-- **When** the user switches back to MagicMount
+- **Given** the user enables the login item in System Settings while AutoMount is in the background
+- **When** the user switches back to AutoMount
 - **Then** the warning banner disappears and `isLoginItemEnabled` is true
 
 ---
@@ -297,7 +297,7 @@ Manual acceptance test plan for the MagicMount macOS main app covering all user-
 
 ### 8.2 Open help via menu
 - **Given** the app is running
-- **When** the user clicks Help → MagicMount Help
+- **When** the user clicks Help → AutoMount Help
 - **Then** the Help window opens
 
 ### 8.3 Help content is readable
