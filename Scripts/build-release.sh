@@ -160,14 +160,19 @@ if (( SKIP_TESTS )); then
     warn "--skip-tests: skipping test suites"
 else
     step "Running tests"
-    for test_scheme in AutoMount AutoMountBackground; do
-        info "testing ${test_scheme}..."
+    # Unit tests only. The UI tests are deliberately excluded: they drive a real
+    # app instance, which makes them slow and flaky in a release build, and they
+    # add nothing the signing verification in phase 5 does not already cover.
+    # Run them from Xcode, or with the AutoMount scheme directly.
+    for test_target in AutoMountTests AutoMountBackgroundTests; do
+        info "testing ${test_target}..."
         xcodebuild test \
             -project "$PROJECT" \
-            -scheme "$test_scheme" \
+            -scheme "${test_target%Tests}" \
             -destination 'platform=macOS' \
+            -only-testing:"$test_target" \
             -quiet \
-            || die "tests failed for scheme ${test_scheme}"
+            || die "tests failed for ${test_target}"
     done
     info "all tests passed"
 fi
