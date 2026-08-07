@@ -10,7 +10,13 @@ import libMounter
 
 
 struct ContentView: View {
-    @State var model : ShareDataModel
+    /// Not @State: the model is owned by `Model` and passed in. @State takes
+    /// ownership of the first value it sees and ignores later ones, so inside a
+    /// MenuBarExtra -- whose content is built lazily and can be rebuilt -- the
+    /// view would keep rendering a snapshot taken before load() populated
+    /// `shares`, leaving the menu permanently empty. ShareDataModel is
+    /// @Observable, so a plain property still tracks changes.
+    let model : ShareDataModel
     
     var body: some View {
         VStack(spacing: 0) {
