@@ -10,14 +10,13 @@ import libMounter
 
 
 struct ContentView: View {
-    /// Not @State: the model is owned by `Model` and passed in. @State takes
-    /// ownership of the first value it sees and ignores later ones, so inside a
-    /// MenuBarExtra -- whose content is built lazily and can be rebuilt -- the
-    /// view would keep rendering a snapshot taken before load() populated
-    /// `shares`, leaving the menu permanently empty. ShareDataModel is
-    /// @Observable, so a plain property still tracks changes.
+    /// Height of a single share row: the label plus its 6pt vertical padding.
+    private static let rowHeight: CGFloat = 30
+    /// Roughly eight rows, after which the list scrolls.
+    private static let maxListHeight: CGFloat = 240
+
     let model : ShareDataModel
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
@@ -75,9 +74,16 @@ struct ContentView: View {
                 }
             }
             .listStyle(.plain)
+            // The popup sizes itself to its content, and a List has no
+            // intrinsic height, so it needs an explicit one. Sized to the rows
+            // present but capped, so a long share list scrolls instead of
+            // growing a menu taller than the screen.
+            .frame(height: min(CGFloat(max(model.shares.count, 1)) * Self.rowHeight,
+                               Self.maxListHeight))
             .padding([.top, .bottom], 12)
-            
+
         }
+        .frame(width: 280)
         
         
     }
@@ -132,7 +138,7 @@ struct ContentCellView: View {
         .buttonStyle(.plain)
         .padding([.leading, .trailing],12)
         .padding([.top, .bottom],6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
