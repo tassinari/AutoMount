@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MagicMount Help</title>
+<title>AutoMount Help</title>
 <style>
   :root {
     --bg: #ffffff;
@@ -128,19 +128,19 @@
 </head>
 <body>
 
-<h1>MagicMount Help</h1>
+<h1>AutoMount Help</h1>
 <p class="subtitle">Network share manager for macOS</p>
 
 <h2>Getting Started</h2>
-<p>MagicMount makes it easy to manage and automatically reconnect network shares on your Mac. The app consists of two parts:</p>
+<p>AutoMount makes it easy to manage and automatically reconnect network shares on your Mac. The app consists of two parts:</p>
 <ul>
-  <li><strong>MagicMount</strong> — The main app where you add, edit, and manage your network shares.</li>
-  <li><strong>MagicMount Background</strong> — A lightweight menu bar service that monitors your network and automatically remounts shares when connectivity is restored.</li>
+  <li><strong>AutoMount</strong> — The main app where you add, edit, and manage your network shares.</li>
+  <li><strong>AutoMount Background</strong> — A lightweight menu bar service that monitors your network and automatically remounts shares when connectivity is restored.</li>
 </ul>
-<p>Add your network shares once, and MagicMount keeps them connected whenever your Mac is on the network.</p>
+<p>Add your network shares once, and AutoMount keeps them connected whenever your Mac is on the network.</p>
 
 <h2 id="background-service">Background Service &amp; Login Item</h2>
-<p>MagicMount relies on a background login item called <strong>MagicMount Background</strong> to monitor your network and automatically remount shares. This service must be enabled for the app to function properly.</p>
+<p>AutoMount relies on a background login item called <strong>AutoMount Background</strong> to monitor your network and automatically remount shares. This service must be enabled for the app to function properly.</p>
 <p>The background service:</p>
 <ul>
   <li>Runs silently and checks the status of your configured shares.</li>
@@ -151,11 +151,11 @@
 <p>The background service is configured as a <strong>Login Item</strong> in macOS. To enable it:</p>
 <ol>
   <li>Open <strong>System Settings</strong> → <strong>General</strong> → <strong>Login Items &amp; Extensions</strong>.</li>
-  <li>Find <strong>MagicMount</strong> in the list and toggle it <strong>on</strong>.</li>
+  <li>Find <strong>AutoMount</strong> in the list and toggle it <strong>on</strong>.</li>
 </ol>
 <div class="note">
   <strong>Important</strong>
-  If the login item is disabled, MagicMount cannot monitor your network or automatically remount shares. You will see a warning in the main app window when this is the case.
+  If the login item is disabled, AutoMount cannot monitor your network or automatically remount shares. You will see a warning in the main app window when this is the case.
 </div>
 
 <h2>Adding a Share</h2>
@@ -187,13 +187,13 @@
 <h2>Managed vs Unmanaged Shares</h2>
 <p>Shares can be either <strong>managed</strong> or <strong>unmanaged</strong>:</p>
 <ul>
-  <li><strong>Managed</strong> — MagicMount will automatically remount these shares when your network connection is restored. The background service monitors for network changes and reconnects managed shares.</li>
+  <li><strong>Managed</strong> — AutoMount will automatically remount these shares when your network connection is restored. The background service monitors for network changes and reconnects managed shares.</li>
   <li><strong>Unmanaged</strong> — These shares appear in the list for easy manual mounting but are not automatically reconnected.</li>
 </ul>
 <p>Toggle the managed state by editing the share and changing its managed setting.</p>
 
 <h2>Auto-Remount &amp; Background Service</h2>
-<p>The MagicMount Background service runs in your menu bar and provides automatic share management:</p>
+<p>The AutoMount Background service runs in your menu bar and provides automatic share management:</p>
 <ul>
   <li><strong>Network monitoring</strong> — Detects when your Mac connects to or disconnects from a network.</li>
   <li><strong>Automatic remount</strong> — When a network change is detected, the service waits for the network to stabilize (debounce period), then attempts to remount all managed shares.</li>
@@ -202,7 +202,7 @@
 </ul>
 <div class="note">
   <strong>Tip</strong>
-  Enable "Show in menu bar" in Settings to see the MagicMount icon in your menu bar for quick access to your shares.
+  Enable "Show in menu bar" in Settings to see the AutoMount icon in your menu bar for quick access to your shares.
 </div>
 
 <h2>Settings</h2>
@@ -217,19 +217,19 @@
 <h2>FAQ</h2>
 
 <h3>Why isn't my share reconnecting automatically?</h3>
-<p>Make sure the share is set to <strong>managed</strong>. Only managed shares are automatically remounted by the background service. Also verify that the MagicMount Background service is running (check for its icon in the menu bar).</p>
+<p>Make sure the share is set to <strong>managed</strong>. Only managed shares are automatically remounted by the background service. Also verify that the AutoMount Background service is running (check for its icon in the menu bar).</p>
 
 <h3>How do I remove a share?</h3>
 <p>Select the share in the list and press <kbd>&#9003;</kbd> (Delete), or right-click and choose <strong>Delete</strong>. The share will be unmounted if currently connected and removed from your list.</p>
 
 <h3>What protocols are supported?</h3>
-<p>MagicMount supports <strong>SMB</strong> and <strong>NFS</strong> protocols. SMB is recommended for most use cases as it offers the best cross-platform compatibility.</p>
+<p>AutoMount supports <strong>SMB</strong> and <strong>NFS</strong> protocols. SMB is recommended for most use cases as it offers the best cross-platform compatibility.</p>
 
-<h3>Can I use MagicMount with VPN connections?</h3>
-<p>Yes. When a VPN connects, MagicMount detects the network change and will attempt to remount your managed shares. You may want to increase the network debounce setting to allow time for the VPN to fully establish.</p>
+<h3>Can I use AutoMount with VPN connections?</h3>
+<p>Yes. When a VPN connects, AutoMount detects the network change and will attempt to remount your managed shares. You may want to increase the network debounce setting to allow time for the VPN to fully establish.</p>
 
 <h3>Where are my share configurations stored?</h3>
-<p>Share configurations are stored in the app group container shared between MagicMount and the background service. They persist across app restarts and updates.</p>
+<p>Share configurations are stored in the app group container shared between AutoMount and the background service. They persist across app restarts and updates.</p>
 
 <h2>Troubleshooting</h2>
 <p>If you encounter errors when mounting shares, here are common causes and solutions:</p>
@@ -281,7 +281,7 @@
 </div>
 
 <hr>
-<p style="color: var(--secondary); font-size: 12px; text-align: center; margin-top: 16px;">MagicMount by Mark Tassinari</p>
+<p style="color: var(--secondary); font-size: 12px; text-align: center; margin-top: 16px;">AutoMount by Mark Tassinari</p>
 
 </body>
 </html>

@@ -80,7 +80,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Magic Mount"
+            "value" : "AutoMount"
           }
         }
       }
@@ -223,7 +223,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MagicMount Help"
+            "value" : "AutoMount Help"
           }
         }
       }
@@ -634,7 +634,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MagicMount does not have permission to run in the background. The main functionality of the app will be missing."
+            "value" : "AutoMount does not have permission to run in the background. The main functionality of the app will be missing."
           }
         }
       }
