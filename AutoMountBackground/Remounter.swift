@@ -39,7 +39,16 @@ actor Remounter{
         pendingTask = task
         await task.value
     }
-    @MainActor private func reconnectAll() async{
+    /// Clears any stale mounts, then remounts every managed share that is not connected.
+    ///
+    /// Deliberately *not* `@MainActor`: nothing here touches UI, and hopping to the main actor
+    /// meant the mount work and the volume enumeration it awaits were serialised behind the
+    /// main thread — so an unreachable server froze the whole app rather than just this task.
+    private func reconnectAll() async{
+        // Detach dead mount points first. Otherwise `fullMountList` reports a stale mount as
+        // connected (so nothing gets remounted), and any remount that does happen lands on a
+        // duplicate mount point such as `/Volumes/media-1`.
+        await storage.clearStaleMounts()
         let shares = await storage.fullMountList()
         for share in shares{
             if share.managed{

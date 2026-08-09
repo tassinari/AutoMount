@@ -46,7 +46,11 @@ struct ContentView: View {
                             switch type{
                                 
                             case .open:
-                                share.open()
+                                // Only a mounted share has somewhere to reveal; opening an
+                                // unmounted one would just bounce Finder off a dead path.
+                                if passedShare.connected == .mounted {
+                                    passedShare.open()
+                                }
                             case .mount:
                                 Task{
                                     do{
@@ -108,34 +112,38 @@ struct ContentCellView: View {
     let actionHandler : (Share, ButtonActionType) -> Void
     
     var body: some View {
-        Button {
-            actionHandler(share, .open)
-        } label: {
-            HStack(spacing: 0){
+        // The row and the mount button are siblings, not nested. Nesting the mount button
+        // inside the row button's label made a single click on eject fire *both* actions —
+        // so ejecting also asked Finder to reveal the volume being unmounted.
+        HStack(spacing: 0){
+            Button {
+                actionHandler(share, .open)
+            } label: {
                 Text(share.name ?? "--")
                     .foregroundStyle(share.textColor)
-                Spacer()
-                Button {
-                    actionHandler(share, .mount)
-                } label: {
-                    switch share.connected {
-                    case .mounted:
-                        Image(systemName: "eject")
-                    case .unmounted:
-                        Image(systemName: "arrow.up.circle")
-                    case .mounting, .unmounting:
-                        ProgressView()
-                            .controlSize(.mini)
-                                .frame(width: 16, height: 16)
-                    }
-
-                }
-                .buttonStyle(.borderless)
-                .disabled(share.buttonDisabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())  //allows taps on empty space in cell
             }
-            .contentShape(Rectangle())  //allows taps on empty space in cell
+            .buttonStyle(.plain)
+
+            Button {
+                actionHandler(share, .mount)
+            } label: {
+                switch share.connected {
+                case .mounted:
+                    Image(systemName: "eject")
+                case .unmounted:
+                    Image(systemName: "arrow.up.circle")
+                case .mounting, .unmounting:
+                    ProgressView()
+                        .controlSize(.mini)
+                            .frame(width: 16, height: 16)
+                }
+
+            }
+            .buttonStyle(.borderless)
+            .disabled(share.buttonDisabled)
         }
-        .buttonStyle(.plain)
         .padding([.leading, .trailing],12)
         .padding([.top, .bottom],6)
         .frame(maxWidth: .infinity, alignment: .leading)

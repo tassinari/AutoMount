@@ -19,6 +19,7 @@ class MockStorage: Storage{
     func mount(_ share: libMounter.Share, ui: Bool) async throws -> libMounter.MountResponse {
         mountCalled = true
         shareCalled = share
+        callLog.append("mount")
         if let err = throwError {
             throw err
         }
@@ -43,23 +44,40 @@ class MockStorage: Storage{
     var unmountCalled : Bool = false
     var throwError : Error? = nil
     var shareCalled : Share? = nil
-    
+
+    /// Mount points `clearStaleMounts()` should report as cleared.
+    var staleMounts : [String]
+    var clearStaleMountsCalled : Bool = false
+    /// Records the order of calls, so tests can assert that stale mounts are cleared
+    /// *before* the mount list is read.
+    var callLog : [String] = []
+
     init(list: [Share] = [],
          mountResponse: MountResponse = .timeout,
          addHandler: @escaping (Share) throws -> Void = {_ in },
          throwError: Error? = nil,
          deleteHandler : @escaping (Share) throws -> Void = { _ in },
+         staleMounts: [String] = [],
          mountHandler :  ((Share) async throws -> MountResponse)? = nil) {
         self.mockMountList = list
         self.addHandler = addHandler
         self.deleteHandler = deleteHandler
         self.mountResponse = mountResponse
         self.throwError = throwError
+        self.staleMounts = staleMounts
         self.mountHandler = mountHandler
     }
-    
+
     func fullMountList() async -> [Share]{
+        callLog.append("fullMountList")
         return mockMountList
+    }
+
+    @discardableResult
+    func clearStaleMounts() async -> [String] {
+        clearStaleMountsCalled = true
+        callLog.append("clearStaleMounts")
+        return staleMounts
     }
     
     func addMount(_ mount: Share) async throws {

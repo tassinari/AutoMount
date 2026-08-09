@@ -10,6 +10,25 @@ import XCTest
 import libMounter
 @testable import AutoMountBackground
 
+/// A detector that never emits on its own.
+///
+/// The real `Detector` starts an `NWPathMonitor` in `listen`, which fires a `.network` event
+/// as soon as the path is evaluated. In tests that meant a stray remount could fulfil an
+/// expectation belonging to whichever test happened to be running, so these suites failed
+/// intermittently depending on ordering. Tests drive `delegate` explicitly instead.
+final class StubDetector: Detectable {
+    private(set) weak var delegate: DetectorDelegate?
+
+    func listen(_ delegate: DetectorDelegate) {
+        self.delegate = delegate
+    }
+
+    /// Emits an event as though the system had detected it.
+    func emit(_ event: DetectorEvent) {
+        delegate?.didDetectEvent(event)
+    }
+}
+
 final class ModelSettingsTests: XCTestCase {
 
     private func freshDefaults() -> UserDefaults {
@@ -31,7 +50,7 @@ final class ModelSettingsTests: XCTestCase {
         })
         let remounter = Remounter(debounceSeconds: 0, storage: storage)
 
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
 
         await fulfillment(of: [exp], timeout: 2)
 
@@ -54,7 +73,7 @@ final class ModelSettingsTests: XCTestCase {
             return .success(nil)
         })
         let remounter = Remounter(debounceSeconds: 0, storage: storage)
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
 
         model.didDetectEvent(.network)
 
@@ -72,7 +91,7 @@ final class ModelSettingsTests: XCTestCase {
             return .success(nil)
         })
         let remounter = Remounter(debounceSeconds: 0, storage: storage)
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
 
         model.didDetectEvent(.wake)
 
@@ -88,7 +107,7 @@ final class ModelSettingsTests: XCTestCase {
         // Use a high debounce so any stray .network events from NWPathMonitor won't trigger mount
         let remounter = Remounter(debounceSeconds: 9999, storage: storage)
 
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
         model.didDetectEvent(.volume(MountEvent(type: .mounted, path: "/Volumes/USB")))
 
         try await Task.sleep(for: .seconds(0.5))
@@ -108,7 +127,7 @@ final class ModelSettingsTests: XCTestCase {
 
         // Held for the duration: a discarded Model may deinit immediately,
         // which would make this assertion pass whether or not the guard works.
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
 
         try await Task.sleep(for: .seconds(1))
         XCTAssertFalse(storage.mountCalled, "Periodic timer should not fire when interval is 0")
@@ -128,7 +147,7 @@ final class ModelSettingsTests: XCTestCase {
             return .success(nil)
         })
         let remounter = Remounter(debounceSeconds: 9999, storage: storage)
-        let model = Model(defaults: defaults, remounter: remounter, storage: storage)
+        let model = Model(defaults: defaults, remounter: remounter, detector: StubDetector(), storage: storage)
 
         // Change debounce to 0 via defaults — Model should propagate to remounter
         defaults.set(0.0, forKey: Constant.networkDebounceKey)
