@@ -54,13 +54,16 @@ extension Share {
         }
     }
 
+    /// Reveals the share's mount point in Finder.
+    ///
+    /// Deliberately does no existence check first. `FileManager.fileExists` on a stale network
+    /// mount blocks uninterruptibly until the SMB timeout, and this runs straight off a
+    /// SwiftUI button action on the main actor — which is exactly how a dead server used to
+    /// beach-ball the menu bar popup. `activateFileViewerSelecting` handles a missing path on
+    /// its own, and Finder is the right process to absorb that stall.
     public func open(){
-        //TODO: throw instead?
         guard let path = self.mountPoint else {return}
         let url = URL(filePath: path)
-        if FileManager.default.fileExists(atPath: url.path){
-            NSWorkspace.shared.activateFileViewerSelecting([url])
-        }
-        
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 }

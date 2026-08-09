@@ -13,18 +13,25 @@ AutoMount is a macOS desktop app (SwiftUI, Swift 5.0, macOS 14.6+) that manages 
 xcodebuild -scheme AutoMount -configuration Debug
 xcodebuild -scheme AutoMountBackground -configuration Debug
 
-# Run all tests
-xcodebuild test -scheme AutoMountTests
-xcodebuild test -scheme AutoMountBackgroundTests
+# Run all tests (test targets build under the app schemes; there is no
+# AutoMountTests or AutoMountBackgroundTests *scheme*)
+xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:AutoMountTests
+xcodebuild test -scheme AutoMountBackground -destination 'platform=macOS' -only-testing:AutoMountBackgroundTests
 
 # Run a single test class
-xcodebuild test -scheme AutoMountTests -only-testing AutoMountTests/ShareDataModelTests
+xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:AutoMountTests/ShareDataModelTests
 
 # Run a single test method
-xcodebuild test -scheme AutoMountTests -only-testing AutoMountTests/ShareDataModelTests/testInitWithStorageLoadsShares
+xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:AutoMountTests/ShareDataModelTests/testInitWithStorageLoadsShares
+
+# libMounter package tests (run from the package directory)
+cd ../Mounter && swift test
 ```
 
-Available schemes: `AutoMount`, `AutoMountBackground`, `libMounter`
+Available schemes: `AutoMount`, `AutoMountBackground`
+
+Some `libMounter` tests need the Docker SMB test server; `Scripts/dockerMount.sh`
+starts it and is safe to re-run. Without Docker those tests skip or fail to mount.
 
 ## Architecture
 

@@ -25,7 +25,10 @@ struct AutoMountBackgroundApp: App {
 class Model{
     let store: ShareDataModel
     let remounter: Remounter
-    let detector: Detector
+    /// Held as `Detectable` rather than `Detector` so tests can inject a stub. A real
+    /// `Detector` starts an `NWPathMonitor` that fires `.network` as soon as it is created,
+    /// which otherwise leaks stray remount events into unrelated tests.
+    let detector: Detectable
     let queue = DispatchQueue(label: "AutoMount NetworkMonitor")
     private let defaults: UserDefaults
     private var periodicTimer: Timer?
@@ -36,7 +39,7 @@ class Model{
         self.init(defaults: defaults)
     }
 
-    init(defaults: UserDefaults, remounter: Remounter? = nil, detector: Detector? = nil, storage: Storage? = nil) {
+    init(defaults: UserDefaults, remounter: Remounter? = nil, detector: Detectable? = nil, storage: Storage? = nil) {
         self.defaults = defaults
         let resolvedStorage = storage ?? StorageManager()
         self.store = ShareDataModel(storage: resolvedStorage)
