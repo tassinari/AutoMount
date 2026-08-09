@@ -211,5 +211,36 @@ public extension StorageManager {
         let url = URL(filePath: path)
         try await MountData.unmount(url: url)
     }
+
+    /// Detaches every mount point whose server no longer responds.
+    ///
+    /// After a sleep/wake or a network drop, the kernel keeps the mount point even though the
+    /// SMB session is dead. Two things then go wrong: any code that stats the path blocks until
+    /// the network timeout, and a remount of the same share lands on a *new* mount point
+    /// (`/Volumes/media-1`) because the original is still occupied. Clearing the stale mounts
+    /// first is what stops those duplicates accumulating.
+    ///
+    /// Reachability is probed with a bounded timeout on a background thread, so this method
+    /// never blocks its caller for longer than `timeout` per mount.
+    ///
+    /// - Parameter timeout: How long to wait for a mount point to respond before declaring it stale.
+    /// - Returns: The mount points that were forcibly detached.
+    @discardableResult
+    func clearStaleMounts(timeout: TimeInterval = 5) async -> [String] {
+        var cleared: [String] = []
+        for path in MountInfo.remoteMountPoints() {
+            if await MountInfo.isMountResponsive(path: path, timeout: timeout) {
+                continue
+            }
+            // `unmount(2)` with MNT_FORCE still blocks while the kernel tears down a dead SMB
+            // session — measured at well over two minutes against an unresponsive server. It
+            // is dispatched to its own thread and not awaited, so clearing stale mounts stays
+            // prompt; the detach completes in the background either way.
+            MountData.forceUnmountDetached(path: path)
+            cleared.append(path)
+            notice("Clearing stale mount at \(path)")
+        }
+        return cleared
+    }
 }
 

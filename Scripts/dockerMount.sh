@@ -24,6 +24,15 @@ fi
 touch "$mountDir/empty_file.txt"
 # Create an empty test.txt file
 
+# Reuse the container if it is already there. Several test suites share this one server,
+# and `docker run` exits 125 on a name clash, which used to surface as a test failure.
+if $dockerpath inspect smb-test >/dev/null 2>&1; then
+  echo "smb-test already exists; ensuring it is running"
+  $dockerpath unpause smb-test >/dev/null 2>&1
+  $dockerpath start smb-test >/dev/null 2>&1
+  exit 0
+fi
+
 $dockerpath run -d \
 --name smb-test \
 -p 1445:445 \
