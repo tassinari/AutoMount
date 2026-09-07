@@ -89,9 +89,14 @@ xcrun notarytool store-credentials "AutoMountNotary" \
 
 ## CI releases
 
-Pushing a `v*` tag builds, signs, notarizes and attaches a DMG to a **draft**
-GitHub release (`.github/workflows/release.yml`). Run the workflow manually
-first — Actions > Release > Run workflow — to check credentials without tagging.
+Pushing a `v*` tag builds, signs, notarizes and **publishes** a GitHub release
+with the DMG attached (`.github/workflows/release.yml`). It goes live as soon as
+the run finishes, so tag deliberately. Run the workflow manually first — Actions
+> Release > Run workflow — to check a build without tagging or publishing.
+
+A tag containing a hyphen (`v1.1.0-beta.1`, `v1.0.0-rc.2`) is marked a
+prerelease: it publishes, but does not become `releases/latest`, so the download
+link keeps pointing at the newest stable build.
 
 `Scripts/ci-keychain.sh` builds a throwaway keychain from repository secrets so
 `build-release.sh` runs unmodified on a runner, and deletes it afterwards.

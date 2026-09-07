@@ -168,7 +168,12 @@ jobs:
           files: |
             ${{ steps.dmg.outputs.path }}
             ${{ steps.dmg.outputs.stable }}
-          draft: true          # review before it goes out; publish by hand
+          # Tags publish immediately -- pushing a tag is the deliberate act.
+          # A tag containing a hyphen (v1.1.0-beta.1, -rc.2) is marked a
+          # prerelease instead, so it does not become /releases/latest and
+          # never displaces a stable build at the download link.
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true
 
       # Runs even on failure: the keychain holds a live Developer ID key.
