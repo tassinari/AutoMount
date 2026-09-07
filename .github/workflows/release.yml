@@ -136,10 +136,21 @@ jobs:
       - name: Locate the DMG
         id: dmg
         run: |
-          dmg="$(find dist -name '*.dmg' -maxdepth 1 | head -1)"
+          # Exclude the fixed-name copy, or a re-run in a dirty workspace
+          # could pick it up instead of the versioned build.
+          dmg="$(find dist -maxdepth 1 -name '*.dmg' ! -name 'AutoMount.dmg' | head -1)"
           [[ -n "$dmg" ]] || { echo "::error::no DMG produced in dist/"; exit 1; }
           echo "path=${dmg}" >> "$GITHUB_OUTPUT"
           echo "Built $(basename "$dmg") ($(du -h "$dmg" | cut -f1))"
+
+          # A second copy under a fixed name, so
+          # /releases/latest/download/AutoMount.dmg is a permanent link that
+          # never has to be updated for a new version. The versioned file is
+          # published too, so older releases stay individually addressable.
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            cp "$dmg" "dist/AutoMount.dmg"
+            echo "stable=dist/AutoMount.dmg" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -154,7 +165,9 @@ jobs:
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.dmg.outputs.path }}
+          files: |
+            ${{ steps.dmg.outputs.path }}
+            ${{ steps.dmg.outputs.stable }}
           draft: true          # review before it goes out; publish by hand
           generate_release_notes: true
 

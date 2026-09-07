@@ -3,6 +3,14 @@
 A macOS app that keeps your SMB, AFP, and NFS shares mounted — remounting them
 automatically on network change, wake, and login. Requires macOS 14.6+.
 
+### [Download AutoMount][latest]
+
+[latest]: https://github.com/tassinari/AutoMount/releases/latest/download/AutoMount.dmg
+
+Open the disk image and drag AutoMount to Applications. The app is signed and
+notarized, so it opens without a Gatekeeper warning. Every build is also listed
+on the [releases page](https://github.com/tassinari/AutoMount/releases).
+
 ## Building
 
 Needs Xcode and an Apple ID in **Xcode > Settings > Accounts**. Both targets
