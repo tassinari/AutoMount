@@ -91,6 +91,17 @@ jobs:
 
       # The team ID reaches the project the same way a contributor's would,
       # through AUTOMOUNT_DEVELOPMENT_TEAM rather than a config file.
+      # Creating provisioning profiles needs an authenticated account, which a
+      # certificate does not provide. Say so up front rather than letting
+      # xcodebuild fail with "No Accounts".
+      - name: Check provisioning credentials
+        run: |
+          if [[ -z "${{ secrets.ASC_KEY_ID }}" ]]; then
+            echo "::warning::No App Store Connect API key set (ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_BASE64). If the archive fails with 'No Accounts', that is why."
+          else
+            echo "App Store Connect API key configured"
+          fi
+
       - name: Build, sign, notarize
         env:
           AUTOMOUNT_DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}

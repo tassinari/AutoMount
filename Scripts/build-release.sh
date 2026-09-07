@@ -185,6 +185,25 @@ resolve_signing
 info "signing identity: ${SIGN_IDENTITY}"
 info "team id: ${TEAM_ID}"
 
+# xcodebuild can only create provisioning profiles when it has an authenticated
+# account. On a developer's Mac that comes from Xcode > Settings > Accounts; on
+# a runner there is none, and -allowProvisioningUpdates fails with "No Accounts:
+# Add a new account in Accounts settings". An App Store Connect API key supplies
+# that identity headlessly. Set AUTOMOUNT_ASC_* (the CI keychain script exports
+# them) to enable it; without them these stay empty and behaviour is unchanged.
+AUTH_ARGS=()
+if [[ -n "${AUTOMOUNT_ASC_KEY_PATH:-}" && -n "${AUTOMOUNT_ASC_KEY_ID:-}" \
+      && -n "${AUTOMOUNT_ASC_ISSUER_ID:-}" ]]; then
+    [[ -f "$AUTOMOUNT_ASC_KEY_PATH" ]] \
+        || die "App Store Connect key not found at ${AUTOMOUNT_ASC_KEY_PATH}"
+    AUTH_ARGS=(
+        -authenticationKeyPath "$AUTOMOUNT_ASC_KEY_PATH"
+        -authenticationKeyID "$AUTOMOUNT_ASC_KEY_ID"
+        -authenticationKeyIssuerID "$AUTOMOUNT_ASC_ISSUER_ID"
+    )
+    info "using App Store Connect API key ${AUTOMOUNT_ASC_KEY_ID} for provisioning"
+fi
+
 # ExportOptions.plist needs a literal team ID, so generate it from the tracked
 # template rather than keeping a developer-specific copy in the repo.
 # `mktemp -t` appends its own random suffix, so it cannot produce a name ending
@@ -267,8 +286,13 @@ xcodebuild archive \
     MARKETING_VERSION="$VERSION" \
     CURRENT_PROJECT_VERSION="$BUILD_NUM" \
     -allowProvisioningUpdates \
+    "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
-    || die "archive failed"
+    || die "archive failed.
+    If this says \"No Accounts\" or \"no Mac App Development provisioning
+    profiles\", xcodebuild has no account to create profiles with. On a CI
+    runner set the App Store Connect API key secrets (ASC_KEY_ID,
+    ASC_ISSUER_ID, ASC_KEY_BASE64); a certificate alone is not enough."
 
 [[ -d "$ARCHIVE_PATH" ]] || die "archive missing at $ARCHIVE_PATH"
 info "archived to ${ARCHIVE_PATH#$REPO_ROOT/}"
@@ -285,6 +309,7 @@ xcodebuild -exportArchive \
     -exportOptionsPlist "$EXPORT_PLIST" \
     -exportPath "$EXPORT_DIR" \
     -allowProvisioningUpdates \
+    "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
     || die "export failed -- see the log above.
     If this is a provisioning failure, the app group entitlement (${APP_GROUP})
