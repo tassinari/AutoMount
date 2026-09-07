@@ -28,3 +28,11 @@ Scripts/signing.env
 
 # Local signing config -- set your own team ID here
 Config/Local.xcconfig
+
+# Base64 blobs produced when setting up CI secrets. These carry a private key
+# (certificates) or signing entitlements (profiles) and must never be committed.
+*.b64
+*.p12
+*.p8
+*.mobileprovision
+*.provisionprofile
