@@ -1,0 +1,127 @@
+name: Release
+
+# Tagging v1.2.0 builds, signs, notarizes and publishes AutoMount-1.2.0.dmg.
+# Run it by hand first with workflow_dispatch to check the credentials without
+# creating a tag or a release.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (no leading v), e.g. 1.2.0'
+        required: true
+        default: '0.0.0-test'
+      skip_notarize:
+        description: 'Skip notarization (fast check, not distributable)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write        # needed to create the release and upload the DMG
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 90  # notarization waits on Apple; the script caps it at 30m
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pin the toolchain. Runner images move Xcode versions without notice,
+      # and a silent bump changes what gets shipped. The project needs
+      # swift-tools 6.2 and a recent SDK, so this must be a current Xcode --
+      # set XCODE_VERSION as a repository variable to move it deliberately.
+      - name: Select Xcode
+        run: |
+          want="${{ vars.XCODE_VERSION }}"
+          if [[ -n "$want" && -d "/Applications/Xcode_${want}.app" ]]; then
+            sudo xcode-select -switch "/Applications/Xcode_${want}.app"
+          else
+            if [[ -n "$want" ]]; then
+              echo "::warning::Xcode ${want} not on this runner; using the newest available"
+              ls -d /Applications/Xcode*.app
+            fi
+            newest="$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+            sudo xcode-select -switch "$newest"
+          fi
+
+      - name: Show build environment
+        run: |
+          xcodebuild -version
+          swift --version
+          sw_vers
+
+      # A tag build takes its version from the tag (v1.2.0 -> 1.2.0); a manual
+      # run takes it from the input.
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="${{ inputs.version }}"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.]+)?$ ]]; then
+            echo "::error::'${version}' is not a valid version (expected 1.2.0)"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${version}"
+
+      - name: Set up signing credentials
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
+        run: ./Scripts/ci-keychain.sh
+
+      # The team ID reaches the project the same way a contributor's would,
+      # through AUTOMOUNT_DEVELOPMENT_TEAM rather than a config file.
+      - name: Build, sign, notarize
+        env:
+          AUTOMOUNT_DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
+          AUTOMOUNT_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          args=(--version "${{ steps.version.outputs.version }}")
+          if [[ "${{ inputs.skip_notarize }}" == "true" ]]; then
+            args+=(--skip-notarize)
+          fi
+          ./Scripts/build-release.sh "${args[@]}"
+
+      - name: Locate the DMG
+        id: dmg
+        run: |
+          dmg="$(find dist -name '*.dmg' -maxdepth 1 | head -1)"
+          [[ -n "$dmg" ]] || { echo "::error::no DMG produced in dist/"; exit 1; }
+          echo "path=${dmg}" >> "$GITHUB_OUTPUT"
+          echo "Built $(basename "$dmg") ($(du -h "$dmg" | cut -f1))"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoMount-${{ steps.version.outputs.version }}-dmg
+          path: ${{ steps.dmg.outputs.path }}
+          retention-days: 14
+          if-no-files-found: error
+
+      # Only tags publish a release; manual runs stop at the artifact above.
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.dmg.outputs.path }}
+          draft: true          # review before it goes out; publish by hand
+          generate_release_notes: true
+
+      # Runs even on failure: the keychain holds a live Developer ID key.
+      - name: Remove signing credentials
+        if: always()
+        run: ./Scripts/ci-keychain.sh --cleanup

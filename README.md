@@ -79,6 +79,32 @@ xcrun notarytool store-credentials "AutoMountNotary" \
     --password "<app-specific-password>"
 ```
 
+## CI releases
+
+Pushing a `v*` tag builds, signs, notarizes and attaches a DMG to a **draft**
+GitHub release (`.github/workflows/release.yml`). Run the workflow manually
+first — Actions > Release > Run workflow — to check credentials without tagging.
+
+`Scripts/ci-keychain.sh` builds a throwaway keychain from repository secrets so
+`build-release.sh` runs unmodified on a runner, and deletes it afterwards.
+Required secrets:
+
+| Secret | Value |
+| --- | --- |
+| `BUILD_CERTIFICATE_BASE64` | `base64 -i Certificates.p12` — Developer ID cert **and** private key |
+| `P12_PASSWORD` | password used when exporting the `.p12` |
+| `KEYCHAIN_PASSWORD` | any random string; secures the temporary keychain |
+| `APPLE_ID` | Apple ID email |
+| `APPLE_TEAM_ID` | your 10-character team ID |
+| `APPLE_APP_PASSWORD` | app-specific password from appleid.apple.com |
+
+Instead of the last three you can set `ASC_KEY_ID`, `ASC_ISSUER_ID` and
+`ASC_KEY_BASE64` for App Store Connect API authentication, which does not break
+when your Apple ID password changes.
+
+Optionally set the `XCODE_VERSION` repository *variable* (e.g. `26.6`) to pin the
+toolchain; without it the workflow uses the newest Xcode on the runner.
+
 ## Architecture
 
 | Target | Role |
