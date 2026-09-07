@@ -30,8 +30,15 @@ cd ../Mounter && swift test
 
 Available schemes: `AutoMount`, `AutoMountBackground`
 
-Some `libMounter` tests need the Docker SMB test server; `Scripts/dockerMount.sh`
-starts it and is safe to re-run. Without Docker those tests skip or fail to mount.
+Signing is not hardcoded. `Config/Signing.xcconfig` optionally includes an
+untracked `Config/Local.xcconfig` supplying `DEVELOPMENT_TEAM_DEFAULT`; run
+`./Scripts/setup-dev.sh` to generate it. `AUTOMOUNT_DEVELOPMENT_TEAM` overrides
+it. Do not set the team through Xcode's Signing & Capabilities editor -- that
+writes the ID back into `project.pbxproj`.
+
+Some `libMounter` tests need the Docker SMB test server. The script lives in the
+package, not this repo: `../Mounter/Scripts/dockerMount.sh` starts it and is safe
+to re-run. Without Docker those tests skip or fail to mount.
 
 ## Architecture
 
