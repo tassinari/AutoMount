@@ -96,18 +96,50 @@ cleanup_cert() { rm -f "$CERT_P12"; }
 trap cleanup_cert EXIT
 
 # base64 -D on macOS, -d on GNU; accept either so this runs locally too.
-printf '%s' "$BUILD_CERTIFICATE_BASE64" | base64 -D -o "$CERT_P12" 2>/dev/null \
-    || printf '%s' "$BUILD_CERTIFICATE_BASE64" | base64 -d > "$CERT_P12" \
+# Strip whitespace first: a secret pasted through a browser often picks up
+# wrapping or a trailing newline, and macOS's base64 silently decodes such
+# input to garbage rather than erroring.
+printf '%s' "$BUILD_CERTIFICATE_BASE64" | tr -d '[:space:]' \
+    | { base64 -D -o "$CERT_P12" 2>/dev/null || base64 -d > "$CERT_P12"; } \
     || die "could not decode BUILD_CERTIFICATE_BASE64 -- is it valid base64?"
 
 [[ -s "$CERT_P12" ]] || die "decoded certificate is empty"
+
+# macOS base64 exits 0 on malformed input, so a corrupt secret yields a
+# plausible-looking file. Verify the decode really produced a PKCS#12 archive:
+# without this, corruption surfaces later as "MAC verification failed (wrong
+# password?)", which sends you chasing the wrong secret.
+if ! openssl pkcs12 -in "$CERT_P12" -nokeys -passin pass:"$P12_PASSWORD" \
+        -legacy >/dev/null 2>&1 \
+   && ! openssl pkcs12 -in "$CERT_P12" -nokeys -passin pass:"$P12_PASSWORD" \
+        >/dev/null 2>&1; then
+    # Distinguish a bad container from a bad password by re-testing structure
+    # with a deliberately wrong password: a valid .p12 fails on the MAC, while
+    # a corrupt file fails to parse at all.
+    probe="$(openssl pkcs12 -in "$CERT_P12" -nokeys \
+             -passin pass:__definitely_not_the_password__ 2>&1 || true)"
+    if printf '%s' "$probe" | grep -qiE 'mac verify|invalid password|verification failure'; then
+        die "the .p12 decoded correctly but P12_PASSWORD is wrong.
+    That is the password you typed when exporting from Keychain Access --
+    not your Mac login and not your Apple ID password."
+    fi
+    die "BUILD_CERTIFICATE_BASE64 did not decode to a valid PKCS#12 archive
+    (decoded $(wc -c < "$CERT_P12" | tr -d ' ') bytes).
+
+    Re-export and re-upload, avoiding any copy-paste step:
+      base64 -i Certificates.p12 -o cert.b64
+      gh secret set BUILD_CERTIFICATE_BASE64 < cert.b64"
+fi
+info "decoded a valid PKCS#12 archive ($(wc -c < "$CERT_P12" | tr -d ' ') bytes)"
 
 # -T codesign grants codesign access without a UI prompt.
 security import "$CERT_P12" \
     -k "$KEYCHAIN_PATH" \
     -P "$P12_PASSWORD" \
     -A -T /usr/bin/codesign -T /usr/bin/security \
-    || die "failed to import the certificate -- is P12_PASSWORD correct?"
+    || die "failed to import the certificate into the keychain.
+    The archive and password are both valid, so this is likely a keychain
+    permissions problem on the runner."
 
 # Without a partition list, codesign blocks on a GUI authorization prompt that
 # never comes on a headless runner, and the build hangs until it times out.
