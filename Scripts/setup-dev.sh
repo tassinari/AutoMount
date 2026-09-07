@@ -76,7 +76,9 @@ teams_from_profiles() {
     while IFS= read -r -d '' p; do
         security cms -D -i "$p" 2>/dev/null \
             | plutil -extract TeamIdentifier.0 raw - -o - 2>/dev/null || true
-    done < <(find "$dir" -maxdepth 1 -name '*.mobileprovision' -o -name '*.provisionprofile' -print0 2>/dev/null)
+    done < <(find "$dir" -maxdepth 1 \
+        \( -name '*.mobileprovision' -o -name '*.provisionprofile' \) \
+        -print0 2>/dev/null)
 }
 
 step "Detecting Apple Developer team"
@@ -90,10 +92,13 @@ else
     count="$(printf '%s' "$candidates" | grep -c . || true)"
 
     # Narrow an ambiguous set with the Developer ID team when there is exactly one.
+    # Candidates are already deduplicated by team ID, so reaching here means the
+    # machine really does carry certificates for more than one team.
     if (( count > 1 )); then
         preferred="$(teams_from_developer_id | sort -u | grep . || true)"
         if (( $(printf '%s' "$preferred" | grep -c . || true) == 1 )); then
-            info "several teams found; preferring the Developer ID team"
+            info "teams found: $(printf '%s' "$candidates" | tr '\n' ' ')"
+            info "preferring the Developer ID team: ${preferred}"
             candidates="$preferred"
             count=1
         fi
