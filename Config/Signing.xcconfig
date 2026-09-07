@@ -5,10 +5,15 @@
 //
 //     DEVELOPMENT_TEAM_DEFAULT = ABCDE12345
 //
-// Copy Config/Local.xcconfig.example to get started. Without it the targets
-// fall back to whatever team Xcode's automatic signing picks for your account,
-// which is enough for a local Debug build.
+// Run ./Scripts/setup-dev.sh to generate that file, or copy
+// Config/Local.xcconfig.example and fill in your team.
+//
+// A team ID is required to build: both targets carry an app-group entitlement,
+// and the entitlement check runs per target, so a build with no team fails with
+// "has entitlements that require signing with a development certificate."
+// Setting AUTOMOUNT_DEVELOPMENT_TEAM in the environment works too, and takes
+// precedence over this file.
 //
 // The `include?` is optional-include: a missing file is not an error, so a
-// fresh clone still opens and builds.
+// fresh clone still opens in Xcode.
 #include? "Local.xcconfig"
