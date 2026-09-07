@@ -96,13 +96,16 @@ jobs:
       # certificate does not provide. Say so up front rather than letting
       # xcodebuild fail with "No Accounts".
       - name: Check provisioning credentials
+        env:
+          HAVE_PROFILES: ${{ secrets.PROVISIONING_PROFILES_BASE64 != '' }}
+          HAVE_ASC_KEY: ${{ secrets.ASC_KEY_ID != '' }}
         run: |
-          if [[ -z "${{ secrets.PROVISIONING_PROFILES_BASE64 }}" ]]; then
+          if [[ "$HAVE_PROFILES" != "true" ]]; then
             echo "::warning::No PROVISIONING_PROFILES_BASE64 set. A personal team cannot create Developer ID profiles via the API, so export will fail. Run ./Scripts/export-profiles.sh locally and set that secret."
           else
             echo "Provisioning profiles supplied"
           fi
-          if [[ -z "${{ secrets.ASC_KEY_ID }}" ]]; then
+          if [[ "$HAVE_ASC_KEY" != "true" ]]; then
             echo "::warning::No App Store Connect API key set. Needed only if profiles are not supplied."
           fi
 
