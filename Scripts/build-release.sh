@@ -69,6 +69,7 @@ die()  { printf '\n%serror:%s %s\n' "$RED" "$RST" "$1" >&2; exit 1; }
 MOUNT_DEV=""
 STAGE_DIR=""
 EXPORT_PLIST=""
+EXPORT_TMPDIR=""
 cleanup() {
     if [[ -n "$MOUNT_DEV" ]]; then
         hdiutil detach "$MOUNT_DEV" -quiet 2>/dev/null || true
@@ -76,8 +77,8 @@ cleanup() {
     if [[ -n "$STAGE_DIR" && -d "$STAGE_DIR" ]]; then
         rm -rf "$STAGE_DIR"
     fi
-    if [[ -n "$EXPORT_PLIST" && -f "$EXPORT_PLIST" ]]; then
-        rm -f "$EXPORT_PLIST"
+    if [[ -n "$EXPORT_TMPDIR" && -d "$EXPORT_TMPDIR" ]]; then
+        rm -rf "$EXPORT_TMPDIR"
     fi
 }
 trap cleanup EXIT
@@ -186,7 +187,10 @@ info "team id: ${TEAM_ID}"
 
 # ExportOptions.plist needs a literal team ID, so generate it from the tracked
 # template rather than keeping a developer-specific copy in the repo.
-EXPORT_PLIST="$(mktemp -t AutoMountExportOptions).plist"
+# `mktemp -t` appends its own random suffix, so it cannot produce a name ending
+# in .plist; make a temp directory and put a correctly-named file inside it.
+EXPORT_TMPDIR="$(mktemp -d -t AutoMountExport)"
+EXPORT_PLIST="${EXPORT_TMPDIR}/ExportOptions.plist"
 sed "s/__TEAM_ID__/${TEAM_ID}/" "$EXPORT_TEMPLATE" > "$EXPORT_PLIST"
 if grep -qF "__TEAM_ID__" "$EXPORT_PLIST"; then
     die "failed to substitute team ID into export options"
