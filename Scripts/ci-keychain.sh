@@ -15,6 +15,10 @@
 # Required environment:
 #   BUILD_CERTIFICATE_BASE64  base64 of the Developer ID Application .p12
 #   P12_PASSWORD              password the .p12 was exported with
+#
+# Optional, needed to archive (see below):
+#   DEV_CERTIFICATE_BASE64    base64 of an Apple Development .p12
+#   DEV_P12_PASSWORD          its password (defaults to P12_PASSWORD)
 #   KEYCHAIN_PASSWORD         any random string; secures the temp keychain
 #   APPLE_ID                  Apple ID email, for notarization
 #   APPLE_TEAM_ID             10-character team ID
@@ -35,6 +39,7 @@ readonly ASC_KEY_DIR="${HOME}/.appstoreconnect/private_keys"
 
 step() { printf '\n==> %s\n' "$1"; }
 info() { printf '    %s\n' "$1"; }
+warn() { printf ' warn: %s\n' "$1" >&2; }
 die()  { printf '\nerror: %s\n' "$1" >&2; exit 1; }
 
 # ------------------------------------------------------------------- cleanup
@@ -131,6 +136,37 @@ if ! openssl pkcs12 -in "$CERT_P12" -nokeys -passin pass:"$P12_PASSWORD" \
       gh secret set BUILD_CERTIFICATE_BASE64 < cert.b64"
 fi
 info "decoded a valid PKCS#12 archive ($(wc -c < "$CERT_P12" | tr -d ' ') bytes)"
+
+# The project's Release configuration signs with "Apple Development" and only
+# the *export* step re-signs with Developer ID, so archiving needs that second
+# certificate as well. Without it xcodebuild fails with "No Accounts" and
+# "no Mac App Development provisioning profiles".
+import_extra_cert() {
+    local b64="$1" pw="$2" label="$3" tmp
+    tmp="$(mktemp -t automount-devcert).p12"
+    printf '%s' "$b64" | tr -d '[:space:]' \
+        | { base64 -D -o "$tmp" 2>/dev/null || base64 -d > "$tmp"; } \
+        || { rm -f "$tmp"; die "could not decode ${label}"; }
+    openssl pkcs12 -in "$tmp" -nokeys -passin pass:"$pw" -legacy >/dev/null 2>&1 \
+        || openssl pkcs12 -in "$tmp" -nokeys -passin pass:"$pw" >/dev/null 2>&1 \
+        || { rm -f "$tmp"; die "${label} is not a valid PKCS#12 archive, or its password is wrong"; }
+    security import "$tmp" -k "$KEYCHAIN_PATH" -P "$pw" \
+        -A -T /usr/bin/codesign -T /usr/bin/security \
+        || { rm -f "$tmp"; die "failed to import ${label}"; }
+    rm -f "$tmp"
+    security set-key-partition-list -S apple-tool:,apple:,codesign: \
+        -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null 2>&1 || true
+    info "imported ${label}"
+}
+
+if [[ -n "${DEV_CERTIFICATE_BASE64:-}" ]]; then
+    step "Importing the Apple Development certificate"
+    import_extra_cert "$DEV_CERTIFICATE_BASE64" \
+        "${DEV_P12_PASSWORD:-$P12_PASSWORD}" "Apple Development certificate"
+else
+    warn "no DEV_CERTIFICATE_BASE64 set -- archiving will fail unless the
+    project's Release configuration signs with Developer ID directly."
+fi
 
 # -T codesign grants codesign access without a UI prompt.
 security import "$CERT_P12" \
