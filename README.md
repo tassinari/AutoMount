@@ -100,7 +100,21 @@ Required secrets:
 | `APPLE_TEAM_ID` | your 10-character team ID |
 | `APPLE_APP_PASSWORD` | app-specific password from appleid.apple.com |
 
-**An App Store Connect API key is required**, not optional: creating provisioning
+**Provisioning profiles must be supplied.** A personal Apple team is not allowed
+to create "Developer ID" provisioning profiles through the API — Apple rejects it
+with *"Team ... does not have permission to create Developer ID provisioning
+profiles"* — so a runner cannot mint its own. Export the ones Xcode already made
+on your machine and store them as a secret:
+
+```bash
+./Scripts/export-profiles.sh --upload      # or omit --upload and set it by hand
+```
+
+That sets `PROVISIONING_PROFILES_BASE64`. With it in place the build reuses those
+profiles offline and never asks Apple for new ones. Re-run it if the profiles
+expire.
+
+**An App Store Connect API key is optional**, not optional: creating provisioning
 profiles needs an authenticated Apple account, and a certificate is not one. A
 runner has no Xcode account, so `-allowProvisioningUpdates` fails with *"No
 Accounts: Add a new account in Accounts settings"* without it.

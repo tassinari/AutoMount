@@ -80,6 +80,7 @@ jobs:
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
           DEV_CERTIFICATE_BASE64: ${{ secrets.DEV_CERTIFICATE_BASE64 }}
           DEV_P12_PASSWORD: ${{ secrets.DEV_P12_PASSWORD }}
+          PROVISIONING_PROFILES_BASE64: ${{ secrets.PROVISIONING_PROFILES_BASE64 }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -96,10 +97,13 @@ jobs:
       # xcodebuild fail with "No Accounts".
       - name: Check provisioning credentials
         run: |
-          if [[ -z "${{ secrets.ASC_KEY_ID }}" ]]; then
-            echo "::warning::No App Store Connect API key set (ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_BASE64). If the archive fails with 'No Accounts', that is why."
+          if [[ -z "${{ secrets.PROVISIONING_PROFILES_BASE64 }}" ]]; then
+            echo "::warning::No PROVISIONING_PROFILES_BASE64 set. A personal team cannot create Developer ID profiles via the API, so export will fail. Run ./Scripts/export-profiles.sh locally and set that secret."
           else
-            echo "App Store Connect API key configured"
+            echo "Provisioning profiles supplied"
+          fi
+          if [[ -z "${{ secrets.ASC_KEY_ID }}" ]]; then
+            echo "::warning::No App Store Connect API key set. Needed only if profiles are not supplied."
           fi
 
       - name: Build, sign, notarize

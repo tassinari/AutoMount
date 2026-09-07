@@ -191,6 +191,17 @@ info "team id: ${TEAM_ID}"
 # Add a new account in Accounts settings". An App Store Connect API key supplies
 # that identity headlessly. Set AUTOMOUNT_ASC_* (the CI keychain script exports
 # them) to enable it; without them these stay empty and behaviour is unchanged.
+# Supplying profiles means they must not be regenerated. -allowProvisioningUpdates
+# asks Apple to create a Developer ID profile, which a personal team may not do
+# ("Team ... does not have permission to create Developer ID provisioning
+# profiles") -- and it is unnecessary when the profiles are already installed:
+# automatic signing then simply reuses them offline.
+PROVISION_ARGS=(-allowProvisioningUpdates)
+if [[ "${AUTOMOUNT_USE_INSTALLED_PROFILES:-0}" == "1" ]]; then
+    PROVISION_ARGS=()
+    info "using pre-installed provisioning profiles (no profile creation)"
+fi
+
 AUTH_ARGS=()
 if [[ -n "${AUTOMOUNT_ASC_KEY_PATH:-}" && -n "${AUTOMOUNT_ASC_KEY_ID:-}" \
       && -n "${AUTOMOUNT_ASC_ISSUER_ID:-}" ]]; then
@@ -285,7 +296,7 @@ xcodebuild archive \
     -destination 'generic/platform=macOS' \
     MARKETING_VERSION="$VERSION" \
     CURRENT_PROJECT_VERSION="$BUILD_NUM" \
-    -allowProvisioningUpdates \
+    "${PROVISION_ARGS[@]+"${PROVISION_ARGS[@]}"}" \
     "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
     || die "archive failed.
@@ -308,7 +319,7 @@ xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportOptionsPlist "$EXPORT_PLIST" \
     -exportPath "$EXPORT_DIR" \
-    -allowProvisioningUpdates \
+    "${PROVISION_ARGS[@]+"${PROVISION_ARGS[@]}"}" \
     "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
     || die "export failed -- see the log above.
