@@ -169,3 +169,7 @@ signing correctness is verified in the release script's own verification phase.
 
 Both apps share state through the `group.org.tassinari.automount` app group.
 Concurrency is async/await throughout — no Combine.
+
+## License
+
+[MIT](LICENSE) © Mark Tassinari
