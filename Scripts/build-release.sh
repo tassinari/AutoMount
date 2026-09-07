@@ -191,15 +191,23 @@ info "team id: ${TEAM_ID}"
 # Add a new account in Accounts settings". An App Store Connect API key supplies
 # that identity headlessly. Set AUTOMOUNT_ASC_* (the CI keychain script exports
 # them) to enable it; without them these stay empty and behaviour is unchanged.
-# Supplying profiles means they must not be regenerated. -allowProvisioningUpdates
-# asks Apple to create a Developer ID profile, which a personal team may not do
-# ("Team ... does not have permission to create Developer ID provisioning
-# profiles") -- and it is unnecessary when the profiles are already installed:
-# automatic signing then simply reuses them offline.
-PROVISION_ARGS=(-allowProvisioningUpdates)
+# The archive and the export need opposite treatment.
+#
+# The archive signs with "Apple Development" and wants a Mac Team Provisioning
+# Profile. Those are device-bound, so they cannot be shipped from a developer's
+# machine -- but Apple *does* permit creating them, so the archive keeps
+# -allowProvisioningUpdates and mints one for the runner.
+#
+# The export signs with Developer ID and wants a "Direct" profile. A personal
+# team may not create those ("Team ... does not have permission to create
+# Developer ID provisioning profiles"), so the export must reuse the profiles
+# installed from PROVISIONING_PROFILES_BASE64 and must NOT pass the flag --
+# passing it makes xcodebuild try to create one and fail.
+ARCHIVE_PROVISION_ARGS=(-allowProvisioningUpdates)
+EXPORT_PROVISION_ARGS=(-allowProvisioningUpdates)
 if [[ "${AUTOMOUNT_USE_INSTALLED_PROFILES:-0}" == "1" ]]; then
-    PROVISION_ARGS=()
-    info "using pre-installed provisioning profiles (no profile creation)"
+    EXPORT_PROVISION_ARGS=()
+    info "export will reuse pre-installed profiles (no Developer ID creation)"
 fi
 
 AUTH_ARGS=()
@@ -296,7 +304,7 @@ xcodebuild archive \
     -destination 'generic/platform=macOS' \
     MARKETING_VERSION="$VERSION" \
     CURRENT_PROJECT_VERSION="$BUILD_NUM" \
-    "${PROVISION_ARGS[@]+"${PROVISION_ARGS[@]}"}" \
+    "${ARCHIVE_PROVISION_ARGS[@]+"${ARCHIVE_PROVISION_ARGS[@]}"}" \
     "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
     || die "archive failed.
@@ -319,7 +327,7 @@ xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportOptionsPlist "$EXPORT_PLIST" \
     -exportPath "$EXPORT_DIR" \
-    "${PROVISION_ARGS[@]+"${PROVISION_ARGS[@]}"}" \
+    "${EXPORT_PROVISION_ARGS[@]+"${EXPORT_PROVISION_ARGS[@]}"}" \
     "${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"}" \
     -quiet \
     || die "export failed -- see the log above.
