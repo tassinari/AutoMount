@@ -93,6 +93,8 @@ Required secrets:
 | --- | --- |
 | `BUILD_CERTIFICATE_BASE64` | `base64 -i Certificates.p12` — Developer ID cert **and** private key |
 | `P12_PASSWORD` | password used when exporting the `.p12` |
+| `DEV_CERTIFICATE_BASE64` | an **Apple Development** cert, same treatment — the archive step signs with it before export re-signs with Developer ID |
+| `DEV_P12_PASSWORD` | its password (omit if the same as `P12_PASSWORD`) |
 | `KEYCHAIN_PASSWORD` | any random string; secures the temporary keychain |
 | `APPLE_ID` | Apple ID email |
 | `APPLE_TEAM_ID` | your 10-character team ID |
