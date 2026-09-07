@@ -19,6 +19,9 @@
 # Optional, needed to archive (see below):
 #   DEV_CERTIFICATE_BASE64    base64 of an Apple Development .p12
 #   DEV_P12_PASSWORD          its password (defaults to P12_PASSWORD)
+#
+# Optional, needed to export without Apple minting profiles:
+#   PROVISIONING_PROFILES_BASE64  base64 of a tar of .provisionprofile files
 #   KEYCHAIN_PASSWORD         any random string; secures the temp keychain
 #   APPLE_ID                  Apple ID email, for notarization
 #   APPLE_TEAM_ID             10-character team ID
@@ -207,6 +210,52 @@ fi
 info "team ${APPLE_TEAM_ID} matches the certificate"
 
 # ------------------------------------------------------- notary credentials
+
+# ------------------------------------------------------ provisioning profiles
+
+# Free and personal teams cannot create Developer ID profiles through the API
+# ("Team ... does not have permission to create Developer ID provisioning
+# profiles"), so exporting on a runner needs the profiles Xcode already made on
+# a developer's machine. Installing them here lets -exportArchive find them
+# instead of trying to mint new ones.
+if [[ -n "${PROVISIONING_PROFILES_BASE64:-}" ]]; then
+    step "Installing provisioning profiles"
+    PROFILE_DIR="${HOME}/Library/MobileDevice/Provisioning Profiles"
+    mkdir -p "$PROFILE_DIR"
+    prof_tar="$(mktemp -t automount-profiles).tgz"
+    printf '%s' "$PROVISIONING_PROFILES_BASE64" | tr -d '[:space:]' \
+        | { base64 -D -o "$prof_tar" 2>/dev/null || base64 -d > "$prof_tar"; } \
+        || die "could not decode PROVISIONING_PROFILES_BASE64"
+    # -z where gzipped (what export-profiles.sh writes), plain tar otherwise.
+    tar -xzf "$prof_tar" -C "$PROFILE_DIR" 2>/dev/null \
+        || tar -xf "$prof_tar" -C "$PROFILE_DIR" \
+        || die "PROVISIONING_PROFILES_BASE64 did not decode to a tar archive"
+    rm -f "$prof_tar"
+
+    # Xcode also reads this location, and -exportArchive prefers it.
+    XC_PROFILE_DIR="${HOME}/Library/Developer/Xcode/UserData/Provisioning Profiles"
+    mkdir -p "$XC_PROFILE_DIR"
+    cp "$PROFILE_DIR"/*.provisionprofile "$XC_PROFILE_DIR"/ 2>/dev/null || true
+
+    installed=0
+    for prof in "$PROFILE_DIR"/*.provisionprofile; do
+        [[ -f "$prof" ]] || continue
+        name="$(security cms -D -i "$prof" 2>/dev/null \
+                | plutil -extract Name raw - -o - 2>/dev/null || echo '?')"
+        info "installed: ${name}"
+        installed=$(( installed + 1 ))
+    done
+    (( installed > 0 )) || die "no .provisionprofile files found in the archive"
+
+    # Tell build-release.sh to reuse these rather than ask Apple for new ones.
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+        echo "AUTOMOUNT_USE_INSTALLED_PROFILES=1" >> "$GITHUB_ENV"
+        info "export will reuse these profiles instead of creating any"
+    fi
+else
+    warn "no PROVISIONING_PROFILES_BASE64 set -- export will ask Apple to create
+    Developer ID profiles, which personal teams are not permitted to do."
+fi
 
 step "Storing notary credentials"
 
