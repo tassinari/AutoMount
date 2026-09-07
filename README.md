@@ -100,9 +100,22 @@ Required secrets:
 | `APPLE_TEAM_ID` | your 10-character team ID |
 | `APPLE_APP_PASSWORD` | app-specific password from appleid.apple.com |
 
-Instead of the last three you can set `ASC_KEY_ID`, `ASC_ISSUER_ID` and
-`ASC_KEY_BASE64` for App Store Connect API authentication, which does not break
-when your Apple ID password changes.
+**An App Store Connect API key is required**, not optional: creating provisioning
+profiles needs an authenticated Apple account, and a certificate is not one. A
+runner has no Xcode account, so `-allowProvisioningUpdates` fails with *"No
+Accounts: Add a new account in Accounts settings"* without it.
+
+| Secret | Value |
+| --- | --- |
+| `ASC_KEY_ID` | the key's ID, e.g. `2X9R4HXF34` |
+| `ASC_ISSUER_ID` | issuer UUID, shown above the keys list |
+| `ASC_KEY_BASE64` | `base64 -i AuthKey_XXXX.p8` |
+
+Create one at [App Store Connect](https://appstoreconnect.apple.com/access/integrations/api)
+> Integrations > App Store Connect API, with the **Developer** role or higher.
+The `.p8` downloads **once** — keep it somewhere safe. The key also authenticates
+notarization, replacing `APPLE_ID` / `APPLE_APP_PASSWORD`, and does not break when
+your Apple ID password changes.
 
 Optionally set the `XCODE_VERSION` repository *variable* (e.g. `26.6`) to pin the
 toolchain; without it the workflow uses the newest Xcode on the runner.

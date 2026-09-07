@@ -225,6 +225,19 @@ if (( USE_ASC_KEY )); then
         --keychain "$KEYCHAIN_PATH" \
         || die "failed to store notary credentials from the API key"
     info "stored profile '${NOTARY_PROFILE}' (App Store Connect API key)"
+
+    # xcodebuild needs the same key to create provisioning profiles: a runner
+    # has no Xcode account, so -allowProvisioningUpdates otherwise fails with
+    # "No Accounts: Add a new account in Accounts settings". Hand the values to
+    # build-release.sh, which passes them as -authenticationKey* arguments.
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+        {
+            echo "AUTOMOUNT_ASC_KEY_PATH=${ASC_KEY_PATH}"
+            echo "AUTOMOUNT_ASC_KEY_ID=${ASC_KEY_ID}"
+            echo "AUTOMOUNT_ASC_ISSUER_ID=${ASC_ISSUER_ID}"
+        } >> "$GITHUB_ENV"
+        info "exported provisioning credentials for the build step"
+    fi
 else
     xcrun notarytool store-credentials "$NOTARY_PROFILE" \
         --apple-id "$APPLE_ID" \
