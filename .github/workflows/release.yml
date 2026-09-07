@@ -18,7 +18,7 @@ on:
         type: boolean
         default: false
       run_tests:
-        description: 'Run the unit tests before building'
+        description: 'Run unit tests first (needs an Apple Development cert -- see README)'
         type: boolean
         default: false
 
@@ -98,11 +98,20 @@ jobs:
           if [[ "${{ inputs.skip_notarize }}" == "true" ]]; then
             args+=(--skip-notarize)
           fi
-          # Tests are skipped by default: some libMounter suites need the
-          # Docker SMB container, which is not on the runner, so they fail on
-          # their mount calls for reasons unrelated to the release. Opt in with
-          # the run_tests input once those are separated out.
-          if [[ "${{ inputs.run_tests }}" != "true" ]]; then
+          # Tests are skipped by default for two reasons: some libMounter
+          # suites need the Docker SMB container, which is not on the runner;
+          # and the test targets sign with "Apple Development", a different
+          # certificate from the Developer ID one CI holds. Ticking run_tests
+          # without that cert fails deep inside xcodebuild with a confusing
+          # "No signing certificate Mac Development found", so check up front.
+          if [[ "${{ inputs.run_tests }}" == "true" ]]; then
+            if security find-identity -v -p codesigning 2>/dev/null | grep -qF "Apple Development"; then
+              echo "Apple Development certificate present -- running tests"
+            else
+              echo "::error::run_tests needs an 'Apple Development' certificate in the CI keychain; the test targets sign with that identity, not the Developer ID certificate used for releases. Untick run_tests, or add an Apple Development cert to BUILD_CERTIFICATE_BASE64."
+              exit 1
+            fi
+          else
             args+=(--skip-tests)
           fi
           ./Scripts/build-release.sh "${args[@]}"

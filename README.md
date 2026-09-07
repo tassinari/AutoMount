@@ -105,10 +105,16 @@ when your Apple ID password changes.
 Optionally set the `XCODE_VERSION` repository *variable* (e.g. `26.6`) to pin the
 toolchain; without it the workflow uses the newest Xcode on the runner.
 
-CI does **not** run the test suites: some `libMounter` tests need the Docker SMB
-container, which is not on the runner, so they fail on their mount calls for
-reasons unrelated to the release. Tick `run_tests` on a manual run to opt in
-once those tests are separated from the ones needing live infrastructure.
+CI does **not** run the test suites, for two reasons. Some `libMounter` tests
+need the Docker SMB container, which is not on the runner. And the test targets
+sign with **Apple Development**, a different certificate from the Developer ID
+one CI holds — so `xcodebuild test` cannot sign them at all, failing with "No
+signing certificate Mac Development found".
+
+Ticking `run_tests` therefore needs an Apple Development certificate added to
+the CI keychain as well; the workflow checks for it and fails early with that
+message rather than deep inside `xcodebuild`. Leave it unticked for releases —
+signing correctness is verified in the release script's own verification phase.
 
 ## Architecture
 
