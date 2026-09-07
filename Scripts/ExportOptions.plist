@@ -6,8 +6,11 @@
 	<key>method</key>
 	<string>developer-id</string>
 
+	<!-- Placeholder. build-release.sh substitutes the resolved team ID into a
+	     temporary copy of this file; this template is never passed to
+	     xcodebuild directly. -->
 	<key>teamID</key>
-	<string>N2Z455V6H8</string>
+	<string>__TEAM_ID__</string>
 
 	<!-- Automatic signing lets xcodebuild mint/refresh the Developer ID provisioning
 	     profiles required by the com.apple.security.application-groups entitlement.

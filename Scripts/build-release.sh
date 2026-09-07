@@ -11,17 +11,26 @@
 #   ./Scripts/build-release.sh --version 1.2.0      # set marketing version
 #   ./Scripts/build-release.sh --skip-notarize      # fast local check
 #
+# Signing is not hardcoded. The team ID and identity are read from the
+# Developer ID certificate in your keychain; override either one with
+# AUTOMOUNT_TEAM_ID / AUTOMOUNT_SIGN_IDENTITY, or put them in the untracked
+# file Scripts/signing.env.
+#
 # First run requires stored notary credentials:
 #   xcrun notarytool store-credentials "AutoMountNotary" \
-#       --apple-id "<your-apple-id>" --team-id "N2Z455V6H8" \
+#       --apple-id "<your-apple-id>" --team-id "<your-team-id>" \
 #       --password "<app-specific-password>"
 #
 set -euo pipefail
 
 # ---------------------------------------------------------------- configuration
 
-readonly TEAM_ID="N2Z455V6H8"
-readonly SIGN_IDENTITY="Developer ID Application: Mark Tassinari (${TEAM_ID})"
+# Signing is account-specific and deliberately not hardcoded, so this repo can
+# be built by anyone with their own Developer ID. TEAM_ID comes from the
+# environment, else Scripts/signing.env (gitignored), else the Developer ID
+# certificate in the keychain -- see resolve_signing() below.
+TEAM_ID="${AUTOMOUNT_TEAM_ID:-}"
+SIGN_IDENTITY="${AUTOMOUNT_SIGN_IDENTITY:-}"
 readonly SCHEME="AutoMount"
 readonly APP_NAME="AutoMount"
 readonly VOLNAME="AutoMount"
@@ -31,7 +40,8 @@ readonly APP_GROUP="group.org.tassinari.automount"
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly PROJECT="${REPO_ROOT}/${APP_NAME}.xcodeproj"
-readonly EXPORT_PLIST="${REPO_ROOT}/Scripts/ExportOptions.plist"
+readonly EXPORT_TEMPLATE="${REPO_ROOT}/Scripts/ExportOptions.plist"
+readonly SIGNING_ENV="${REPO_ROOT}/Scripts/signing.env"
 readonly BUILD_DIR="${REPO_ROOT}/build"
 
 VERSION="1.0"
@@ -58,6 +68,7 @@ die()  { printf '\n%serror:%s %s\n' "$RED" "$RST" "$1" >&2; exit 1; }
 
 MOUNT_DEV=""
 STAGE_DIR=""
+EXPORT_PLIST=""
 cleanup() {
     if [[ -n "$MOUNT_DEV" ]]; then
         hdiutil detach "$MOUNT_DEV" -quiet 2>/dev/null || true
@@ -65,13 +76,16 @@ cleanup() {
     if [[ -n "$STAGE_DIR" && -d "$STAGE_DIR" ]]; then
         rm -rf "$STAGE_DIR"
     fi
+    if [[ -n "$EXPORT_PLIST" && -f "$EXPORT_PLIST" ]]; then
+        rm -f "$EXPORT_PLIST"
+    fi
 }
 trap cleanup EXIT
 
 # ------------------------------------------------------------------- arguments
 
 usage() {
-    sed -n '3,18p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '3,23p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
 }
 
@@ -108,19 +122,75 @@ fi
 
 step "Preflight"
 
-[[ -d "$PROJECT" ]]      || die "project not found: $PROJECT"
-[[ -f "$EXPORT_PLIST" ]] || die "export options not found: $EXPORT_PLIST"
+[[ -d "$PROJECT" ]]          || die "project not found: $PROJECT"
+[[ -f "$EXPORT_TEMPLATE" ]]  || die "export template not found: $EXPORT_TEMPLATE"
 
 command -v xcodebuild >/dev/null || die "xcodebuild not found -- install Xcode"
 
 # The Developer ID cert must be present, or the export silently falls back to
-# a development identity that cannot be notarized.
-if ! security find-identity -v -p codesigning 2>/dev/null | grep -qF "Developer ID Application"; then
-    die "no 'Developer ID Application' identity in the keychain.
+# a development identity that cannot be notarized. Its common name also carries
+# the team ID in trailing parens, which is where we read signing config from
+# when the environment does not supply it.
+#
+#   Developer ID Application: Some Name (ABCDE12345)
+#
+resolve_signing() {
+    # Optional untracked file for developers who prefer not to export vars.
+    if [[ -f "$SIGNING_ENV" ]]; then
+        # shellcheck source=/dev/null
+        source "$SIGNING_ENV"
+        TEAM_ID="${AUTOMOUNT_TEAM_ID:-$TEAM_ID}"
+        SIGN_IDENTITY="${AUTOMOUNT_SIGN_IDENTITY:-$SIGN_IDENTITY}"
+    fi
+
+    local found
+    found="$(security find-identity -v -p codesigning 2>/dev/null \
+             | grep -F "Developer ID Application" || true)"
+
+    if [[ -z "$found" ]]; then
+        die "no 'Developer ID Application' identity in the keychain.
     Download it from https://developer.apple.com/account/resources/certificates
     or via Xcode > Settings > Accounts > Manage Certificates."
-fi
+    fi
+
+    if [[ -z "$SIGN_IDENTITY" ]]; then
+        local count
+        count="$(printf '%s\n' "$found" | grep -c .)"
+        if (( count > 1 )); then
+            die "multiple 'Developer ID Application' identities in the keychain:
+$(printf '%s\n' "$found" | sed 's/^/    /')
+
+    Pick one by exporting its full common name, e.g.
+      export AUTOMOUNT_SIGN_IDENTITY='Developer ID Application: Your Name (ABCDE12345)'"
+        fi
+        # Common name sits between the first quote pair on the line.
+        SIGN_IDENTITY="$(printf '%s\n' "$found" | sed -n 's/.*"\(.*\)".*/\1/p')"
+        [[ -n "$SIGN_IDENTITY" ]] \
+            || die "could not parse the signing identity from:\n${found}"
+    fi
+
+    if [[ -z "$TEAM_ID" ]]; then
+        # Trailing (TEAMID) of the common name.
+        TEAM_ID="$(printf '%s\n' "$SIGN_IDENTITY" | sed -n 's/.*(\([A-Z0-9]\{10\}\))$/\1/p')"
+        [[ -n "$TEAM_ID" ]] \
+            || die "could not derive a team ID from signing identity '${SIGN_IDENTITY}'.
+    Set it explicitly:  export AUTOMOUNT_TEAM_ID=ABCDE12345"
+    fi
+
+    readonly TEAM_ID SIGN_IDENTITY
+}
+
+resolve_signing
 info "signing identity: ${SIGN_IDENTITY}"
+info "team id: ${TEAM_ID}"
+
+# ExportOptions.plist needs a literal team ID, so generate it from the tracked
+# template rather than keeping a developer-specific copy in the repo.
+EXPORT_PLIST="$(mktemp -t AutoMountExportOptions).plist"
+sed "s/__TEAM_ID__/${TEAM_ID}/" "$EXPORT_TEMPLATE" > "$EXPORT_PLIST"
+if grep -qF "__TEAM_ID__" "$EXPORT_PLIST"; then
+    die "failed to substitute team ID into export options"
+fi
 
 # libMounter is a local package outside this repo; the build cannot resolve
 # without it and xcodebuild's error for this is not obvious.

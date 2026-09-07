@@ -1,0 +1,14 @@
+// Signing configuration.
+//
+// This repo does not hardcode an Apple Developer Team ID. Set yours in an
+// untracked Config/Local.xcconfig (gitignored):
+//
+//     DEVELOPMENT_TEAM_DEFAULT = ABCDE12345
+//
+// Copy Config/Local.xcconfig.example to get started. Without it the targets
+// fall back to whatever team Xcode's automatic signing picks for your account,
+// which is enough for a local Debug build.
+//
+// The `include?` is optional-include: a missing file is not an error, so a
+// fresh clone still opens and builds.
+#include? "Local.xcconfig"

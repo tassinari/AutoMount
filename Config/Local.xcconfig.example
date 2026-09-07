@@ -1,0 +1,4 @@
+// Copy to Config/Local.xcconfig (untracked) and set your Apple Developer Team ID.
+// Find it at https://developer.apple.com/account -> Membership, or in the
+// trailing parens of your certificate name in Keychain Access.
+DEVELOPMENT_TEAM_DEFAULT = ABCDE12345
