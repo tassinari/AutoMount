@@ -105,6 +105,11 @@ when your Apple ID password changes.
 Optionally set the `XCODE_VERSION` repository *variable* (e.g. `26.6`) to pin the
 toolchain; without it the workflow uses the newest Xcode on the runner.
 
+CI does **not** run the test suites: some `libMounter` tests need the Docker SMB
+container, which is not on the runner, so they fail on their mount calls for
+reasons unrelated to the release. Tick `run_tests` on a manual run to opt in
+once those tests are separated from the ones needing live infrastructure.
+
 ## Architecture
 
 | Target | Role |
