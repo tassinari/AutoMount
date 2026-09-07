@@ -10,12 +10,16 @@ A Swift package for managing network share (SMB, AFP, NFS) mounting on macOS. It
 
 ## Installation
 
-Add libMounter to your project using Swift Package Manager:
+libMounter lives inside the [AutoMount](https://github.com/tassinari/AutoMount)
+repository at `Packages/libMounter` and is consumed there as a local package —
+there is no separate repository to depend on.
+
+To use it from another project, add it by path:
 
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/tassinari/Mounter.git", branch: "main")
+    .package(path: "../AutoMount/Packages/libMounter")
 ]
 ```
 

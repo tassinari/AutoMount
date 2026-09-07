@@ -382,7 +382,7 @@
 			mainGroup = 482995E72EFC63CF003AB633;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */,
+				488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 482995F12EFC63CF003AB633 /* Products */;
@@ -946,21 +946,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */ = {
+		488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Mounter;
+			relativePath = Packages/libMounter;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		488F8C012F1EC111004E8664 /* libMounter */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */;
 			productName = libMounter;
 		};
 		488F8C032F1EC118004E8664 /* libMounter */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */;
 			productName = libMounter;
 		};
 /* End XCSwiftPackageProductDependency section */

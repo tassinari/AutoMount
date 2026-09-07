@@ -60,8 +60,15 @@ AUTOMOUNT_DEVELOPMENT_TEAM=ABCDE12345 xcodebuild -scheme AutoMount build
 
 ### libMounter
 
-The project depends on `libMounter`, a local Swift package expected at
-`../Mounter` — clone it beside this repo, or the build cannot resolve it.
+`libMounter` is a Swift package vendored in this repo at `Packages/libMounter`.
+It provides the `Share` type, the `Storage` protocol, and the actual mount
+operations. Nothing extra to clone — Xcode resolves it as a local package.
+
+It builds and tests on its own too:
+
+```bash
+cd Packages/libMounter && swift test
+```
 
 ## Tests
 
@@ -72,9 +79,9 @@ xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:Au
 xcodebuild test -scheme AutoMountBackground -destination 'platform=macOS' -only-testing:AutoMountBackgroundTests
 ```
 
-Some `libMounter` tests need a local SMB server in Docker. The helper lives in
-the package, not this repo — run `../Mounter/Scripts/dockerMount.sh`, which is
-safe to re-run. Without Docker those tests skip or fail to mount.
+Some `libMounter` tests need a local SMB server in Docker:
+`Packages/libMounter/Scripts/dockerMount.sh` starts it and is safe to re-run.
+Without Docker those tests fail on the mount operations.
 
 ## Releases
 
@@ -107,7 +114,7 @@ under Sign-In and Security. Override the detected signing values with
 | `AutoMount` | SwiftUI app — share list, add/edit dialogs, settings |
 | `AutoMountBackground` | Login item — menu bar popup, network detection, remounting |
 | `Common` | Shared model, storage protocol, logging, constants |
-| `libMounter` | Local package (`../Mounter`) — `Share`, `Storage`, mount operations |
+| `libMounter` | Vendored package (`Packages/libMounter`) — `Share`, `Storage`, mount operations |
 
 Both apps share state through the `group.org.tassinari.automount` app group.
 `ShareDataModel` is the central `@Observable @MainActor` model; `Detector`

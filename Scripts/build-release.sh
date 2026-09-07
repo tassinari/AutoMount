@@ -192,11 +192,11 @@ if grep -qF "__TEAM_ID__" "$EXPORT_PLIST"; then
     die "failed to substitute team ID into export options"
 fi
 
-# libMounter is a local package outside this repo; the build cannot resolve
-# without it and xcodebuild's error for this is not obvious.
-if [[ ! -d "${REPO_ROOT}/../Mounter" ]]; then
-    die "local package 'libMounter' not found at $(cd "${REPO_ROOT}/.." && pwd)/Mounter
-    The project references it as a local package; clone it beside this repo."
+# libMounter is vendored in this repo; a missing or empty checkout (a partial
+# clone, say) gives an xcodebuild error that is not obvious.
+if [[ ! -f "${REPO_ROOT}/Packages/libMounter/Package.swift" ]]; then
+    die "vendored package 'libMounter' is missing from Packages/libMounter.
+    Expected Packages/libMounter/Package.swift. Re-clone or restore the checkout."
 fi
 
 if (( ! SKIP_NOTARIZE )); then
