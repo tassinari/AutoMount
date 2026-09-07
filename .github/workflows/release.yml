@@ -17,6 +17,10 @@ on:
         description: 'Skip notarization (fast check, not distributable)'
         type: boolean
         default: false
+      run_tests:
+        description: 'Run the unit tests before building'
+        type: boolean
+        default: false
 
 permissions:
   contents: write        # needed to create the release and upload the DMG
@@ -93,6 +97,13 @@ jobs:
           args=(--version "${{ steps.version.outputs.version }}")
           if [[ "${{ inputs.skip_notarize }}" == "true" ]]; then
             args+=(--skip-notarize)
+          fi
+          # Tests are skipped by default: some libMounter suites need the
+          # Docker SMB container, which is not on the runner, so they fail on
+          # their mount calls for reasons unrelated to the release. Opt in with
+          # the run_tests input once those are separated out.
+          if [[ "${{ inputs.run_tests }}" != "true" ]]; then
+            args+=(--skip-tests)
           fi
           ./Scripts/build-release.sh "${args[@]}"
 
