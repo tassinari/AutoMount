@@ -91,11 +91,16 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("settings.tab.settings", systemImage: "gear") }
 
-            VStack {
+            VStack(spacing: 4) {
                 Text("common.app_name")
                     .font(.title)
+                Text(AppVersion().displayText)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
                 Text("settings.about.attribution")
                     .foregroundStyle(.secondary)
+                    .padding(.top, 4)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .tabItem { Label("settings.tab.about", systemImage: "info.circle") }

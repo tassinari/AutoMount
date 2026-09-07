@@ -104,8 +104,19 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Default build number to the commit count, so every release is distinguishable.
+# A shallow clone (CI's default checkout) counts only the commits it fetched,
+# which silently yields 1 and makes every build look identical to macOS. Refuse
+# to guess: a wrong build number ships, and nothing downstream catches it.
 if [[ -z "$BUILD_NUM" ]]; then
-    BUILD_NUM="$(git -C "$REPO_ROOT" rev-list --count HEAD 2>/dev/null || echo 1)"
+    if [[ "$(git -C "$REPO_ROOT" rev-parse --is-shallow-repository 2>/dev/null)" == "true" ]]; then
+        die "shallow clone: the commit count is not the real build number.
+    Pass --build N, or fetch the full history (actions/checkout with
+    fetch-depth: 0)."
+    fi
+    BUILD_NUM="$(git -C "$REPO_ROOT" rev-list --count HEAD 2>/dev/null)" \
+        || die "could not count commits for the build number; pass --build N"
+    [[ -n "$BUILD_NUM" && "$BUILD_NUM" != "0" ]] \
+        || die "commit count came back empty; pass --build N"
 fi
 
 readonly ARCHIVE_PATH="${BUILD_DIR}/${APP_NAME}.xcarchive"

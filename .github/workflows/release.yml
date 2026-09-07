@@ -31,7 +31,13 @@ jobs:
     timeout-minutes: 90  # notarization waits on Apple; the script caps it at 30m
 
     steps:
+      # The build number is the commit count (see Scripts/build-release.sh).
+      # checkout defaults to a depth-1 clone, which makes that count 1 on every
+      # run, so every release shipped CFBundleVersion=1 and macOS could not
+      # tell two builds apart. Fetch the full history so the count is real.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Pin the toolchain. Runner images move Xcode versions without notice,
       # and a silent bump changes what gets shipped. The project needs
