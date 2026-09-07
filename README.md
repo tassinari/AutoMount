@@ -83,6 +83,13 @@ Some `libMounter` tests need a local SMB server in Docker:
 `Packages/libMounter/Scripts/dockerMount.sh` starts it and is safe to re-run.
 Without Docker those tests fail on the mount operations.
 
+The `AutoMountBackground` scheme starts that same container itself, from a
+pre-action on its *test* action, and tears it down afterwards. The pre-action is
+not attached to the build action, so plain builds never touch Docker. Without
+Docker running it simply does nothing: `xcodebuild` neither fails the run nor
+reports it, so tests that need a live SMB share fail on their mount calls rather
+than with an obvious "Docker is not running" message.
+
 ## Releases
 
 `Scripts/build-release.sh` produces a notarized, stapled DMG. It reads your
