@@ -19,3 +19,12 @@ dist/
 # Secrets -- never commit
 Scripts/.env
 *.p8
+
+# Local Claude Code config -- machine-specific, not for the repo
+.claude/settings.local.json
+
+# Local signing overrides for build-release.sh
+Scripts/signing.env
+
+# Local signing config -- set your own team ID here
+Config/Local.xcconfig

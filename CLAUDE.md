@@ -25,13 +25,21 @@ xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:Au
 xcodebuild test -scheme AutoMount -destination 'platform=macOS' -only-testing:AutoMountTests/ShareDataModelTests/testInitWithStorageLoadsShares
 
 # libMounter package tests (run from the package directory)
-cd ../Mounter && swift test
+cd Packages/libMounter && swift test
 ```
 
 Available schemes: `AutoMount`, `AutoMountBackground`
 
-Some `libMounter` tests need the Docker SMB test server; `Scripts/dockerMount.sh`
-starts it and is safe to re-run. Without Docker those tests skip or fail to mount.
+Signing is not hardcoded. `Config/Signing.xcconfig` optionally includes an
+untracked `Config/Local.xcconfig` supplying `DEVELOPMENT_TEAM_DEFAULT`; run
+`./Scripts/setup-dev.sh` to generate it. `AUTOMOUNT_DEVELOPMENT_TEAM` overrides
+it. Do not set the team through Xcode's Signing & Capabilities editor -- that
+writes the ID back into `project.pbxproj`.
+
+Some `libMounter` tests need the Docker SMB test server;
+`Packages/libMounter/Scripts/dockerMount.sh` starts it and is safe to re-run.
+Without Docker those tests fail on the mount operations (3 in
+`StorageManagerTests`, plus the NFS suite).
 
 ## Architecture
 
@@ -39,7 +47,7 @@ starts it and is safe to re-run. Without Docker those tests skip or fail to moun
 - **AutoMount** — Main SwiftUI app with share list UI, add/edit dialogs, menu commands
 - **AutoMountBackground** — Login-item background service with menu bar popup, network detection (`Detector`), and automatic remounting (`Remounter`)
 - **Common** — Shared code: `ShareDataModel` (main observable model), `Storage` protocol, logging, constants
-- **libMounter** — Local Swift package (at `../Mounter`) providing the `Share` struct, `Storage` protocol, and `StorageManager` for actual mount operations
+- **libMounter** — Swift package vendored at `Packages/libMounter` providing the `Share` struct, `Storage` protocol, and `StorageManager` for actual mount operations. Merged in from its own repo via `git subtree`, so its history is preserved here.
 
 Both apps share data via application group `group.org.tassinari.automount` (UserDefaults suite).
 

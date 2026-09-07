@@ -1,0 +1,291 @@
+//
+//  MountDataTests.swift
+//  AutoMountTests
+//
+//  Created by Mark Tassinari on 12/24/25.
+//
+
+import XCTest
+@testable import libMounter
+
+enum ShellError: Error {
+    case nonZeroExit(Int, String)
+}
+
+class BaseTest : XCTestCase{
+    static let defaultsSuiteName = "group.org.tassinari.automount.test"
+    let storage = StorageManager(defaults: UserDefaults(suiteName: defaultsSuiteName))
+
+    static func runPreTestScript(script: String) {
+        do {
+            let tmpLocation = FileManager.default.temporaryDirectory.appending(path: "mount", directoryHint: .isDirectory)
+
+            try FileManager.default.createDirectory(at: tmpLocation, withIntermediateDirectories: true)
+            XCTAssert( FileManager.default.fileExists(atPath: tmpLocation.path()))
+            let testFileURL = URL(fileURLWithPath: #filePath)
+            let packageRoot = testFileURL
+                .deletingLastPathComponent() // MounterTests
+                .deletingLastPathComponent() // Tests
+                .deletingLastPathComponent() // package root
+
+            let scriptURL = packageRoot
+                .appendingPathComponent(script)
+
+            XCTAssertTrue(
+                FileManager.default.isExecutableFile(atPath: scriptURL.path),
+                "\(script) is missing or not executable"
+            )
+
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/bash")
+            process.arguments = [scriptURL.path, tmpLocation.path()]
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+
+            
+            try process.run()
+            process.waitUntilExit()
+
+//            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+//            if let output = String(data: stdoutData, encoding: .utf8) {
+//                print(output)
+//            }
+//
+//            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+//            if let errorOutput = String(data: stderrData, encoding: .utf8) {
+//                print(errorOutput)
+//            }
+            
+            XCTAssertEqual(
+                process.terminationStatus,
+                0,
+                "\(script) exited with code \(process.terminationStatus)"
+            )
+        } catch {
+            XCTFail("Failed to run script: \(error)")
+            return
+        }
+    }
+    override func setUp() async throws {
+        for m in  await storage.mounts() ?? []{
+            try await storage.unmount(m)
+        }
+
+    }
+
+}
+
+
+
+final class MountDataTests: BaseTest {
+
+    let hostName = "localhost"
+    let port = 1445
+    let password = "secret123"
+    let userName = "samba"
+    let shareName = "smbTestShare"
+
+    override class func setUp() {
+        Self.runPreTestScript(script: "Scripts/dockerMount.sh")
+        let delay = 2.0
+        super.setUp()
+        print("Letting smb server spin up for \(delay) seconds...")
+        let deadline = Date().addingTimeInterval(delay)
+        while Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+    }
+
+    override class func tearDown() {
+        super.tearDown()
+        Self.runPreTestScript(script: "Scripts/dockerUnmount.sh")
+    }
+
+    override func setUp() async throws {
+        try await super.setUp()
+        do{
+            _ = try await MountData.unmount(url: URL(filePath: "/Volumes/\(shareName)"))
+        }catch{
+            //no-op, just cleaning up, it may not e mounted and will throw
+        }
+        
+    }
+    override func tearDown() async throws {
+        try await super.tearDown()
+        do{
+            _ = try await MountData.unmount(url: URL(filePath: "/Volumes/\(shareName)"))
+        }catch{
+            //no-op, just cleaning up, it may not e mounted and will throw
+        }
+        
+    }
+
+    func testURLProducedWithNoPort(){
+        let mount = MountData(scheme: "smb", host: "localhost", port: nil, path: "share")
+        let expexted = "smb://localhost:445/share"
+        XCTAssertEqual(expexted, try mount.url.absoluteString)
+    }
+  
+  
+    @MainActor func testUnmountWorks() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, path: shareName)
+        //FIXME: unmount after every test
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        do{
+            switch try await mountData.mount(){
+            case .success( _):
+                guard let share = await storage.fullMountList().first(where: {$0.name == shareName}) else {XCTFail(); return}
+                XCTAssertTrue( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+                try await storage.unmount( share)
+                XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+            default:
+                XCTFail()
+            }
+            
+            
+        }catch{
+            XCTFail(error.localizedDescription)
+        }
+        
+        
+    }
+    
+    @MainActor func testMountedVolumes() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port,  path: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let _ = try await mountData.mount()
+        try await Task.sleep(nanoseconds: 10000)
+        let volumes = MountInfo.mountedVolumes()
+        guard let test = volumes.first(where: { $0.name == shareName}) else { XCTFail() ; return}
+        XCTAssertEqual(test.remountURL, URL(string: "smb://samba@localhost:1445/smbTestShare")!)
+        XCTAssertEqual(test.name, shareName)
+        XCTAssertEqual(test.path, "/Volumes/\(shareName)")
+        
+    }
+    
+    func testMountWithWrongPortFails() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: 445,  path: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let mounts = try await mountData.mount()
+        switch mounts {
+        case .connectionRefused:
+            break
+        default:
+            XCTFail()
+        }
+    }
+    func testMountWithBadHostFails() async throws{
+        let mountData =  MountData(scheme: "smb", host: "UNKNOWN", port: port,  path: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let mounts = try await mountData.mount()
+        switch mounts {
+        case .cannotFindHost:
+            break
+        default:
+            XCTFail()
+        }
+    }
+    func testMountWithRandomPortFails() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: 1010, path: shareName)
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let mounts = try await mountData.mount()
+        switch mounts {
+        case .timeout:
+            break
+        default:
+            XCTFail("Got \(mounts)")
+        }
+    }
+    func testMountWithBadShareFails() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port, path: "doesntExsist")
+        
+        XCTAssertFalse( FileManager.default.fileExists(atPath: "/Volumes/smbTestShare/empty_file.txt"))
+        let mounts = try await mountData.mount()
+        switch mounts {
+        case .noSuchFileOrDirectory:
+            break
+        default:
+            XCTFail()
+        }
+    }
+    @MainActor func testAlreadyMountedReportsError() async throws{
+        let mountData =  MountData(scheme: "smb", host: hostName, port: port,  path: shareName)
+        _ = try await mountData.mount()
+        switch try await mountData.mount() {
+        case .alreadyMounted:
+            break
+        default:
+            XCTFail()
+        }
+    }
+    
+  
+    func testIsVolumeMountedReturnsTrueAfterMount() async throws {
+        let mountData = MountData(
+            scheme: "smb",
+            host: "localhost",
+            port: 1445,
+            path: "smbTestShare"
+        )
+        XCTAssertFalse(MountInfo.isVolumeMounted(at: URL(filePath: "/Volumes/smbTestShare")))
+
+        let response = try await mountData.mount()
+        switch response{
+        case .success(let shareName):
+            guard let shareName else {
+                XCTFail("Expected share name")
+                return
+            }
+            XCTAssertTrue(MountInfo.isVolumeMounted(at: URL(filePath: shareName, directoryHint: .isDirectory)))
+        default:
+            XCTFail()
+        }
+
+
+
+    }
+
+    func testMountedVolumesExcludesLocalVolumes(){
+        let volumes = MountInfo.mountedVolumes()
+        for vol in volumes {
+            XCTAssertNotEqual(vol.path, "/", "Root volume should be excluded as a local volume")
+            XCTAssertFalse(vol.path.hasPrefix("/System/Volumes/"), "\(vol.path) appears to be a local system volume")
+        }
+    }
+
+    @MainActor func testMountedVolumesIncludesRemoteButNotLocal() async throws {
+        let mountData = MountData(scheme: "smb", host: hostName, port: port, path: shareName)
+        _ = try await mountData.mount()
+        try await Task.sleep(nanoseconds: 10000)
+
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssertTrue(volumes.contains(where: { $0.name == shareName }), "Remote SMB share should appear in mountedVolumes")
+        XCTAssertFalse(volumes.contains(where: { $0.path == "/" }), "Root volume should not appear in mountedVolumes")
+    }
+
+    func testMountedVolumesDataSharePropertyIsUnmanaged(){
+        let data = MountedVolumesData(name: "test", remountURL: URL(string: "smb://server/share")!, path: "/Volumes/test")
+        let share = data.share
+        XCTAssertFalse(share.managed)
+        XCTAssertEqual(share.connected, .mounted)
+    }
+    func testMountedVolumesExcludesDMG() async throws{
+        let path = "/Volumes/TestVolume"
+        Self.runPreTestScript(script: "Scripts/testDMG.sh")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        let volumes = MountInfo.mountedVolumes()
+        XCTAssertFalse(volumes.map{$0.name}.contains("TestVolume"))
+        Self.runPreTestScript(script: "Scripts/ejectTest.sh")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: path))
+    }
+
+}
+
+

@@ -78,6 +78,7 @@
 		482995FD2EFC63D0003AB633 /* AutoMountTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AutoMountTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		482996072EFC63D0003AB633 /* AutoMountUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AutoMountUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		487A91D92F006F260095BDA6 /* AutoMountBackground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AutoMountBackground.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		48C0NF162F4A0001000000AA /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Signing.xcconfig; path = Config/Signing.xcconfig; sourceTree = "<group>"; };
 		48D81D142F0558070046103D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -381,7 +382,7 @@
 			mainGroup = 482995E72EFC63CF003AB633;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */,
+				488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 482995F12EFC63CF003AB633 /* Products */;
@@ -513,7 +514,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.AutoMountBackgroundTests;
@@ -533,7 +534,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.AutoMountBackgroundTests;
@@ -549,6 +550,7 @@
 		};
 		4829960F2EFC63D0003AB633 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 48C0NF162F4A0001000000AA /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -582,7 +584,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -613,6 +615,7 @@
 		};
 		482996102EFC63D0003AB633 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 48C0NF162F4A0001000000AA /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -646,7 +649,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -676,7 +679,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -709,7 +712,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -739,7 +742,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
@@ -760,7 +763,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
@@ -780,7 +783,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.AutoMountUITests;
@@ -799,7 +802,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.tassinari.AutoMountUITests;
@@ -822,7 +825,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -857,7 +860,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = N2Z455V6H8;
+				DEVELOPMENT_TEAM = "$(AUTOMOUNT_DEVELOPMENT_TEAM:default=$(DEVELOPMENT_TEAM_DEFAULT))";
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -943,21 +946,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */ = {
+		488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../Mounter;
+			relativePath = Packages/libMounter;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		488F8C012F1EC111004E8664 /* libMounter */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */;
 			productName = libMounter;
 		};
 		488F8C032F1EC118004E8664 /* libMounter */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "../Mounter" */;
+			package = 488F8BFE2F1EC0B9004E8664 /* XCLocalSwiftPackageReference "Packages/libMounter" */;
 			productName = libMounter;
 		};
 /* End XCSwiftPackageProductDependency section */
