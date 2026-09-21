@@ -33,6 +33,10 @@ public enum MountResponse : Sendable{
     case connectionRefused
     /// The volume is already mounted at a local path.
     case alreadyMounted
+    /// The mount succeeded but landed on a different mount point than the share expected,
+    /// meaning it duplicated an existing mount. The duplicate has been detached.
+    /// The associated value is the duplicate path that was rejected.
+    case duplicateRejected(String)
 
 }
 internal struct MountedVolumesData: Equatable{
@@ -332,10 +336,17 @@ internal struct MountData{
         }
     }
     
-    internal func mount(ui: Bool = false) async throws -> MountResponse {
-       
+    /// Mounts the share via NetFS.
+    ///
+    /// - Parameters:
+    ///   - ui: Whether the system may present authentication UI.
+    ///   - expecting: The share being mounted. When it carries a known mount point, a mount
+    ///     that lands anywhere else is treated as a duplicate and detached again -- see
+    ///     ``rejectIfDuplicate(response:expecting:)``.
+    internal func mount(ui: Bool = false, expecting: Share? = nil) async throws -> MountResponse {
+
         let url = try self.url
-        return await withCheckedContinuation { cont in
+        let response: MountResponse = await withCheckedContinuation { cont in
             DispatchQueue.global().async {
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
@@ -376,7 +387,39 @@ internal struct MountData{
                 cont.resume(returning: retVal)
             }
         }
-        
+
+        return MountData.rejectIfDuplicate(response: response, expecting: expecting)
+    }
+
+    /// Turns a "successful" mount that landed on the wrong mount point back into a no-op.
+    ///
+    /// NetFS does not refuse to mount a share that is already mounted: it returns success
+    /// having mounted it a second time at a deduplicated path (`/Volumes/media-1`). The
+    /// pre-flight check in `StorageManager.mount` catches almost all of these, but it races
+    /// against anything else mounting the same share. This is the backstop: if the path NetFS
+    /// reports is not the one this share expected, the mount is a duplicate, so it is detached
+    /// again and reported as ``MountResponse/duplicateRejected(_:)`` rather than success.
+    ///
+    /// A share with no recorded `mountPoint` has no expectation to violate, so it is left alone.
+    internal static func rejectIfDuplicate(response: MountResponse, expecting: Share?) -> MountResponse {
+        guard case .success(let actualPath) = response,
+              let actualPath,
+              let expected = expecting?.mountPoint,
+              !expected.isEmpty else {
+            return response
+        }
+        guard normalize(actualPath) != normalize(expected) else {
+            return response
+        }
+        libMounter.error("Mount of \(expected) landed on \(actualPath); detaching duplicate")
+        forceUnmountDetached(path: actualPath)
+        return .duplicateRejected(actualPath)
+    }
+
+    /// Drops a trailing slash so two spellings of the same mount point compare equal.
+    private static func normalize(_ path: String) -> String {
+        guard path.count > 1, path.hasSuffix("/") else { return path }
+        return String(path.dropLast())
     }
 
     internal static func unmount(url: URL) async throws {

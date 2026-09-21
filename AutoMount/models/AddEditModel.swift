@@ -31,6 +31,10 @@ extension AddEditModelError: LocalizedError {
                 return String(localized: "error.connection_refused")
             case .alreadyMounted:
                 return String(localized: "error.already_mounted")
+            // The share is mounted where it should be; the duplicate NetFS created was
+            // detached again. Nothing for the user to fix.
+            case .duplicateRejected:
+                return String(localized: "error.already_mounted")
             case .genericError(let error):
                 return String(localized: "error.mount_generic \(error.localizedDescription)")
             case .success:
