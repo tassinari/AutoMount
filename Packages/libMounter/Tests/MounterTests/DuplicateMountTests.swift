@@ -108,17 +108,17 @@ final class DuplicateMountPreflightTests: XCTestCase {
                            name: "media",
                            mountPoint: "/Volumes/media",
                            connected: .mounted)
-        var consulted = false
+        let consulted = LookupFlag()
 
         let response = try await storage.mount(target, ui: false, mountedVolumes: {
-            consulted = true
+            consulted.record()
             return []
         })
 
         guard case .alreadyMounted = response else {
             return XCTFail("A share already marked mounted must return .alreadyMounted, got \(response)")
         }
-        XCTAssertFalse(consulted, "The mount table should not be read for an already-mounted share")
+        XCTAssertFalse(consulted.wasConsulted, "The mount table should not be read for an already-mounted share")
     }
 
     func testShareWithoutMountDataThrows() async {
@@ -141,23 +141,35 @@ final class DuplicateMountPreflightTests: XCTestCase {
     }
 }
 
-/// The backstop: NetFS reported success, but at the wrong mount point.
+/// The backstop: NetFS reported success, but the share was already mounted elsewhere.
+///
+/// The test is identity, not location — how many mount points now carry this share's remote
+/// URL — so a share that legitimately mounts somewhere other than where it was last recorded
+/// is never touched.
 final class DuplicateMountRejectionTests: XCTestCase {
 
+    private let shareURL = URL(string: "smb://tassinari@synology:445/media")!
+
     private func share(mountPoint: String?) -> Share {
-        return Share(url: URL(string: "smb://tassinari@synology:445/media")!,
+        return Share(url: shareURL,
                      name: "media",
                      mountPoint: mountPoint,
                      managed: true,
                      connected: .unmounted)
     }
 
-    /// A mount that lands on `/Volumes/media-1` when the share expects `/Volumes/media`
-    /// is a duplicate, and must be reported as such rather than as success.
-    func testSuccessAtUnexpectedPathIsRejected() {
+    private func volume(_ path: String, url: URL? = nil) -> MountedVolumesData {
+        return MountedVolumesData(name: (path as NSString).lastPathComponent,
+                                  remountURL: url ?? shareURL,
+                                  path: path)
+    }
+
+    /// The share appears at two mount points, so the one NetFS just reported is surplus.
+    func testDuplicateAtSecondMountPointIsRejected() {
         let result = MountData.rejectIfDuplicate(
             response: .success("/Volumes/media-1"),
-            expecting: share(mountPoint: "/Volumes/media")
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media"), self.volume("/Volumes/media-1")] }
         )
         guard case .duplicateRejected(let path) = result else {
             return XCTFail("Expected .duplicateRejected, got \(result)")
@@ -165,53 +177,91 @@ final class DuplicateMountRejectionTests: XCTestCase {
         XCTAssertEqual(path, "/Volumes/media-1")
     }
 
-    func testSuccessAtExpectedPathPassesThrough() {
+    /// One mount point carrying the share is the normal case, whatever path it is.
+    func testSingleMountPassesThrough() {
         let result = MountData.rejectIfDuplicate(
             response: .success("/Volumes/media"),
-            expecting: share(mountPoint: "/Volumes/media")
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media")] }
+        )
+        guard case .success = result else {
+            return XCTFail("Expected .success, got \(result)")
+        }
+    }
+
+    /// Regression for the review finding on this PR's first revision: the share is recorded
+    /// at `/Volumes/media-1` (persisted while the duplicate bug had it there), the duplicate
+    /// has since been cleaned up, and a clean mount lands on `/Volumes/media`. Only one mount
+    /// point carries the share, so this must pass through untouched — the earlier
+    /// stored-path comparison force-unmounted it.
+    func testCleanMountAtDifferentPathThanRecordedIsNotRejected() {
+        let result = MountData.rejectIfDuplicate(
+            response: .success("/Volumes/media"),
+            expecting: share(mountPoint: "/Volumes/media-1"),
+            mountedVolumes: { [self.volume("/Volumes/media")] }
         )
         guard case .success(let path) = result else {
-            return XCTFail("Expected .success, got \(result)")
+            return XCTFail("A relocated but unique mount must not be rejected, got \(result)")
         }
         XCTAssertEqual(path, "/Volumes/media")
     }
 
-    /// Mount points differing only by a trailing slash are the same place.
-    func testTrailingSlashDoesNotCountAsMismatch() {
+    /// A first-ever mount of a newly added share has nothing to duplicate.
+    func testFirstEverMountIsNeverRejected() {
         let result = MountData.rejectIfDuplicate(
-            response: .success("/Volumes/media/"),
-            expecting: share(mountPoint: "/Volumes/media")
+            response: .success("/Volumes/media"),
+            expecting: share(mountPoint: nil),
+            mountedVolumes: { [self.volume("/Volumes/media")] }
         )
         guard case .success = result else {
-            return XCTFail("A trailing slash must not be read as a different mount point, got \(result)")
+            return XCTFail("A first-ever mount must pass through, got \(result)")
         }
     }
 
-    /// A share with no recorded mount point has no expectation to violate — the first
-    /// ever mount of a newly added share must not be rejected.
-    func testShareWithoutMountPointIsNeverRejected() {
+    /// A different share on the same host mounted alongside is not a duplicate.
+    func testOtherSharesOnSameHostAreNotCounted() {
+        let other = URL(string: "smb://tassinari@synology:445/photos")!
         let result = MountData.rejectIfDuplicate(
             response: .success("/Volumes/media"),
-            expecting: share(mountPoint: nil)
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media"),
+                               self.volume("/Volumes/photos", url: other)] }
         )
         guard case .success = result else {
-            return XCTFail("A share with no expected mount point must pass through, got \(result)")
+            return XCTFail("A different share must not count as a duplicate, got \(result)")
         }
     }
 
-    func testEmptyExpectedMountPointIsNeverRejected() {
+    /// Trailing-slash spellings of the reported path still match a table entry.
+    func testTrailingSlashStillMatchesTableEntry() {
         let result = MountData.rejectIfDuplicate(
-            response: .success("/Volumes/media"),
-            expecting: share(mountPoint: "")
+            response: .success("/Volumes/media-1/"),
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media"), self.volume("/Volumes/media-1")] }
+        )
+        guard case .duplicateRejected = result else {
+            return XCTFail("Expected .duplicateRejected, got \(result)")
+        }
+    }
+
+    /// If the kernel does not show the reported path, nothing is unmounted — we never
+    /// force-detach a path we cannot confirm.
+    func testPathAbsentFromMountTableIsNotDetached() {
+        let result = MountData.rejectIfDuplicate(
+            response: .success("/Volumes/somewhere-else"),
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media"), self.volume("/Volumes/media-1")] }
         )
         guard case .success = result else {
-            return XCTFail("An empty expected mount point must pass through, got \(result)")
+            return XCTFail("An unconfirmed path must not be detached, got \(result)")
         }
     }
 
     /// With no share to compare against, the response is returned untouched.
     func testNilExpectationPassesThrough() {
-        let result = MountData.rejectIfDuplicate(response: .success("/Volumes/media-1"), expecting: nil)
+        let result = MountData.rejectIfDuplicate(response: .success("/Volumes/media-1"),
+                                                 expecting: nil,
+                                                 mountedVolumes: { [] })
         guard case .success = result else {
             return XCTFail("Expected .success, got \(result)")
         }
@@ -221,7 +271,8 @@ final class DuplicateMountRejectionTests: XCTestCase {
     func testSuccessWithoutPathPassesThrough() {
         let result = MountData.rejectIfDuplicate(
             response: .success(nil),
-            expecting: share(mountPoint: "/Volumes/media")
+            expecting: share(mountPoint: "/Volumes/media"),
+            mountedVolumes: { [self.volume("/Volumes/media"), self.volume("/Volumes/media-1")] }
         )
         guard case .success = result else {
             return XCTFail("Expected .success, got \(result)")
@@ -231,15 +282,84 @@ final class DuplicateMountRejectionTests: XCTestCase {
     /// Failures must not be reinterpreted as duplicates.
     func testFailureResponsesArePassedThroughUnchanged() {
         let expecting = share(mountPoint: "/Volumes/media")
+        let table = { [self.volume("/Volumes/media"), self.volume("/Volumes/media-1")] }
 
-        guard case .timeout = MountData.rejectIfDuplicate(response: .timeout, expecting: expecting) else {
+        guard case .timeout = MountData.rejectIfDuplicate(response: .timeout, expecting: expecting, mountedVolumes: table) else {
             return XCTFail("Expected .timeout to pass through")
         }
-        guard case .authenticationError = MountData.rejectIfDuplicate(response: .authenticationError, expecting: expecting) else {
+        guard case .authenticationError = MountData.rejectIfDuplicate(response: .authenticationError, expecting: expecting, mountedVolumes: table) else {
             return XCTFail("Expected .authenticationError to pass through")
         }
-        guard case .alreadyMounted = MountData.rejectIfDuplicate(response: .alreadyMounted, expecting: expecting) else {
+        guard case .alreadyMounted = MountData.rejectIfDuplicate(response: .alreadyMounted, expecting: expecting, mountedVolumes: table) else {
             return XCTFail("Expected .alreadyMounted to pass through")
         }
+    }
+}
+
+/// Share identity matching — the predicate both guards rely on.
+final class ShareIdentityMatchingTests: XCTestCase {
+
+    private func volume(_ urlString: String) -> MountedVolumesData {
+        return MountedVolumesData(name: "v",
+                                  remountURL: URL(string: urlString)!,
+                                  path: "/Volumes/v")
+    }
+
+    private func share(_ urlString: String) -> Share {
+        return Share(url: URL(string: urlString)!, name: "v",
+                     mountPoint: nil, managed: true, connected: .unmounted)
+    }
+
+    /// Shares on different ports of the same host are different shares; treating them as
+    /// equal would suppress a legitimate mount and report it as "already mounted".
+    func testDifferentPortsAreNotEqual() {
+        XCTAssertFalse(volume("smb://synology:4450/media").equal(to: share("smb://synology:445/media")))
+    }
+
+    /// The mount table spells out `:445` while a user-typed URL omits it — same share.
+    func testDefaultPortMatchesOmittedPort() {
+        XCTAssertTrue(volume("smb://synology:445/media").equal(to: share("smb://synology/media")))
+        XCTAssertTrue(volume("afp://synology:548/media").equal(to: share("afp://synology/media")))
+    }
+
+    /// SMB share names are case-insensitive on the server, so a case difference must not
+    /// let the duplicate guard miss an existing mount.
+    func testSMBPathComparisonIsCaseInsensitive() {
+        XCTAssertTrue(volume("smb://synology/media").equal(to: share("smb://synology/Media")))
+    }
+
+    /// NFS exports are case-sensitive filesystem paths.
+    func testNFSPathComparisonIsCaseSensitive() {
+        XCTAssertFalse(volume("nfs://synology/export/media").equal(to: share("nfs://synology/export/Media")))
+    }
+
+    /// Hostnames are case-insensitive.
+    func testHostComparisonIsCaseInsensitive() {
+        XCTAssertTrue(volume("smb://Synology/media").equal(to: share("smb://synology/media")))
+    }
+
+    func testDifferentSharesAreNotEqual() {
+        XCTAssertFalse(volume("smb://synology/media").equal(to: share("smb://synology/photos")))
+        XCTAssertFalse(volume("smb://synology/media").equal(to: share("smb://other/media")))
+        XCTAssertFalse(volume("smb://synology/media").equal(to: share("afp://synology/media")))
+    }
+}
+
+/// Records whether the injected mount-table lookup was called. The lookup closure is
+/// `@Sendable`, so the flag cannot simply be a captured `var`.
+private final class LookupFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var consulted = false
+
+    func record() {
+        lock.lock()
+        defer { lock.unlock() }
+        consulted = true
+    }
+
+    var wasConsulted: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return consulted
     }
 }

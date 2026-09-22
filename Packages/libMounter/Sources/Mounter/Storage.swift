@@ -193,7 +193,7 @@ public extension StorageManager {
     /// - Parameter mountedVolumes: Returns the volumes the kernel currently has mounted.
     internal func mount(_ share : Share,
                         ui : Bool = false,
-                        mountedVolumes: () -> [MountedVolumesData]) async throws -> MountResponse {
+                        mountedVolumes: @escaping @Sendable () -> [MountedVolumesData]) async throws -> MountResponse {
         if share.connected == .mounted{
             return .alreadyMounted
         }
@@ -210,7 +210,7 @@ public extension StorageManager {
             notice("\(share.name ?? "--") is already mounted, skipping duplicate mount")
             return .alreadyMounted
         }
-        return try await md.mount(ui: ui, expecting: share)
+        return try await md.mount(ui: ui, expecting: share, mountedVolumes: mountedVolumes)
     }
     /// Unmounts a currently mounted share.
     ///
