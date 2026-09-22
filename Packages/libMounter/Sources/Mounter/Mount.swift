@@ -33,6 +33,10 @@ public enum MountResponse : Sendable{
     case connectionRefused
     /// The volume is already mounted at a local path.
     case alreadyMounted
+    /// The mount succeeded but landed on a different mount point than the share expected,
+    /// meaning it duplicated an existing mount. The duplicate has been detached.
+    /// The associated value is the duplicate path that was rejected.
+    case duplicateRejected(String)
 
 }
 internal struct MountedVolumesData: Equatable{
@@ -40,8 +44,45 @@ internal struct MountedVolumesData: Equatable{
     let remountURL : URL
     let path : String
     
+    /// Whether this mounted volume is the same remote share as `to`.
+    ///
+    /// Matches on identity — scheme, host, port and share path — rather than on mount point,
+    /// since a share can be mounted at a path other than the one it is recorded at.
     func equal(to: Share) -> Bool {
-        return remountURL.scheme == to.url.scheme && remountURL.host == to.url.host && remountURL.path() == to.url.path()
+        guard let scheme = remountURL.scheme?.lowercased(),
+              scheme == to.url.scheme?.lowercased() else { return false }
+        guard remountURL.host?.lowercased() == to.url.host?.lowercased() else { return false }
+        // The mount table always spells the port out (`//host:445/share`) while a user-typed
+        // URL usually omits it, so compare against the scheme's default when either is absent.
+        guard MountedVolumesData.port(of: remountURL, scheme: scheme)
+                == MountedVolumesData.port(of: to.url, scheme: scheme) else { return false }
+        return MountedVolumesData.pathsEqual(remountURL.path(), to.url.path(), scheme: scheme)
+    }
+
+    /// The URL's port, falling back to the scheme's default so `smb://h/s` and
+    /// `smb://h:445/s` are recognised as the same server.
+    private static func port(of url: URL, scheme: String) -> Int? {
+        if let port = url.port { return port }
+        switch scheme {
+        case "smb": return 445
+        case "afp": return 548
+        case "nfs": return 2049
+        default: return nil
+        }
+    }
+
+    /// Compares two share paths under the case rules of their protocol.
+    ///
+    /// SMB and AFP share names are case-insensitive on the server, so `/Media` and `/media`
+    /// are the same share and must match — otherwise the duplicate guard misses the mount it
+    /// exists to catch. NFS exports are case-sensitive paths, so they are compared exactly.
+    private static func pathsEqual(_ lhs: String, _ rhs: String, scheme: String) -> Bool {
+        switch scheme {
+        case "smb", "afp":
+            return lhs.compare(rhs, options: .caseInsensitive) == .orderedSame
+        default:
+            return lhs == rhs
+        }
     }
     var share: Share {
         return Share( url: remountURL, name: name, mountPoint: path, managed: false, connected: .mounted)
@@ -120,7 +161,10 @@ internal struct MountInfo{
     static func mountedVolumes() -> [MountedVolumesData] {
         var result: [MountedVolumesData] = []
         for var fs in fileSystemStats() {
-            guard isRemote(fs) else { continue }
+            // Same filter as `remoteMountPoints()`: remote *and* a share type this app
+            // manages. `isRemote` alone would admit any non-MNT_LOCAL filesystem whose
+            // device string happens to parse as `//host/share`.
+            guard isRemote(fs), isSupportedShareType(fs) else { continue }
 
             let mountPoint = withUnsafePointer(to: &fs.f_mntonname) {
                 $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) { string(from: $0) }
@@ -332,10 +376,21 @@ internal struct MountData{
         }
     }
     
-    internal func mount(ui: Bool = false) async throws -> MountResponse {
-       
+    /// Mounts the share via NetFS.
+    ///
+    /// - Parameters:
+    ///   - ui: Whether the system may present authentication UI.
+    ///   - expecting: The share being mounted. After the mount, the kernel mount table is
+    ///     re-read: if this share's remote URL now appears at more than one mount point, the
+    ///     mount NetFS just made was a duplicate -- see ``rejectIfDuplicate(response:expecting:mountedVolumes:)``.
+    ///   - mountedVolumes: Returns the volumes the kernel currently has mounted. Injected so
+    ///     the duplicate backstop can be exercised without touching real mounts.
+    internal func mount(ui: Bool = false,
+                        expecting: Share? = nil,
+                        mountedVolumes: @escaping @Sendable () -> [MountedVolumesData] = MountInfo.mountedVolumes) async throws -> MountResponse {
+
         let url = try self.url
-        return await withCheckedContinuation { cont in
+        let response: MountResponse = await withCheckedContinuation { cont in
             DispatchQueue.global().async {
                 var cfArray: Unmanaged<CFArray>?
                 let mountD = NSMutableDictionary()
@@ -376,7 +431,57 @@ internal struct MountData{
                 cont.resume(returning: retVal)
             }
         }
-        
+
+        return MountData.rejectIfDuplicate(response: response,
+                                           expecting: expecting,
+                                           mountedVolumes: mountedVolumes)
+    }
+
+    /// Turns a "successful" mount that duplicated an existing one back into a no-op.
+    ///
+    /// NetFS does not refuse to mount a share that is already mounted: it returns success
+    /// having mounted it a second time at a deduplicated path (`/Volumes/media-1`). The
+    /// pre-flight check in `StorageManager.mount` catches almost all of these, but it races
+    /// against anything else mounting the same share. This is the backstop.
+    ///
+    /// The test is identity, not location: after the mount, ask the kernel how many mount
+    /// points now carry this share's *remote URL*. One is the normal case, whatever path it
+    /// landed on -- a first-ever mount and a share that legitimately relocated both look like
+    /// this. More than one means NetFS just mounted an already-mounted share, and the path it
+    /// reported is the surplus copy, so it is detached again.
+    ///
+    /// Deliberately **not** compared against the share's stored `mountPoint`: that value is
+    /// whatever path the share occupied when it was first persisted and is never refreshed,
+    /// so a share recorded at `/Volumes/media-1` would see a clean mount at `/Volumes/media`
+    /// as a duplicate and force-unmount a volume that is working.
+    internal static func rejectIfDuplicate(response: MountResponse,
+                                           expecting: Share?,
+                                           mountedVolumes: () -> [MountedVolumesData]) -> MountResponse {
+        guard case .success(let actualPath) = response,
+              let actualPath,
+              !actualPath.isEmpty,
+              let share = expecting else {
+            return response
+        }
+        // Count the mount points currently carrying this share's remote URL.
+        let entries = mountedVolumes().filter { $0.equal(to: share) }
+        guard entries.count > 1 else {
+            return response
+        }
+        // Only detach the copy NetFS just reported, and only if the kernel agrees it is one
+        // of the duplicates -- never unmount a path we cannot see in the table.
+        guard entries.contains(where: { normalize($0.path) == normalize(actualPath) }) else {
+            return response
+        }
+        libMounter.error("Mount of \(share.name ?? "--") at \(actualPath) duplicates an existing mount; detaching duplicate")
+        forceUnmountDetached(path: actualPath)
+        return .duplicateRejected(actualPath)
+    }
+
+    /// Drops a trailing slash so two spellings of the same mount point compare equal.
+    private static func normalize(_ path: String) -> String {
+        guard path.count > 1, path.hasSuffix("/") else { return path }
+        return String(path.dropLast())
     }
 
     internal static func unmount(url: URL) async throws {

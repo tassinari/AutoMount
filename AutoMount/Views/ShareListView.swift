@@ -311,7 +311,10 @@ struct MountButtonCell: View {
                 case .unmounted:
                     let resp = try await model.mount(share)
                     switch resp{
-                    case .success:
+                    // The share ends up mounted in all three cases -- `.duplicateRejected`
+                    // only means a surplus copy was detached -- so none belongs in the
+                    // error slot.
+                    case .success, .alreadyMounted, .duplicateRejected:
                         break
                     default:
                         let err = AddEditModelError.mountFailed(resp)

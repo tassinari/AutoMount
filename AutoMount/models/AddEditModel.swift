@@ -31,6 +31,10 @@ extension AddEditModelError: LocalizedError {
                 return String(localized: "error.connection_refused")
             case .alreadyMounted:
                 return String(localized: "error.already_mounted")
+            // The share is mounted where it should be; the duplicate NetFS created was
+            // detached again. Nothing for the user to fix.
+            case .duplicateRejected:
+                return String(localized: "error.already_mounted")
             case .genericError(let error):
                 return String(localized: "error.mount_generic \(error.localizedDescription)")
             case .success:
@@ -89,7 +93,12 @@ extension AddEditModelError: LocalizedError {
         
         let resp = try await store.mount(mount, ui: true)
         switch resp {
-        case .success(_):
+        // `.duplicateRejected` means the share is mounted where it belongs and a surplus copy
+        // was detached, and `.alreadyMounted` that it was mounted before we got here. From the
+        // user's point of view both are the share being available, so they must take the same
+        // path as `.success` -- throwing here would skip `manage()` and leave a mounted share
+        // unmanaged.
+        case .success(_), .alreadyMounted, .duplicateRejected(_):
             addServerToHistory()
             if manage, let mountedShare = store.shareMatching(url: url){
                 try await store.manage(mountedShare)

@@ -74,6 +74,8 @@ actor Remounter{
                             notice("Mount failure for \(name): connection refused")
                         case .alreadyMounted:
                             notice("Mount failure for \(name): already mounted")
+                        case .duplicateRejected(let path):
+                            notice("Rejected duplicate mount of \(name) at \(path); already mounted elsewhere")
                         }
                     }catch {
                         AutoMountBackground.error("Mount(\(name)) threw:  \(String(describing: error))")

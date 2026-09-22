@@ -184,14 +184,33 @@ public extension StorageManager {
     /// - Returns: A ``MountResponse`` indicating the outcome of the mount operation.
     /// - Throws: ``MountError/noMountData`` if the share's URL cannot be decomposed into valid mount data.
     func mount(_ share : Share, ui : Bool = false) async throws -> MountResponse {
+        return try await mount(share, ui: ui, mountedVolumes: MountInfo.mountedVolumes)
+    }
+
+    /// Mount implementation with the mount-table lookup injected, so the duplicate
+    /// guard can be exercised without touching real mounts.
+    ///
+    /// - Parameter mountedVolumes: Returns the volumes the kernel currently has mounted.
+    internal func mount(_ share : Share,
+                        ui : Bool = false,
+                        mountedVolumes: @escaping @Sendable () -> [MountedVolumesData]) async throws -> MountResponse {
         if share.connected == .mounted{
             return .alreadyMounted
         }
-        if let md = share.mountData{
-            let data =  try await md.mount(ui: ui)
-            return data
+        guard let md = share.mountData else {
+            throw MountError.noMountData
         }
-        throw MountError.noMountData
+        // `share.connected` is a snapshot taken when the share list was built, and mounting
+        // is slow enough that it can be seconds stale by the time we get here. NetFS does not
+        // refuse a share that is already mounted -- it silently mounts it a second time at a
+        // deduplicated path such as `/Volumes/media-1`. So ask the kernel what is mounted
+        // *now*, matched on the remote URL rather than the mount point: the whole failure mode
+        // is the mount landing somewhere other than where this share expects to be.
+        if mountedVolumes().contains(where: { $0.equal(to: share) }) {
+            notice("\(share.name ?? "--") is already mounted, skipping duplicate mount")
+            return .alreadyMounted
+        }
+        return try await md.mount(ui: ui, expecting: share, mountedVolumes: mountedVolumes)
     }
     /// Unmounts a currently mounted share.
     ///
