@@ -16,6 +16,18 @@ actor Remounter{
     internal var debounceSeconds: TimeInterval
     private let storage : Storage
     private var pendingTask: Task<Void, Never>?
+    /// The remount pass currently running, if any.
+    ///
+    /// Cancelling `pendingTask` only stops a pass that is still in its debounce sleep; once
+    /// `reconnectAll()` has started it runs to completion. And because this is an actor,
+    /// it keeps accepting events while that pass is suspended in a mount -- which, while the
+    /// Mac is asleep, can be for hours. Without this, every later event started another pass
+    /// alongside it, and when the network came back they all mounted the same shares at once.
+    private var reconnectTask: Task<Void, Never>?
+    /// Set when an event's debounce expires while a pass is running. That pass then runs
+    /// once more when it finishes, so the event is not lost -- but however many events
+    /// arrive, at most one follow-up pass is queued.
+    private var followUpRequested = false
 
     func setDebounce(_ seconds: TimeInterval) {
         debounceSeconds = seconds
@@ -34,11 +46,30 @@ actor Remounter{
             } catch {
                 return
             }
-            await reconnectAll()
+            await runReconnect()
         }
         pendingTask = task
         await task.value
     }
+    /// Runs `reconnectAll()`, making sure only one pass is ever in progress.
+    private func runReconnect() async {
+        if let running = reconnectTask {
+            notice("Remount pass already running; queueing a follow-up pass")
+            followUpRequested = true
+            await running.value
+            return
+        }
+        let task = Task {
+            repeat {
+                self.followUpRequested = false
+                await self.reconnectAll()
+            } while self.followUpRequested
+            self.reconnectTask = nil
+        }
+        reconnectTask = task
+        await task.value
+    }
+
     /// Clears any stale mounts, then remounts every managed share that is not connected.
     ///
     /// Deliberately *not* `@MainActor`: nothing here touches UI, and hopping to the main actor

@@ -37,7 +37,7 @@ class MockStorage: Storage{
     }
     let mountResponse : MountResponse
     let addHandler : (Share) throws -> Void
-    @MainActor let mountHandler : ((Share) async throws -> MountResponse)?
+    @MainActor var mountHandler : ((Share) async throws -> MountResponse)?
     let deleteHandler : (Share) throws -> Void
     var mockMountList: [Share]
     var mountCalled : Bool = false
