@@ -58,6 +58,22 @@ public actor StorageManager{
         self.userDefaults = defaults
     }
     let userDefaults: UserDefaults?
+
+    /// Mounts currently in progress, keyed by ``Share/mountIdentity``.
+    ///
+    /// The kernel mount table cannot see a mount that has been requested but not completed,
+    /// so the pre-flight check in `mount` lets any number of concurrent callers through for
+    /// the same share -- and NetFS then mounts it once per caller, at `/Volumes/<name>`,
+    /// `/Volumes/<name>-1`, and so on. A second caller instead waits for the first attempt.
+    private var mountsInFlight: [String: Task<MountResponse, Error>] = [:]
+
+    internal func mountInFlight(for key: String) -> Task<MountResponse, Error>? {
+        mountsInFlight[key]
+    }
+
+    internal func setMountInFlight(_ task: Task<MountResponse, Error>?, for key: String) {
+        mountsInFlight[key] = task
+    }
     
     /// Adds a share to the list of managed mounts and persists the updated list.
     ///
@@ -187,18 +203,28 @@ public extension StorageManager {
         return try await mount(share, ui: ui, mountedVolumes: MountInfo.mountedVolumes)
     }
 
-    /// Mount implementation with the mount-table lookup injected, so the duplicate
-    /// guard can be exercised without touching real mounts.
+    /// Mount implementation with the mount-table lookup and the mount itself injected, so
+    /// the duplicate guards can be exercised without touching real mounts.
     ///
-    /// - Parameter mountedVolumes: Returns the volumes the kernel currently has mounted.
+    /// - Parameters:
+    ///   - mountedVolumes: Returns the volumes the kernel currently has mounted.
+    ///   - performMount: Performs the mount. `nil` mounts through NetFS.
     internal func mount(_ share : Share,
                         ui : Bool = false,
-                        mountedVolumes: @escaping @Sendable () -> [MountedVolumesData]) async throws -> MountResponse {
+                        mountedVolumes: @escaping @Sendable () -> [MountedVolumesData],
+                        performMount: (@Sendable (Share) async throws -> MountResponse)? = nil) async throws -> MountResponse {
         if share.connected == .mounted{
             return .alreadyMounted
         }
         guard let md = share.mountData else {
             throw MountError.noMountData
+        }
+        // Another caller is already mounting this share. Starting a second NetFS request
+        // would mount it twice, so share the outcome of the first instead.
+        let key = share.mountIdentity
+        if let inFlight = mountInFlight(for: key) {
+            notice("\(share.name ?? "--") is already being mounted, waiting for that attempt")
+            return try await inFlight.value
         }
         // `share.connected` is a snapshot taken when the share list was built, and mounting
         // is slow enough that it can be seconds stale by the time we get here. NetFS does not
@@ -210,7 +236,18 @@ public extension StorageManager {
             notice("\(share.name ?? "--") is already mounted, skipping duplicate mount")
             return .alreadyMounted
         }
-        return try await md.mount(ui: ui, expecting: share, mountedVolumes: mountedVolumes)
+        // Registered before the first suspension point, so no caller can slip in between the
+        // checks above and this.
+        let timeout = ui ? nil : MountData.unattendedMountTimeout
+        let task = Task {
+            if let performMount {
+                return try await performMount(share)
+            }
+            return try await md.mount(ui: ui, expecting: share, timeout: timeout, mountedVolumes: mountedVolumes)
+        }
+        setMountInFlight(task, for: key)
+        defer { setMountInFlight(nil, for: key) }
+        return try await task.value
     }
     /// Unmounts a currently mounted share.
     ///

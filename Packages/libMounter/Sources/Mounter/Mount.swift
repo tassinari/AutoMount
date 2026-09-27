@@ -61,7 +61,7 @@ internal struct MountedVolumesData: Equatable{
 
     /// The URL's port, falling back to the scheme's default so `smb://h/s` and
     /// `smb://h:445/s` are recognised as the same server.
-    private static func port(of url: URL, scheme: String) -> Int? {
+    fileprivate static func port(of url: URL, scheme: String) -> Int? {
         if let port = url.port { return port }
         switch scheme {
         case "smb": return 445
@@ -76,7 +76,7 @@ internal struct MountedVolumesData: Equatable{
     /// SMB and AFP share names are case-insensitive on the server, so `/Media` and `/media`
     /// are the same share and must match — otherwise the duplicate guard misses the mount it
     /// exists to catch. NFS exports are case-sensitive paths, so they are compared exactly.
-    private static func pathsEqual(_ lhs: String, _ rhs: String, scheme: String) -> Bool {
+    fileprivate static func pathsEqual(_ lhs: String, _ rhs: String, scheme: String) -> Bool {
         switch scheme {
         case "smb", "afp":
             return lhs.compare(rhs, options: .caseInsensitive) == .orderedSame
@@ -86,6 +86,30 @@ internal struct MountedVolumesData: Equatable{
     }
     var share: Share {
         return Share( url: remountURL, name: name, mountPoint: path, managed: false, connected: .mounted)
+    }
+}
+
+extension Share {
+    /// A key that is equal for two shares exactly when ``MountedVolumesData/equal(to:)``
+    /// would treat them as the same remote share: scheme, host and port (defaulted per
+    /// scheme), plus the path under its protocol's case rules. The user name is ignored,
+    /// as it is there.
+    ///
+    /// Used to recognise a second mount of a share that is already being mounted, however
+    /// its URL happens to be spelled.
+    internal var mountIdentity: String {
+        guard let scheme = url.scheme?.lowercased(), let host = url.host?.lowercased() else {
+            return url.absoluteString
+        }
+        let port = MountedVolumesData.port(of: url, scheme: scheme).map { ":\($0)" } ?? ""
+        let path: String
+        switch scheme {
+        case "smb", "afp":
+            path = url.path().lowercased()
+        default:
+            path = url.path()
+        }
+        return "\(scheme)://\(host)\(port)\(path)"
     }
 }
 
@@ -328,6 +352,28 @@ internal struct MountInfo{
     }
 }
 
+/// Resumes a continuation at most once, however many parties race to resume it.
+private final class ResumeOnce: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<MountResponse, Never>?
+
+    init(_ continuation: CheckedContinuation<MountResponse, Never>) {
+        self.continuation = continuation
+    }
+
+    /// Resumes with `value` if nothing has yet.
+    /// - Returns: `true` if this call was the one that resumed.
+    @discardableResult
+    func resume(returning value: MountResponse) -> Bool {
+        lock.lock()
+        let pending = continuation
+        continuation = nil
+        lock.unlock()
+        pending?.resume(returning: value)
+        return pending != nil
+    }
+}
+
 /// A lock-guarded flag shared between the probe thread and the waiter in
 /// ``MountInfo/isMountResponsive(path:timeout:)``.
 private final class ProbeResult: @unchecked Sendable {
@@ -376,6 +422,14 @@ internal struct MountData{
         }
     }
     
+    /// How long an unattended mount may take before it is cancelled.
+    ///
+    /// `NetFSMountURLSync` has no timeout of its own that survives sleep: a request made while
+    /// the network is going away sits in NetAuthSysAgent until connectivity returns, however
+    /// long that is. Requests piled up that way overnight all complete together on the next
+    /// wake, and each mounts the share again at `/Volumes/<name>-1`, `-2`, ...
+    internal static let unattendedMountTimeout: TimeInterval = 60
+
     /// Mounts the share via NetFS.
     ///
     /// - Parameters:
@@ -383,58 +437,105 @@ internal struct MountData{
     ///   - expecting: The share being mounted. After the mount, the kernel mount table is
     ///     re-read: if this share's remote URL now appears at more than one mount point, the
     ///     mount NetFS just made was a duplicate -- see ``rejectIfDuplicate(response:expecting:mountedVolumes:)``.
+    ///   - timeout: Cancel the request and report ``MountResponse/timeout`` if it has not
+    ///     completed after this many seconds of wall-clock time (which, unlike uptime, keeps
+    ///     counting while the Mac sleeps). `nil` waits indefinitely -- appropriate when `ui`
+    ///     is `true` and the user may be typing a password.
     ///   - mountedVolumes: Returns the volumes the kernel currently has mounted. Injected so
     ///     the duplicate backstop can be exercised without touching real mounts.
     internal func mount(ui: Bool = false,
                         expecting: Share? = nil,
+                        timeout: TimeInterval? = nil,
                         mountedVolumes: @escaping @Sendable () -> [MountedVolumesData] = MountInfo.mountedVolumes) async throws -> MountResponse {
 
         let url = try self.url
-        let response: MountResponse = await withCheckedContinuation { cont in
-            DispatchQueue.global().async {
-                var cfArray: Unmanaged<CFArray>?
-                let mountD = NSMutableDictionary()
-                let optD = NSMutableDictionary()
-                optD.setValue(true as CFBoolean, forKey: kNetFSSoftMountKey)
-                if !ui{
-                    mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
-                }
-                let response = NetFSMountURLSync(url as CFURL, nil, nil, nil, mountD as CFMutableDictionary, optD as CFMutableDictionary, &cfArray)
-                print("Responses: \(response)")
-                var retVal: MountResponse = .alreadyMounted
-                switch response{
-                case 0:
-                    let messages: [String] = {
-                        guard let unmanaged = cfArray else { return [] }
-                        let arrayRef: CFArray = unmanaged.takeUnretainedValue()
-                        let anyArray = arrayRef as [AnyObject]
-                        return anyArray.compactMap { $0 as? String }
-                    }()
-                    retVal =  .success(messages.first)
-                    //
-                case EAUTH:
-                    retVal =  .authenticationError
-                case EHOSTUNREACH:
-                    retVal =  .cannotFindHost
-                case ETIMEDOUT:
-                    retVal =  .timeout
-                case ECONNREFUSED, ELOOP:
-                    retVal =  .connectionRefused
-                case ENOENT:
-                    retVal =  .noSuchFileOrDirectory
-                case EEXIST:
-                    retVal =  .alreadyMounted
-                    
-                default:
-                    retVal =  .genericError(NSError(domain: "NetFS", code: Int(response), userInfo: nil))
-                }
-                cont.resume(returning: retVal)
+        let response = await MountData.awaitMountRequest(timeout: timeout, start: { finish in
+            let mountD = NSMutableDictionary()
+            let optD = NSMutableDictionary()
+            optD.setValue(true as CFBoolean, forKey: kNetFSSoftMountKey)
+            if !ui{
+                mountD.setValue(kNAUIOptionNoUI, forKey:kNAUIOptionKey)
             }
-        }
+            var requestID: AsyncRequestID?
+            let status = NetFSMountURLAsync(url as CFURL, nil, nil, nil,
+                                            mountD as CFMutableDictionary, optD as CFMutableDictionary,
+                                            &requestID, DispatchQueue.global()) { status, _, mountpoints in
+                finish(MountData.response(for: status, mountpoints: mountpoints))
+            }
+            if status != 0 {
+                // Rejected before it was queued; the completion block will not run.
+                finish(MountData.response(for: status, mountpoints: nil))
+                return nil
+            }
+            return requestID.map(MountRequest.init)
+        }, cancel: { (request: MountRequest) in
+            libMounter.error("Mount of \(url.absoluteString) timed out; cancelling request")
+            _ = NetFSMountURLCancel(request.id)
+        })
 
         return MountData.rejectIfDuplicate(response: response,
                                            expecting: expecting,
                                            mountedVolumes: mountedVolumes)
+    }
+
+    /// A pending `NetFSMountURLAsync` request. The raw pointer is an opaque token that NetFS
+    /// only ever reads back in `NetFSMountURLCancel`, so passing it between threads is safe.
+    internal struct MountRequest: @unchecked Sendable {
+        let id: AsyncRequestID
+    }
+
+    /// Waits for an asynchronous mount request, cancelling it if it outlives `timeout`.
+    ///
+    /// Whichever comes first -- the request's completion or the deadline -- decides the
+    /// result; the other is ignored. On the deadline, `cancel` is called with the request's
+    /// token so the request cannot complete later and mount the share behind our back.
+    ///
+    /// - Parameters:
+    ///   - timeout: Seconds of wall-clock time to wait, or `nil` to wait indefinitely.
+    ///   - start: Issues the request. It receives a `finish` callback to report the outcome
+    ///     (which may be called synchronously), and returns the token needed to cancel it, or
+    ///     `nil` if there is nothing to cancel.
+    ///   - cancel: Cancels a pending request.
+    internal static func awaitMountRequest<Token: Sendable>(
+        timeout: TimeInterval?,
+        start: (@escaping @Sendable (MountResponse) -> Void) -> Token?,
+        cancel: @escaping @Sendable (Token) -> Void
+    ) async -> MountResponse {
+        await withCheckedContinuation { continuation in
+            let outcome = ResumeOnce(continuation)
+            let token = start { response in
+                outcome.resume(returning: response)
+            }
+            guard let timeout else { return }
+            DispatchQueue.global().asyncAfter(wallDeadline: .now() + timeout) {
+                if outcome.resume(returning: .timeout), let token {
+                    cancel(token)
+                }
+            }
+        }
+    }
+
+    /// Maps a NetFS status code, and the mount points it reported, to a ``MountResponse``.
+    private static func response(for status: Int32, mountpoints: CFArray?) -> MountResponse {
+        switch status{
+        case 0:
+            let paths = (mountpoints as? [AnyObject])?.compactMap { $0 as? String } ?? []
+            return .success(paths.first)
+        case EAUTH:
+            return .authenticationError
+        case EHOSTUNREACH:
+            return .cannotFindHost
+        case ETIMEDOUT:
+            return .timeout
+        case ECONNREFUSED, ELOOP:
+            return .connectionRefused
+        case ENOENT:
+            return .noSuchFileOrDirectory
+        case EEXIST:
+            return .alreadyMounted
+        default:
+            return .genericError(NSError(domain: "NetFS", code: Int(status), userInfo: nil))
+        }
     }
 
     /// Turns a "successful" mount that duplicated an existing one back into a no-op.
