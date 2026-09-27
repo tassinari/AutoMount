@@ -42,7 +42,7 @@ final class RemounterConcurrencyTests: XCTestCase {
         var gate: CheckedContinuation<Void, Never>?
 
         let storage = MockStorage(list: [makeShare()])
-        storage.mountHandler = { _ in
+        storage.mountHandler = { [unowned storage] _ in
             mountCount += 1
             inFlight += 1
             maxInFlight = max(maxInFlight, inFlight)

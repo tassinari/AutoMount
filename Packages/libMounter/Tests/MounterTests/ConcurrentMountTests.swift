@@ -176,6 +176,87 @@ final class InFlightMountTests: XCTestCase {
             return XCTFail("Expected a fresh attempt after the failure, got \(response)")
         }
     }
+
+    /// An unattended attempt cannot prompt for a password, so a `ui: true` caller that
+    /// arrives during it must not inherit its `.authenticationError`: it waits for that
+    /// attempt, then makes its own.
+    func testInteractiveCallerDoesNotInheritUnattendedAuthenticationFailure() async throws {
+        let storage = makeStorage()
+        let gate = MountGate()
+        let target = share("smb://synology/media")
+        let unattended: @Sendable (Share) async throws -> MountResponse = { _ in
+            await gate.enter()
+            return .authenticationError
+        }
+
+        let background = Task {
+            try await storage.mount(target, ui: false, mountedVolumes: { [] }, performMount: unattended)
+        }
+        try await waitForWaiters(gate, count: 1)
+        let interactive = Task {
+            try await storage.mount(target, ui: true, mountedVolumes: { [] },
+                                    performMount: { _ in .success("/Volumes/media") })
+        }
+        try await Task.sleep(for: .milliseconds(100))
+        let callsWhileBlocked = await gate.calls
+        XCTAssertEqual(callsWhileBlocked, 1, "The interactive caller must wait, not mount alongside")
+
+        await gate.releaseAll()
+        guard case .authenticationError = try await background.value else {
+            return XCTFail("The unattended caller keeps its own outcome")
+        }
+        guard case .success = try await interactive.value else {
+            return XCTFail("The interactive caller should have made its own attempt")
+        }
+    }
+
+    /// If the attempt it waited on succeeded, the interactive caller sees the share in the
+    /// mount table and does not mount it a second time.
+    func testInteractiveCallerSkipsMountThatSucceededWhileWaiting() async throws {
+        let storage = makeStorage()
+        let gate = MountGate()
+        let target = share("smb://synology/media")
+        let mounted = MountedFlag()
+        let unattended: @Sendable (Share) async throws -> MountResponse = { _ in
+            await gate.enter()
+            mounted.set()
+            return .success("/Volumes/media")
+        }
+        let volumes: @Sendable () -> [MountedVolumesData] = {
+            mounted.isSet ? [MountedVolumesData(name: "media", remountURL: target.url, path: "/Volumes/media")] : []
+        }
+
+        let background = Task {
+            try await storage.mount(target, ui: false, mountedVolumes: volumes, performMount: unattended)
+        }
+        try await waitForWaiters(gate, count: 1)
+        let interactive = Task {
+            try await storage.mount(target, ui: true, mountedVolumes: volumes,
+                                    performMount: { _ in XCTFail("Must not mount twice"); return .timeout })
+        }
+        try await Task.sleep(for: .milliseconds(100))
+
+        await gate.releaseAll()
+        _ = try await background.value
+        guard case .alreadyMounted = try await interactive.value else {
+            return XCTFail("Expected .alreadyMounted once the first attempt succeeded")
+        }
+    }
+}
+
+/// Lock-guarded flag a mount stub sets to show up in a fake mount table.
+private final class MountedFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    func set() {
+        lock.lock(); value = true; lock.unlock()
+    }
+
+    var isSet: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return value
+    }
 }
 
 /// Lock-guarded record of cancelled tokens.

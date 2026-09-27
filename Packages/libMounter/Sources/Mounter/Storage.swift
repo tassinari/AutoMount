@@ -71,8 +71,16 @@ public actor StorageManager{
         mountsInFlight[key]
     }
 
-    internal func setMountInFlight(_ task: Task<MountResponse, Error>?, for key: String) {
+    internal func setMountInFlight(_ task: Task<MountResponse, Error>, for key: String) {
         mountsInFlight[key] = task
+    }
+
+    /// Removes `task` from the in-flight table, but only if it is still the registered
+    /// attempt: a caller that waited on it may already have registered a newer one.
+    internal func clearMountInFlight(_ task: Task<MountResponse, Error>, for key: String) {
+        if mountsInFlight[key] == task {
+            mountsInFlight[key] = nil
+        }
     }
     
     /// Adds a share to the list of managed mounts and persists the updated list.
@@ -222,9 +230,21 @@ public extension StorageManager {
         // Another caller is already mounting this share. Starting a second NetFS request
         // would mount it twice, so share the outcome of the first instead.
         let key = share.mountIdentity
-        if let inFlight = mountInFlight(for: key) {
-            notice("\(share.name ?? "--") is already being mounted, waiting for that attempt")
-            return try await inFlight.value
+        // Once awaited, a finished task stays registered until its owner resumes on this
+        // actor to clear it, which cannot happen while we loop without suspending.
+        var awaited: Task<MountResponse, Error>?
+        while let inFlight = mountInFlight(for: key), inFlight != awaited {
+            guard ui else {
+                notice("\(share.name ?? "--") is already being mounted, waiting for that attempt")
+                return try await inFlight.value
+            }
+            // The attempt in flight may be unattended, so it cannot prompt for credentials;
+            // handing its `.authenticationError` to a caller that can would skip the prompt.
+            // Wait for it to finish instead, then mount with UI. If it succeeded, the
+            // mount-table check below returns `.alreadyMounted`.
+            notice("\(share.name ?? "--") is already being mounted, waiting before mounting with UI")
+            _ = try? await inFlight.value
+            awaited = inFlight
         }
         // `share.connected` is a snapshot taken when the share list was built, and mounting
         // is slow enough that it can be seconds stale by the time we get here. NetFS does not
@@ -246,7 +266,7 @@ public extension StorageManager {
             return try await md.mount(ui: ui, expecting: share, timeout: timeout, mountedVolumes: mountedVolumes)
         }
         setMountInFlight(task, for: key)
-        defer { setMountInFlight(nil, for: key) }
+        defer { clearMountInFlight(task, for: key) }
         return try await task.value
     }
     /// Unmounts a currently mounted share.
