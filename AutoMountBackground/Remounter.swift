@@ -9,12 +9,20 @@ import Foundation
 import libMounter
 
 actor Remounter{
-    init(debounceSeconds : TimeInterval = 20, storage: Storage = StorageManager()){
+    init(debounceSeconds : TimeInterval = 20,
+         storage: Storage = StorageManager(),
+         backoff: RemountBackoff = RemountBackoff(),
+         now: @escaping @Sendable () -> Date = Date.init){
         self.debounceSeconds = debounceSeconds
         self.storage = storage
+        self.backoff = backoff
+        self.now = now
     }
     internal var debounceSeconds: TimeInterval
     private let storage : Storage
+    /// Shares whose mounts keep timing out, and when each may next be attempted.
+    private var backoff: RemountBackoff
+    private let now: @Sendable () -> Date
     private var pendingTask: Task<Void, Never>?
     /// The remount pass currently running, if any.
     ///
@@ -35,6 +43,9 @@ actor Remounter{
 
     func checkAndRemount(_ event: DetectorEvent) async {
         notice("remount event: \(event)")
+        if case .wake = event {
+            backoff.resetAll()
+        }
         if pendingTask != nil {
             notice("Debounced: rescheduling")
         }
@@ -85,9 +96,20 @@ actor Remounter{
             if share.managed{
                 let name = share.name ?? "--"
                 if share.connected == .unmounted{
+                    let key = share.url.absoluteString
+                    if let retryAfter = backoff.retryAfter(key, now: now()) {
+                        notice("\(name) timed out recently; not retrying until \(retryAfter)")
+                        continue
+                    }
                     notice("\(name) is not connected, connecting..")
                     do{
-                        switch try await storage.mount(share, ui: false){
+                        let response = try await storage.mount(share, ui: false)
+                        if case .timeout = response {
+                            backoff.recordTimeout(key, now: now())
+                        } else {
+                            backoff.reset(key)
+                        }
+                        switch response{
                             
                         case .genericError(let e):
                             error("Generic error in mount attempt: \(String(describing: e))")
@@ -109,6 +131,7 @@ actor Remounter{
                             notice("Rejected duplicate mount of \(name) at \(path); already mounted elsewhere")
                         }
                     }catch {
+                        backoff.reset(key)
                         AutoMountBackground.error("Mount(\(name)) threw:  \(String(describing: error))")
                     }
                 }else{

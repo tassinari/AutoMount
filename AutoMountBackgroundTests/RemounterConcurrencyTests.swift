@@ -87,7 +87,9 @@ final class RemounterConcurrencyTests: XCTestCase {
             if mountCount == 1 {
                 await withCheckedContinuation { gate = $0 }
             }
-            return .timeout
+            // Not `.timeout`: that would back the share off, and the follow-up pass would
+            // rightly skip it. This test is about pass serialisation, not backoff.
+            return .cannotFindHost
         }
         let remounter = Remounter(debounceSeconds: 0, storage: storage)
 
