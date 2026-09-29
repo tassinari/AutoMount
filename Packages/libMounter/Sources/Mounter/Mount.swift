@@ -374,6 +374,96 @@ private final class ResumeOnce: @unchecked Sendable {
     }
 }
 
+/// Tracks NetFS calls that have not returned within ``MountData/netFSCallTimeout``.
+///
+/// A call stuck that long means NetAuthSysAgent is wedged, and every further call will block
+/// the same way -- each one parking a thread and queueing another request that the agent
+/// replays if it ever recovers. While a call is stuck, new calls are refused, except for one
+/// retry every `retryInterval`: a wedged call may never return even after the agent is
+/// restarted, and refusing forever would then need AutoMount restarted too.
+internal final class NetFSCallGate: @unchecked Sendable {
+    static let shared = NetFSCallGate()
+
+    private let lock = NSLock()
+    private let retryInterval: TimeInterval
+    private let now: @Sendable () -> Date
+    private var stuckCalls = 0
+    private var lastStuck: Date?
+
+    init(retryInterval: TimeInterval = 300, now: @escaping @Sendable () -> Date = Date.init) {
+        self.retryInterval = retryInterval
+        self.now = now
+    }
+
+    /// Whether a new call may be issued. Allowing a retry restarts the retry interval, so
+    /// concurrent callers do not all get through at once.
+    func isAcceptingCalls() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard stuckCalls > 0, let lastStuck else { return true }
+        let current = now()
+        guard current.timeIntervalSince(lastStuck) >= retryInterval else { return false }
+        self.lastStuck = current
+        return true
+    }
+
+    func callStuck() {
+        lock.lock(); defer { lock.unlock() }
+        stuckCalls += 1
+        lastStuck = now()
+    }
+
+    func stuckCallReturned() {
+        lock.lock(); defer { lock.unlock() }
+        stuckCalls = max(0, stuckCalls - 1)
+    }
+}
+
+/// State shared between the thread issuing a NetFS request and the deadlines racing it.
+private final class PendingRequest<Token: Sendable>: @unchecked Sendable {
+    private let lock = NSLock()
+    private let gate: NetFSCallGate
+    private var returned = false
+    private var stuck = false
+    private var token: Token?
+    private var cancelRequested = false
+
+    init(gate: NetFSCallGate) {
+        self.gate = gate
+    }
+
+    /// Records that the issuing call returned.
+    /// - Returns: `true` if a deadline already asked for the request to be cancelled, so the
+    ///   caller must cancel `token` (if any) now.
+    func didReturn(token: Token?) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        returned = true
+        self.token = token
+        if stuck {
+            gate.stuckCallReturned()
+        }
+        return cancelRequested
+    }
+
+    /// Marks the call stuck if it has not returned yet.
+    /// - Returns: `true` if it was marked.
+    func markStuckIfNotReturned() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard !returned else { return false }
+        stuck = true
+        gate.callStuck()
+        return true
+    }
+
+    /// Asks for the request to be cancelled.
+    /// - Returns: The token to cancel now, or `nil` if there is none yet; ``didReturn(token:)``
+    ///   then reports that the cancel is still owed.
+    func requestCancel() -> Token? {
+        lock.lock(); defer { lock.unlock() }
+        cancelRequested = true
+        return token
+    }
+}
+
 /// A lock-guarded flag shared between the probe thread and the waiter in
 /// ``MountInfo/isMountResponsive(path:timeout:)``.
 private final class ProbeResult: @unchecked Sendable {
@@ -449,7 +539,9 @@ internal struct MountData{
                         mountedVolumes: @escaping @Sendable () -> [MountedVolumesData] = MountInfo.mountedVolumes) async throws -> MountResponse {
 
         let url = try self.url
-        let response = await MountData.awaitMountRequest(timeout: timeout, start: { finish in
+        let response = await MountData.awaitMountRequest(timeout: timeout,
+                                                         callTimeout: ui ? nil : MountData.netFSCallTimeout,
+                                                         start: { finish in
             let mountD = NSMutableDictionary()
             let optD = NSMutableDictionary()
             optD.setValue(true as CFBoolean, forKey: kNetFSSoftMountKey)
@@ -484,34 +576,86 @@ internal struct MountData{
         let id: AsyncRequestID
     }
 
+    /// How long the NetFS call that *issues* a request may take to return.
+    ///
+    /// `NetFSMountURLAsync` is only asynchronous once NetAuthSysAgent has accepted the request;
+    /// handing it over is a synchronous IPC round trip. When the agent wedges, that call blocks
+    /// indefinitely -- on 2026-09-29 one blocked for over half an hour, and since the mount
+    /// timeout was only armed once it returned, the remount pass hung until the agent was
+    /// killed. Normally the call returns in milliseconds.
+    internal static let netFSCallTimeout: TimeInterval = 20
+
     /// Waits for an asynchronous mount request, cancelling it if it outlives `timeout`.
     ///
-    /// Whichever comes first -- the request's completion or the deadline -- decides the
-    /// result; the other is ignored. On the deadline, `cancel` is called with the request's
-    /// token so the request cannot complete later and mount the share behind our back.
+    /// Whichever comes first -- the request's completion or a deadline -- decides the result;
+    /// the others are ignored. On a deadline, `cancel` is called with the request's token (as
+    /// soon as `start` has produced one) so the request cannot complete later and mount the
+    /// share behind our back.
+    ///
+    /// `start` runs on its own thread, because the NetFS call it makes can block
+    /// indefinitely; both deadlines are armed before it runs. If `start` has not returned
+    /// after `callTimeout` the caller gets ``MountResponse/timeout`` and `gate` records the
+    /// call as stuck. While it stays stuck, later requests fail immediately rather than
+    /// parking another thread in the same wedged agent.
     ///
     /// - Parameters:
-    ///   - timeout: Seconds of wall-clock time to wait, or `nil` to wait indefinitely.
+    ///   - timeout: Seconds of wall-clock time to wait for completion, or `nil` to wait
+    ///     indefinitely once the request has been issued.
+    ///   - callTimeout: Seconds to wait for `start` itself to return, or `nil` not to limit it.
+    ///     Interactive mounts pass `nil`: it is not documented whether `NetFSMountURLAsync`
+    ///     returns before or after the password prompt, and cancelling a request the user is
+    ///     typing a password for would be worse than waiting.
+    ///   - gate: Tracks calls stuck inside NetFS.
     ///   - start: Issues the request. It receives a `finish` callback to report the outcome
     ///     (which may be called synchronously), and returns the token needed to cancel it, or
     ///     `nil` if there is nothing to cancel.
     ///   - cancel: Cancels a pending request.
     internal static func awaitMountRequest<Token: Sendable>(
         timeout: TimeInterval?,
-        start: (@escaping @Sendable (MountResponse) -> Void) -> Token?,
+        callTimeout: TimeInterval? = netFSCallTimeout,
+        gate: NetFSCallGate = .shared,
+        start: @escaping @Sendable (@escaping @Sendable (MountResponse) -> Void) -> Token?,
         cancel: @escaping @Sendable (Token) -> Void
     ) async -> MountResponse {
-        await withCheckedContinuation { continuation in
+        guard gate.isAcceptingCalls() else {
+            libMounter.error("A previous NetFS call is still stuck; not issuing another mount request")
+            return .timeout
+        }
+        return await withCheckedContinuation { continuation in
             let outcome = ResumeOnce(continuation)
-            let token = start { response in
-                outcome.resume(returning: response)
-            }
-            guard let timeout else { return }
-            DispatchQueue.global().asyncAfter(wallDeadline: .now() + timeout) {
-                if outcome.resume(returning: .timeout), let token {
+            let request = PendingRequest<Token>(gate: gate)
+
+            // Called when either deadline passes: report a timeout and cancel the request,
+            // now if `start` has returned its token, or as soon as it does.
+            let expire: @Sendable () -> Void = {
+                if outcome.resume(returning: .timeout), let token = request.requestCancel() {
                     cancel(token)
                 }
             }
+            if let callTimeout {
+                DispatchQueue.global().asyncAfter(wallDeadline: .now() + callTimeout) {
+                    if request.markStuckIfNotReturned() {
+                        libMounter.error("NetFS did not accept the mount request within \(Int(callTimeout))s")
+                        expire()
+                    }
+                }
+            }
+            if let timeout {
+                DispatchQueue.global().asyncAfter(wallDeadline: .now() + timeout, execute: expire)
+            }
+
+            // A dedicated thread, not a global-queue dispatch: a call wedged in NetFS would
+            // otherwise hold a pool thread indefinitely. The gate bounds how many can pile up.
+            let thread = Thread {
+                let token = start { response in
+                    outcome.resume(returning: response)
+                }
+                if request.didReturn(token: token), let token {
+                    cancel(token)
+                }
+            }
+            thread.stackSize = 512 * 1024
+            thread.start()
         }
     }
 
