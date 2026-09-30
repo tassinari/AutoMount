@@ -380,6 +380,148 @@ final class MountRequestTimeoutTests: XCTestCase {
     }
 }
 
+/// A clock a test can move by hand.
+private final class TestClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var current = Date(timeIntervalSince1970: 1_000_000)
+
+    var now: Date {
+        lock.lock(); defer { lock.unlock() }
+        return current
+    }
+
+    func advance(by seconds: TimeInterval) {
+        lock.lock(); current += seconds; lock.unlock()
+    }
+}
+
+/// Lock-guarded count of calls to a synchronous `start` closure, which cannot await an actor.
+private final class StartCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = 0
+
+    func increment() {
+        lock.lock(); value += 1; lock.unlock()
+    }
+
+    var count: Int {
+        lock.lock(); defer { lock.unlock() }
+        return value
+    }
+}
+
+/// The NetFS call that issues a request can itself block when NetAuthSysAgent is wedged,
+/// which is what hung the remount pass on 2026-09-29.
+final class BlockedNetFSCallTests: XCTestCase {
+
+    /// A `start` that never returns still times out, and is cancelled once it finally does.
+    func testBlockedCallTimesOutAndIsCancelledWhenItReturns() async throws {
+        let log = CancelLog()
+        let gate = NetFSCallGate()
+        let unblock = DispatchSemaphore(value: 0)
+
+        let response = await MountData.awaitMountRequest(timeout: 5, callTimeout: 0.1, gate: gate, start: { _ in
+            unblock.wait()
+            return 11
+        }, cancel: { log.record($0) })
+
+        guard case .timeout = response else {
+            return XCTFail("Expected .timeout, got \(response)")
+        }
+        XCTAssertEqual(log.cancelled, [], "There is no token to cancel until the call returns")
+
+        unblock.signal()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(log.cancelled, [11], "The request must be cancelled as soon as its token exists")
+    }
+
+    /// The completion deadline also covers a call that returns late: its token is cancelled
+    /// when it arrives.
+    func testCompletionDeadlineCancelsATokenThatArrivesLate() async throws {
+        let log = CancelLog()
+        let unblock = DispatchSemaphore(value: 0)
+
+        let response = await MountData.awaitMountRequest(timeout: 0.05, callTimeout: nil, gate: NetFSCallGate(), start: { _ in
+            unblock.wait()
+            return 9
+        }, cancel: { log.record($0) })
+
+        guard case .timeout = response else {
+            return XCTFail("Expected .timeout, got \(response)")
+        }
+        unblock.signal()
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertEqual(log.cancelled, [9])
+    }
+
+    /// While a call is stuck, further requests fail at once instead of queueing behind it.
+    func testRequestsAreRefusedWhileACallIsStuck() async throws {
+        let gate = NetFSCallGate()
+        let unblock = DispatchSemaphore(value: 0)
+        _ = await MountData.awaitMountRequest(timeout: 5, callTimeout: 0.05, gate: gate, start: { _ in
+            unblock.wait()
+            return 1
+        }, cancel: { _ in })
+
+        let calls = StartCounter()
+        let refused = await MountData.awaitMountRequest(timeout: 5, callTimeout: 0.05, gate: gate, start: { finish in
+            calls.increment()
+            finish(.success("/Volumes/media"))
+            return 2
+        }, cancel: { _ in })
+        guard case .timeout = refused else {
+            return XCTFail("Expected .timeout while a call is stuck, got \(refused)")
+        }
+        XCTAssertEqual(calls.count, 0, "No new NetFS call may be made while one is stuck")
+
+        unblock.signal()
+        try await Task.sleep(for: .milliseconds(100))
+        let accepted = await MountData.awaitMountRequest(timeout: 5, callTimeout: 0.05, gate: gate, start: { finish in
+            calls.increment()
+            finish(.success("/Volumes/media"))
+            return 3
+        }, cancel: { _ in })
+        guard case .success = accepted else {
+            return XCTFail("Expected calls to resume once the stuck call returned, got \(accepted)")
+        }
+        XCTAssertEqual(calls.count, 1)
+    }
+
+    /// A call that fails immediately returns before the watchdog fires and is not counted
+    /// as stuck.
+    func testCallThatReturnsPromptlyIsNotMarkedStuck() async throws {
+        let gate = NetFSCallGate()
+        let response = await MountData.awaitMountRequest(timeout: 5, callTimeout: 0.05, gate: gate, start: { finish in
+            finish(.cannotFindHost)
+            return nil as Int?
+        }, cancel: { _ in })
+        guard case .cannotFindHost = response else {
+            return XCTFail("Expected .cannotFindHost, got \(response)")
+        }
+        try await Task.sleep(for: .milliseconds(150))
+        XCTAssertTrue(gate.isAcceptingCalls())
+    }
+
+    /// A wedged call may never return, even after the agent restarts, so one retry is let
+    /// through per interval rather than refusing forever.
+    func testGateAllowsOneRetryPerInterval() {
+        let clock = TestClock()
+        let gate = NetFSCallGate(retryInterval: 300, now: { clock.now })
+        XCTAssertTrue(gate.isAcceptingCalls())
+
+        gate.callStuck()
+        XCTAssertFalse(gate.isAcceptingCalls())
+        clock.advance(by: 299)
+        XCTAssertFalse(gate.isAcceptingCalls())
+        clock.advance(by: 1)
+        XCTAssertTrue(gate.isAcceptingCalls(), "One retry once the interval has passed")
+        XCTAssertFalse(gate.isAcceptingCalls(), "Only one caller gets the retry")
+
+        gate.stuckCallReturned()
+        XCTAssertTrue(gate.isAcceptingCalls())
+    }
+}
+
 final class MountIdentityTests: XCTestCase {
 
     private func identity(_ urlString: String) -> String {
