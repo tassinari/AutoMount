@@ -1,3 +1,4 @@
+[![Release](https://github.com/tassinari/AutoMount/actions/workflows/release.yml/badge.svg)](https://github.com/tassinari/AutoMount/actions/workflows/release.yml)
 # AutoMount
 
 A macOS app that keeps your SMB, AFP, and NFS shares mounted — remounting them
