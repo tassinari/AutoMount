@@ -67,9 +67,14 @@ class Detector : Detectable{
     }
     public func listen(_ delegate: DetectorDelegate){
         self.delegate = delegate
+        // Only touched from `queue`, where NWPathMonitor delivers every update.
+        var filter = NetworkChangeFilter()
         monitor.pathUpdateHandler = { [weak self]path in
-            if path.status == .satisfied && path.supportsDNS{
+            let snapshot = NetworkSnapshot(path)
+            if filter.shouldReport(snapshot) {
                 self?.delegate?.didDetectEvent(.network)
+            } else if snapshot.isUsable {
+                debug("Network path update with no reachability change; ignoring")
             } else {
                 debug("Network unavailable")
             }
