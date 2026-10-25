@@ -64,6 +64,21 @@ info() { printf '    %s\n' "$1"; }
 warn() { printf '%s warn:%s %s\n' "$YEL" "$RST" "$1" >&2; }
 die()  { printf '\n%serror:%s %s\n' "$RED" "$RST" "$1" >&2; exit 1; }
 
+# Staples a notarization ticket, retrying a few times. `stapler` fetches the
+# ticket from Apple's servers, so a dropped connection (NSURLErrorDomain -1005)
+# or a ticket that has not propagated yet right after notarization fails the
+# release even though the build is fine.
+staple() {
+    local attempt
+    for attempt in 1 2 3 4; do
+        xcrun stapler staple "$1" && return 0
+        (( attempt < 4 )) || break
+        warn "stapling failed (attempt ${attempt}/4); retrying in $(( attempt * 15 ))s"
+        sleep $(( attempt * 15 ))
+    done
+    return 1
+}
+
 # --------------------------------------------------------------------- cleanup
 
 MOUNT_DEV=""
@@ -438,7 +453,7 @@ if (( ! SKIP_NOTARIZE )); then
     # ------------------------------------------------- phase 7: staple app
     step "Stapling app"
     # Stapling the .app makes it validate offline forever once installed.
-    xcrun stapler staple "$APP"  || die "failed to staple the app"
+    staple "$APP" || die "failed to staple the app"
     xcrun stapler validate "$APP" || die "staple validation failed for the app"
     info "ticket stapled to ${APP_NAME}.app"
 fi
@@ -499,7 +514,7 @@ if (( ! SKIP_NOTARIZE )); then
     fi
 
     step "Stapling DMG"
-    xcrun stapler staple "$DMG_FINAL" || die "failed to staple the disk image"
+    staple "$DMG_FINAL" || die "failed to staple the disk image"
 
     # ------------------------------------------------- phase 10: final gate
     step "Final verification"
