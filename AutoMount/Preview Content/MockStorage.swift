@@ -79,6 +79,10 @@ class MockStorage: Storage{
         callLog.append("clearStaleMounts")
         return staleMounts
     }
+
+    func netFSAgentRestarted() async {
+        callLog.append("netFSAgentRestarted")
+    }
     
     func addMount(_ mount: Share) async throws {
         if let err = throwError {

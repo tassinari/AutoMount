@@ -288,6 +288,15 @@ public extension StorageManager {
         try await MountData.unmount(url: url)
     }
 
+    /// Call after NetAuthSysAgent has been restarted.
+    ///
+    /// While a NetFS call is stuck, new mount requests are refused for up to five minutes
+    /// (see `NetFSCallGate`). A call stuck in the old agent says nothing about the new one,
+    /// so this lets the next mount through straight away.
+    func netFSAgentRestarted() {
+        NetFSCallGate.shared.reset()
+    }
+
     /// Detaches every mount point whose server no longer responds.
     ///
     /// After a sleep/wake or a network drop, the kernel keeps the mount point even though the

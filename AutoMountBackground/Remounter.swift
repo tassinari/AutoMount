@@ -12,16 +12,28 @@ actor Remounter{
     init(debounceSeconds : TimeInterval = 20,
          storage: Storage = StorageManager(),
          backoff: RemountBackoff = RemountBackoff(),
+         watchdog: NetAuthAgentWatchdog = NetAuthAgentWatchdog(),
+         agentRestarter: NetAuthAgentRestarting = NetAuthAgentRestarter(),
+         reachability: ServerReachability = TCPServerReachability(),
          now: @escaping @Sendable () -> Date = Date.init){
         self.debounceSeconds = debounceSeconds
         self.storage = storage
         self.backoff = backoff
+        self.watchdog = watchdog
+        self.agentRestarter = agentRestarter
+        self.reachability = reachability
         self.now = now
     }
     internal var debounceSeconds: TimeInterval
     private let storage : Storage
     /// Shares whose mounts keep timing out, and when each may next be attempted.
     private var backoff: RemountBackoff
+    /// Counts mount timeouts across all shares to spot a wedged NetAuthSysAgent.
+    private var watchdog: NetAuthAgentWatchdog
+    private let agentRestarter: NetAuthAgentRestarting
+    private let reachability: ServerReachability
+    /// How long the reachability probe may take before the server counts as unreachable.
+    private static let reachabilityTimeout: TimeInterval = 5
     private let now: @Sendable () -> Date
     private var pendingTask: Task<Void, Never>?
     /// The remount pass currently running, if any.
@@ -45,6 +57,8 @@ actor Remounter{
         notice("remount event: \(event)")
         if case .wake = event {
             backoff.resetAll()
+            // Timeouts from while the network was going away say nothing about the agent.
+            watchdog.resetTimeouts()
         }
         if pendingTask != nil {
             notice("Debounced: rescheduling")
@@ -106,8 +120,14 @@ actor Remounter{
                         let response = try await storage.mount(share, ui: false)
                         if case .timeout = response {
                             backoff.recordTimeout(key, now: now())
+                            watchdog.recordTimeout()
                         } else {
                             backoff.reset(key)
+                            if case .success = response {
+                                watchdog.recordAnswer(success: true)
+                            } else {
+                                watchdog.recordAnswer(success: false)
+                            }
                         }
                         switch response{
                             
@@ -121,6 +141,7 @@ actor Remounter{
                             notice("Mount failure for \(name): no host")
                         case .timeout:
                             notice("Mount failure for \(name): timeout")
+                            await restartAgentIfWedged(share)
                         case .noSuchFileOrDirectory:
                             notice("Mount failure for \(name): no such file or directory")
                         case .connectionRefused:
@@ -138,6 +159,33 @@ actor Remounter{
                      notice("\(name) connected, not attempting remount")
                 }
             }
+        }
+    }
+
+    /// Restarts NetAuthSysAgent if mounts keep timing out while `share`'s server accepts
+    /// connections. See ``NetAuthAgentWatchdog``.
+    ///
+    /// After a restart every backoff is cleared and one more pass is queued, so the shares
+    /// that timed out are retried against the fresh agent straight away. That retry depends
+    /// on libMounter's NetFS call gate, which refuses requests while a call is stuck; it is
+    /// reset here so a call stuck in the old agent cannot block the new one.
+    private func restartAgentIfWedged(_ share: Share) async {
+        guard watchdog.shouldRestart(now: now()),
+              let host = share.url.host(), let port = share.serverPort else { return }
+        let server = "\(host):\(port)"
+        guard await reachability.isReachable(host: host, port: port, timeout: Self.reachabilityTimeout) else {
+            notice("Mounts keep timing out, but \(server) is not reachable; leaving NetAuthSysAgent alone")
+            return
+        }
+        AutoMountBackground.error("Mounts keep timing out though \(server) is reachable; NetAuthSysAgent looks wedged")
+        watchdog.recordRestart(now: now())
+        if await agentRestarter.restart() {
+            notice("NetAuthSysAgent restarted; retrying all shares")
+            await storage.netFSAgentRestarted()
+            backoff.resetAll()
+            followUpRequested = true
+        } else {
+            notice("NetAuthSysAgent was not restarted; next attempt in \(Int(watchdog.currentCooldown / 60)) min")
         }
     }
 }

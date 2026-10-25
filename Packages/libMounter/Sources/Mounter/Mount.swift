@@ -61,7 +61,7 @@ internal struct MountedVolumesData: Equatable{
 
     /// The URL's port, falling back to the scheme's default so `smb://h/s` and
     /// `smb://h:445/s` are recognised as the same server.
-    fileprivate static func port(of url: URL, scheme: String) -> Int? {
+    internal static func port(of url: URL, scheme: String) -> Int? {
         if let port = url.port { return port }
         switch scheme {
         case "smb": return 445
@@ -415,6 +415,15 @@ internal final class NetFSCallGate: @unchecked Sendable {
     func stuckCallReturned() {
         lock.lock(); defer { lock.unlock() }
         stuckCalls = max(0, stuckCalls - 1)
+    }
+
+    /// Forgets every stuck call, so the next call goes straight through. Used once the
+    /// agent has been restarted: a call stuck in the old agent says nothing about the new one.
+    /// If a forgotten call returns later, ``stuckCallReturned()`` does not go below zero.
+    func reset() {
+        lock.lock(); defer { lock.unlock() }
+        stuckCalls = 0
+        lastStuck = nil
     }
 }
 

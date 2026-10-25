@@ -53,6 +53,11 @@ public struct Share: Codable,Sendable {
     
     /// The remote URL of the share (e.g. `smb://server/share`, `afp://server/volume`, `nfs://server/export`).
     public let url : URL
+    /// The port the share's server listens on: the URL's own, or the scheme's default
+    /// (445 for SMB, 548 for AFP, 2049 for NFS). `nil` for an unknown scheme.
+    public var serverPort: Int? {
+        MountedVolumesData.port(of: url, scheme: url.scheme?.lowercased() ?? "")
+    }
     /// An optional display name for the share.
     public let name: String?
     /// The local filesystem path where the share is mounted, or `nil` if unknown.
