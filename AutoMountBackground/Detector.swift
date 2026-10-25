@@ -8,6 +8,7 @@
 import Foundation
 import Network
 import AppKit
+import os
 
 protocol Detectable{
     func listen(_ : DetectorDelegate)
@@ -67,15 +68,20 @@ class Detector : Detectable{
     }
     public func listen(_ delegate: DetectorDelegate){
         self.delegate = delegate
-        // Only touched from `queue`, where NWPathMonitor delivers every update.
-        var filter = NetworkChangeFilter()
-        monitor.pathUpdateHandler = { [weak self]path in
+        // NWPathMonitor calls the handler on `queue`, so the filter lives behind a lock
+        // rather than in a captured `var`.
+        let tracker = OSAllocatedUnfairLock(initialState: NetworkChangeTracker())
+        monitor.pathUpdateHandler = { @Sendable [weak self] path in
             let snapshot = NetworkSnapshot(path)
-            if filter.shouldReport(snapshot) {
-                self?.delegate?.didDetectEvent(.network)
-            } else if snapshot.isUsable {
-                debug("Network path update with no reachability change; ignoring")
-            } else {
+            let ignored = tracker.withLock { $0.report(snapshot) }
+            if let ignored {
+                // `notice` so the log survives and shows what changed and how many
+                // updates were filtered out in between.
+                notice("Network changed: \(snapshot); ignored \(ignored) updates since the last change")
+                Task { @MainActor in
+                    self?.delegate?.didDetectEvent(.network)
+                }
+            } else if !snapshot.isUsable {
                 debug("Network unavailable")
             }
 #if DEBUG

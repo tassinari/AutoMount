@@ -41,7 +41,7 @@ extension NetworkSnapshot {
 ///
 /// A path update counts only when the network becomes usable or, while usable, its
 /// interfaces or gateways change, as when joining another network or a VPN coming up.
-nonisolated struct NetworkChangeFilter {
+nonisolated struct NetworkChangeFilter: Sendable {
     private var last: NetworkSnapshot?
 
     /// Records `snapshot` and returns whether it is a change worth reporting.
@@ -49,5 +49,22 @@ nonisolated struct NetworkChangeFilter {
         defer { last = snapshot }
         guard snapshot.isUsable else { return false }
         return snapshot != last
+    }
+}
+
+/// Wraps `NetworkChangeFilter` with a count of the updates it filtered out, for logging.
+nonisolated struct NetworkChangeTracker: Sendable {
+    private var filter = NetworkChangeFilter()
+    private var ignoredCount = 0
+
+    /// Returns the number of updates ignored since the last reported change when
+    /// `snapshot` is reported, or `nil` when it is filtered out.
+    mutating func report(_ snapshot: NetworkSnapshot) -> Int? {
+        guard filter.shouldReport(snapshot) else {
+            ignoredCount += 1
+            return nil
+        }
+        defer { ignoredCount = 0 }
+        return ignoredCount
     }
 }

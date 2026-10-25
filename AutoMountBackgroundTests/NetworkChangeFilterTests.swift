@@ -84,4 +84,36 @@ final class NetworkChangeFilterTests: XCTestCase {
         let office = NetworkSnapshot(isUsable: true, interfaces: ["en0"], gateways: ["10.0.0.1:0"])
         XCTAssertTrue(filter.shouldReport(office))
     }
+
+    /// With Ethernet and Wi-Fi both up, a change in the preferred one reorders the list.
+    /// Order matters, so this must stay a change (don't compare as a `Set`).
+    func testSwappingInterfaceOrderIsReported() {
+        var filter = NetworkChangeFilter()
+        let both = NetworkSnapshot(isUsable: true, interfaces: ["en0", "en7"], gateways: ["192.168.1.1:0"])
+        _ = filter.shouldReport(both)
+
+        let swapped = NetworkSnapshot(isUsable: true, interfaces: ["en7", "en0"], gateways: ["192.168.1.1:0"])
+        XCTAssertTrue(filter.shouldReport(swapped))
+    }
+
+    func testTrackerCountsIgnoredUpdatesAndResetsOnReport() {
+        var tracker = NetworkChangeTracker()
+        XCTAssertEqual(tracker.report(wifi), 0)
+
+        for _ in 0..<3 {
+            XCTAssertNil(tracker.report(wifi))
+        }
+        let ethernet = NetworkSnapshot(isUsable: true, interfaces: ["en7"], gateways: ["192.168.1.1:0"])
+        XCTAssertEqual(tracker.report(ethernet), 3)
+        XCTAssertNil(tracker.report(ethernet))
+        XCTAssertEqual(tracker.report(wifi), 1)
+    }
+
+    func testTrackerCountsUnusablePathsAsIgnored() {
+        var tracker = NetworkChangeTracker()
+        _ = tracker.report(wifi)
+
+        XCTAssertNil(tracker.report(NetworkSnapshot(isUsable: false, interfaces: [], gateways: [])))
+        XCTAssertEqual(tracker.report(wifi), 1)
+    }
 }
