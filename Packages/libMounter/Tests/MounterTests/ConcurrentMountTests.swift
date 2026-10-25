@@ -520,9 +520,39 @@ final class BlockedNetFSCallTests: XCTestCase {
         gate.stuckCallReturned()
         XCTAssertTrue(gate.isAcceptingCalls())
     }
+
+    /// After the agent is restarted, calls go through at once, and a forgotten stuck call
+    /// that returns later does not close the gate again.
+    func testResetReopensTheGate() {
+        let gate = NetFSCallGate()
+        gate.callStuck()
+        XCTAssertFalse(gate.isAcceptingCalls())
+
+        gate.reset()
+        XCTAssertTrue(gate.isAcceptingCalls())
+
+        gate.stuckCallReturned()
+        XCTAssertTrue(gate.isAcceptingCalls())
+        gate.callStuck()
+        XCTAssertFalse(gate.isAcceptingCalls(), "Counting starts again from zero")
+    }
 }
 
 final class MountIdentityTests: XCTestCase {
+
+    private func port(_ urlString: String) -> Int? {
+        Share(url: URL(string: urlString)!, name: nil, mountPoint: nil,
+              managed: true, connected: .unmounted).serverPort
+    }
+
+    func testServerPortUsesTheURLOrTheSchemeDefault() {
+        XCTAssertEqual(port("smb://nas/media"), 445)
+        XCTAssertEqual(port("SMB://nas/media"), 445)
+        XCTAssertEqual(port("afp://nas/media"), 548)
+        XCTAssertEqual(port("nfs://nas/export"), 2049)
+        XCTAssertEqual(port("smb://nas:1445/media"), 1445)
+        XCTAssertNil(port("file:///tmp"))
+    }
 
     private func identity(_ urlString: String) -> String {
         Share(url: URL(string: urlString)!, name: nil, mountPoint: nil,
