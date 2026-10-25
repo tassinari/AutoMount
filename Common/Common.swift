@@ -27,12 +27,18 @@ public protocol Storage {
     /// - Returns: The mount points that were cleared.
     @discardableResult
     func clearStaleMounts() async -> [String]
+
+    /// Tells the mount layer that NetAuthSysAgent was restarted, so it stops refusing
+    /// requests because of a call that was stuck in the old agent.
+    func netFSAgentRestarted() async
 }
 
 public extension Storage {
     /// Default no-op, so conformances that do not manage real mounts need not implement it.
     @discardableResult
     func clearStaleMounts() async -> [String] { return [] }
+
+    func netFSAgentRestarted() async {}
 }
 
 

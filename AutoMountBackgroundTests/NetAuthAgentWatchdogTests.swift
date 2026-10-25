@@ -54,62 +54,73 @@ private struct FakeReachability: ServerReachability {
 final class NetAuthAgentWatchdogTests: XCTestCase {
 
     private let start = Date(timeIntervalSince1970: 1_000_000)
-    private let server = "synology:445"
+
+    private func timeouts(_ count: Int, _ watchdog: inout NetAuthAgentWatchdog) {
+        for _ in 0..<count { watchdog.recordTimeout() }
+    }
 
     func testBelowThresholdDoesNotRestart() {
         var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 3)
-        watchdog.recordTimeout(server)
-        watchdog.recordTimeout(server)
-        XCTAssertFalse(watchdog.shouldRestart(for: server, now: start))
+        timeouts(2, &watchdog)
+        XCTAssertFalse(watchdog.shouldRestart(now: start))
     }
 
     func testThresholdReachedRestarts() {
         var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 3)
-        for _ in 0..<3 { watchdog.recordTimeout(server) }
-        XCTAssertTrue(watchdog.shouldRestart(for: server, now: start))
+        timeouts(3, &watchdog)
+        XCTAssertTrue(watchdog.shouldRestart(now: start))
     }
 
+    /// Any answer, even a failure, shows the agent is alive.
     func testAnswerResetsTheCount() {
         var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 3)
-        watchdog.recordTimeout(server)
-        watchdog.recordTimeout(server)
-        watchdog.recordAnswer(server)
-        watchdog.recordTimeout(server)
-        XCTAssertFalse(watchdog.shouldRestart(for: server, now: start))
+        timeouts(2, &watchdog)
+        watchdog.recordAnswer(success: false)
+        timeouts(1, &watchdog)
+        XCTAssertFalse(watchdog.shouldRestart(now: start))
     }
 
-    func testServersAreCountedSeparately() {
-        var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 2)
-        watchdog.recordTimeout(server)
-        watchdog.recordTimeout("other:445")
-        XCTAssertFalse(watchdog.shouldRestart(for: server, now: start))
-        XCTAssertFalse(watchdog.shouldRestart(for: "other:445", now: start))
+    /// Used on wake: earlier timeouts no longer count.
+    func testResetTimeoutsClearsTheCount() {
+        var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 3)
+        timeouts(2, &watchdog)
+        watchdog.resetTimeouts()
+        timeouts(1, &watchdog)
+        XCTAssertFalse(watchdog.shouldRestart(now: start))
     }
 
     func testCooldownLimitsRestarts() {
         var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 1, cooldown: 900)
-        watchdog.recordTimeout(server)
+        timeouts(1, &watchdog)
         watchdog.recordRestart(now: start)
 
-        watchdog.recordTimeout(server)
-        XCTAssertFalse(watchdog.shouldRestart(for: server, now: start + 899))
-        XCTAssertTrue(watchdog.shouldRestart(for: server, now: start + 900))
+        timeouts(1, &watchdog)
+        XCTAssertFalse(watchdog.shouldRestart(now: start + 899))
+        XCTAssertTrue(watchdog.shouldRestart(now: start + 900))
     }
 
-    func testRestartClearsEveryCount() {
+    func testRestartClearsTheCount() {
         var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 1, cooldown: 0)
-        watchdog.recordTimeout(server)
-        watchdog.recordTimeout("other:445")
+        timeouts(1, &watchdog)
         watchdog.recordRestart(now: start)
-        XCTAssertFalse(watchdog.shouldRestart(for: server, now: start))
-        XCTAssertFalse(watchdog.shouldRestart(for: "other:445", now: start))
+        XCTAssertFalse(watchdog.shouldRestart(now: start))
     }
 
-    func testServerKeyUsesHostAndDefaultPort() {
-        XCTAssertEqual(NetAuthAgentWatchdog.serverKey(for: URL(string: "smb://Synology/media")!), "synology:445")
-        XCTAssertEqual(NetAuthAgentWatchdog.serverKey(for: URL(string: "smb://synology:4450/media")!), "synology:4450")
-        XCTAssertEqual(NetAuthAgentWatchdog.serverKey(for: URL(string: "nfs://nas/export")!), "nas:2049")
-        XCTAssertNil(NetAuthAgentWatchdog.serverKey(for: URL(string: "file:///tmp")!))
+    /// Restarts that are not followed by a successful mount double the cooldown, up to the cap.
+    func testCooldownGrowsWhileRestartsDoNotHelp() {
+        var watchdog = NetAuthAgentWatchdog(timeoutThreshold: 1, cooldown: 900, maximumCooldown: 3000)
+        XCTAssertEqual(watchdog.currentCooldown, 900)
+        watchdog.recordRestart(now: start)
+        XCTAssertEqual(watchdog.currentCooldown, 900)
+        watchdog.recordRestart(now: start)
+        XCTAssertEqual(watchdog.currentCooldown, 1800)
+        watchdog.recordRestart(now: start)
+        XCTAssertEqual(watchdog.currentCooldown, 3000, "Capped at the maximum")
+
+        watchdog.recordAnswer(success: false)
+        XCTAssertEqual(watchdog.currentCooldown, 3000, "A failed answer does not show the restart helped")
+        watchdog.recordAnswer(success: true)
+        XCTAssertEqual(watchdog.currentCooldown, 900)
     }
 
     /// Reading the process table must work without touching any process.
@@ -133,6 +144,14 @@ final class RemounterAgentRestartTests: XCTestCase {
         }
     }
 
+    /// One share on each of three servers.
+    private func makeSharesOnSeparateServers() -> [Share] {
+        ["smb://nas1/media", "smb://nas2/media", "smb://nas3/media"].map {
+            Share(url: URL(string: $0)!, name: nil, mountPoint: nil,
+                  managed: true, connected: .unmounted)
+        }
+    }
+
     @MainActor private func mountCount(_ storage: MockStorage) -> Int {
         storage.callLog.filter { $0 == "mount" }.count
     }
@@ -150,6 +169,57 @@ final class RemounterAgentRestartTests: XCTestCase {
 
         XCTAssertEqual(restarter.restarts, 1)
         XCTAssertEqual(mountCount(storage), 6, "3 timeouts, restart, then a follow-up pass for all 3")
+        XCTAssertTrue(storage.callLog.contains("netFSAgentRestarted"),
+                      "The NetFS gate must be reopened before the follow-up pass")
+    }
+
+    /// One agent serves every server, so timeouts count across servers: one share on each
+    /// of three servers is detected in a single pass, not after three backoff rounds.
+    @MainActor func testTimeoutsAcrossServersRestartTheAgent() async {
+        let restarter = FakeRestarter()
+        let storage = MockStorage(list: makeSharesOnSeparateServers(), mountResponse: .timeout)
+        let remounter = Remounter(debounceSeconds: 0, storage: storage,
+                                  agentRestarter: restarter,
+                                  reachability: FakeReachability(reachable: true))
+
+        await remounter.checkAndRemount(.network)
+
+        XCTAssertEqual(restarter.restarts, 1)
+    }
+
+    /// Timeouts from before a sleep do not count toward a restart after wake.
+    @MainActor func testWakeClearsTimeoutsFromBeforeSleep() async {
+        let clock = WatchdogClock()
+        let restarter = FakeRestarter()
+        let shares = Array(makeShares().prefix(2))
+        let storage = MockStorage(list: shares, mountResponse: .timeout)
+        let remounter = Remounter(debounceSeconds: 0, storage: storage,
+                                  backoff: RemountBackoff(initialDelay: 0, maximumDelay: 0),
+                                  agentRestarter: restarter,
+                                  reachability: FakeReachability(reachable: true),
+                                  now: { clock.now })
+
+        await remounter.checkAndRemount(.network)
+        XCTAssertEqual(restarter.restarts, 0, "Only 2 timeouts")
+
+        await remounter.checkAndRemount(.wake)
+        XCTAssertEqual(restarter.restarts, 0, "Without the wake reset this would make 4 in a row")
+    }
+
+    /// A share in backoff is skipped, so it is neither mounted nor counted.
+    @MainActor func testSharesInBackoffAreNotCounted() async {
+        let restarter = FakeRestarter()
+        let storage = MockStorage(list: [makeShares()[0]], mountResponse: .timeout)
+        let remounter = Remounter(debounceSeconds: 0, storage: storage,
+                                  watchdog: NetAuthAgentWatchdog(timeoutThreshold: 2),
+                                  agentRestarter: restarter,
+                                  reachability: FakeReachability(reachable: true))
+
+        await remounter.checkAndRemount(.network)
+        await remounter.checkAndRemount(.network)
+
+        XCTAssertEqual(mountCount(storage), 1, "The second pass skips the backed-off share")
+        XCTAssertEqual(restarter.restarts, 0)
     }
 
     @MainActor func testUnreachableServerDoesNotRestartTheAgent() async {
@@ -202,6 +272,14 @@ final class RemounterAgentRestartTests: XCTestCase {
         clock.advance(by: 300)
         await remounter.checkAndRemount(.network)
         XCTAssertEqual(restarter.restarts, 2)
+
+        clock.advance(by: 900)
+        await remounter.checkAndRemount(.network)
+        XCTAssertEqual(restarter.restarts, 2, "Restarts that did not help double the cooldown")
+
+        clock.advance(by: 900)
+        await remounter.checkAndRemount(.network)
+        XCTAssertEqual(restarter.restarts, 3)
     }
 
     /// Timeouts mixed with answers (e.g. a slow server that sometimes mounts) never

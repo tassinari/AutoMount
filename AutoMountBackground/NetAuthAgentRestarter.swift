@@ -5,11 +5,12 @@
 
 import Foundation
 import Network
+import os
 
 /// Restarts the system agent that performs NetFS mounts.
 protocol NetAuthAgentRestarting: Sendable {
     /// Ends the running agent so launchd starts a fresh one on the next mount request.
-    /// - Returns: `true` if an agent was found and ended.
+    /// - Returns: `true` if an agent was found and signalled.
     func restart() async -> Bool
 }
 
@@ -22,6 +23,8 @@ protocol ServerReachability: Sendable {
 ///
 /// The agent runs as the logged-in user and launchd relaunches it on demand, so no
 /// privileges are needed. Mounted volumes are kernel mounts and are not affected.
+///
+/// Requires the app to be unsandboxed: App Sandbox blocks signals to other processes.
 nonisolated struct NetAuthAgentRestarter: NetAuthAgentRestarting {
     static let processName = "NetAuthSysAgent"
 
@@ -39,17 +42,26 @@ nonisolated struct NetAuthAgentRestarter: NetAuthAgentRestarting {
             notice("No \(Self.processName) running for this user; nothing to restart")
             return false
         }
+        var signalled: [pid_t] = []
         for pid in pids {
             notice("Restarting \(Self.processName) (pid \(pid))")
-            kill(pid, SIGTERM)
+            if kill(pid, SIGTERM) == 0 {
+                signalled.append(pid)
+            } else {
+                let code = errno
+                notice("Could not signal \(Self.processName) (pid \(pid)): \(String(cString: strerror(code)))")
+            }
         }
+        guard !signalled.isEmpty else { return false }
         let deadline = Date() + gracePeriod
-        var remaining = pids
-        while !remaining.isEmpty, Date() < deadline {
+        var remaining = signalled
+        while !remaining.isEmpty, Date() < deadline, !Task.isCancelled {
             try? await Task.sleep(for: .milliseconds(250))
             remaining = remaining.filter(Self.isRunning)
         }
-        for pid in remaining {
+        // A pid can be reused during the grace period; only kill one that is still the agent.
+        let stillAgent = Set(Self.pids(named: Self.processName, uid: getuid()))
+        for pid in remaining where stillAgent.contains(pid) {
             notice("\(Self.processName) (pid \(pid)) ignored SIGTERM; sending SIGKILL")
             kill(pid, SIGKILL)
         }
@@ -87,34 +99,26 @@ nonisolated struct TCPServerReachability: ServerReachability {
         let connection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: .tcp)
         let queue = DispatchQueue(label: "AutoMount reachability")
         return await withCheckedContinuation { continuation in
-            let once = ResumeOnceFlag()
+            let resumed = OSAllocatedUnfairLock(initialState: false)
             let finish: @Sendable (Bool) -> Void = { reachable in
-                guard once.claim() else { return }
+                let first = resumed.withLock { done in
+                    defer { done = true }
+                    return !done
+                }
+                guard first else { return }
                 connection.cancel()
                 continuation.resume(returning: reachable)
             }
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready: finish(true)
-                case .failed, .cancelled: finish(false)
+                // `.waiting` means no route or a refused connection; it would only retry until the deadline.
+                case .waiting, .failed, .cancelled: finish(false)
                 default: break
                 }
             }
             queue.asyncAfter(deadline: .now() + timeout) { finish(false) }
             connection.start(queue: queue)
         }
-    }
-}
-
-/// Lets exactly one caller through, for resuming a continuation once.
-private nonisolated final class ResumeOnceFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var claimed = false
-
-    func claim() -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        guard !claimed else { return false }
-        claimed = true
-        return true
     }
 }
